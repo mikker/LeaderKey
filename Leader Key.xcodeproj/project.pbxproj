@@ -35,6 +35,7 @@
 		427C18542BD6E59300955B98 /* NSWindow+Animations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 427C18532BD6E59300955B98 /* NSWindow+Animations.swift */; };
 		42A0CE822D2D226800879029 /* ConfigEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42A0CE812D2D226800879029 /* ConfigEditorView.swift */; };
 		42E70A572C823FF200FCF902 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 42E70A562C823FF200FCF902 /* Sparkle */; };
+		42F4CDC92D458FF700D0DD76 /* MainMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42F4CDC82D458FF700D0DD76 /* MainMenu.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -83,6 +84,7 @@
 		427C184F2BD6652500955B98 /* Util.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Util.swift; sourceTree = "<group>"; };
 		427C18532BD6E59300955B98 /* NSWindow+Animations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSWindow+Animations.swift"; sourceTree = "<group>"; };
 		42A0CE812D2D226800879029 /* ConfigEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigEditorView.swift; sourceTree = "<group>"; };
+		42F4CDC82D458FF700D0DD76 /* MainMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainMenu.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -146,6 +148,7 @@
 				427C184C2BD65C5C00955B98 /* Defaults.swift */,
 				427C18472BD5B3FD00955B98 /* FileMonitor.swift */,
 				427C18242BD31E2E00955B98 /* GeneralPane.swift */,
+				42F4CDC82D458FF700D0DD76 /* MainMenu.swift */,
 				427C18532BD6E59300955B98 /* NSWindow+Animations.swift */,
 				427C18262BD31E2E00955B98 /* StatusItem.swift */,
 				427C183A2BD329F900955B98 /* UserConfig.swift */,
@@ -359,6 +362,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				427C182B2BD31E2E00955B98 /* Controller.swift in Sources */,
+				42F4CDC92D458FF700D0DD76 /* MainMenu.swift in Sources */,
 				427C184D2BD65C5C00955B98 /* Defaults.swift in Sources */,
 				427C18292BD31E2E00955B98 /* Window.swift in Sources */,
 				427C182D2BD31F9500955B98 /* Settings.swift in Sources */,
