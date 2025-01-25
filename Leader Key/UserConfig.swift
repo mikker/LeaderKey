@@ -11,26 +11,45 @@ class UserConfig: ObservableObject {
   var afterReload: ((_ success: Bool) -> Void)?
 
   func fileURL() -> URL {
-    let urls = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-    return urls[0].appendingPathComponent(fileName)
+    let appSupportDir = FileManager.default.urls(
+      for: .applicationSupportDirectory, in: .userDomainMask)[0]
+    let path = (appSupportDir.path as NSString).appendingPathComponent("Leader Key")
+
+    // Create directory if it doesn't exist
+    try? FileManager.default.createDirectory(atPath: path, withIntermediateDirectories: true)
+
+    let filePath = (path as NSString).appendingPathComponent(fileName)
+    return URL(fileURLWithPath: filePath)
   }
 
   func configExists() -> Bool {
-    FileManager.default.fileExists(atPath: fileURL().path())
+    let path = fileURL().path
+    return FileManager.default.fileExists(atPath: path)
   }
 
   func bootstrapConfig() throws {
-    print("Writing default config")
-    let data = defaultConfig.data(using: .utf8)
-    try data?.write(to: fileURL())
+    guard let data = defaultConfig.data(using: .utf8) else {
+      throw NSError(
+        domain: "UserConfig", code: 1,
+        userInfo: [NSLocalizedDescriptionKey: "Failed to encode default config"])
+    }
+    let url = fileURL()
+    try data.write(to: url, options: [.atomic])
+
+    // Verify the file was written
+    guard FileManager.default.fileExists(atPath: url.path) else {
+      throw NSError(
+        domain: "UserConfig", code: 2,
+        userInfo: [NSLocalizedDescriptionKey: "File was not created after write"])
+    }
   }
 
   func readConfigFile() -> String {
     do {
-      let str = try String(contentsOfFile: fileURL().path(), encoding: .utf8)
+      let path = fileURL().path
+      let str = try String(contentsOfFile: path, encoding: .utf8)
       return str
     } catch {
-      print("Error decoding JSON: \(error)")
       let alert = NSAlert()
       alert.alertStyle = .critical
       alert.messageText = "\(error)"
@@ -44,7 +63,6 @@ class UserConfig: ObservableObject {
       do {
         try bootstrapConfig()
       } catch {
-        print("Failed writing default config: \(error)")
         let alert = NSAlert()
         alert.alertStyle = .critical
         alert.messageText = "\(error)"
@@ -59,7 +77,6 @@ class UserConfig: ObservableObject {
 
   private func startWatching() {
     self.fileMonitor.startMonitoring(fileURL: fileURL()) {
-      print("File has been modified.")
       self.reloadConfig()
     }
   }
@@ -72,15 +89,12 @@ class UserConfig: ObservableObject {
           let root_ = try decoder.decode(Group.self, from: jsonData)
           root = root_
         } catch {
-          print("Error decoding JSON: \(error)")
           handleConfigError(error)
         }
       } else {
-        print("Failed to read config file")
         root = Group(actions: [])
       }
     } else {
-      print("Config file does not exist, using empty configuration")
       root = Group(actions: [])
     }
   }
@@ -108,7 +122,6 @@ class UserConfig: ObservableObject {
       let jsonData = try encoder.encode(root)
       try jsonData.write(to: fileURL())
     } catch {
-      print("Error saving config: \(error)")
       handleConfigError(error)
     }
 
