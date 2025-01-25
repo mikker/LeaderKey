@@ -74,7 +74,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
   @IBAction
   func settingsMenuItemActionHandler(_: NSMenuItem) {
-    print("wut")
     settingsWindowController.show()
     NSApp.activate(ignoringOtherApps: true)
   }

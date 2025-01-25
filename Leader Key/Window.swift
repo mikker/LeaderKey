@@ -39,8 +39,12 @@ class Window: NSPanel, NSWindowDelegate {
     super.makeKeyAndOrderFront(sender)
   }
 
-  override func performKeyEquivalent(with _: NSEvent) -> Bool {
-    return true
+  override func performKeyEquivalent(with event: NSEvent) -> Bool {
+    if event.modifierFlags.contains(.command) {
+      controller.keyDown(with: event)
+      return true
+    }
+    return false
   }
 
   override func keyDown(with event: NSEvent) {
