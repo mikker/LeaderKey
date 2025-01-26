@@ -7,12 +7,16 @@ let emptyRoot = Group(key: "🚫", label: "Config error", actions: [])
 class UserConfig: ObservableObject {
   @Published var root = emptyRoot
 
+  var customFilePath: URL? = nil
   let fileName = "config.json"
   let fileMonitor = FileMonitor()
 
   var afterReload: ((_ success: Bool) -> Void)?
 
   func fileURL() -> URL {
+    if customFilePath != nil{
+      return customFilePath!
+    }
     let appSupportDir = FileManager.default.urls(
       for: .applicationSupportDirectory, in: .userDomainMask)[0]
     let path = (appSupportDir.path as NSString).appendingPathComponent("Leader Key")
@@ -112,6 +116,11 @@ class UserConfig: ObservableObject {
   func reloadConfig() {
     loadConfig()
     afterReload?(true)
+  }
+    
+  func changeConfigLocation(_ path: URL){
+      customFilePath = path
+      reloadConfig()
   }
 
   func saveConfig() {

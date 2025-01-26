@@ -37,6 +37,18 @@ struct GeneralPane: View {
             Button("Reveal config file in Finder") {
               NSWorkspace.shared.activateFileViewerSelecting([config.fileURL()])
             }
+              
+            Button("Change config file location"){
+                let panel = NSOpenPanel()
+                panel.allowsMultipleSelection = false
+                panel.canChooseDirectories = true
+                panel.canChooseFiles = true
+                if panel.runModal() != .OK{
+                    return
+                }
+                guard let selectedPath = panel.url else { return }
+                config.changeConfigLocation(selectedPath)
+            }
           }
         }
       }
