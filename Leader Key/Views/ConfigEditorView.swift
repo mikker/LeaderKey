@@ -132,7 +132,7 @@ struct ActionRow: View {
 
       switch action.type {
       case .application:
-        Button("Choose...") {
+        Button("Choose…") {
           let panel = NSOpenPanel()
           panel.allowedContentTypes = [.applicationBundle, .application]
           panel.canChooseFiles = true
@@ -144,9 +144,9 @@ struct ActionRow: View {
             action.value = panel.url?.path ?? ""
           }
         }
-        Text(action.value)
+        Text(action.value).truncationMode(.middle).lineLimit(1)
       case .folder:
-        Button("Choose...") {
+        Button("Choose…") {
           let panel = NSOpenPanel()
           panel.allowsMultipleSelection = false
           panel.canChooseDirectories = true
@@ -157,14 +157,14 @@ struct ActionRow: View {
             action.value = panel.url?.path ?? ""
           }
         }
-        Text(action.value)
+        Text(action.value).truncationMode(.middle).lineLimit(1)
       default:
         TextField("Value", text: $action.value)
       }
 
       Spacer()
 
-      TextField(action.bestGuessDisplayName, text: $action.label ?? "").frame(width: 80)
+      TextField(action.bestGuessDisplayName, text: $action.label ?? "").frame(width: 120)
 
       Button(role: .destructive, action: onDelete) {
         Image(systemName: "trash")
@@ -202,7 +202,7 @@ struct GroupRow: View {
 
         Spacer(minLength: 0)
 
-        TextField("Label", text: $group.label ?? "").frame(width: 80)
+        TextField("Label", text: $group.label ?? "").frame(width: 120)
 
         Button(role: .destructive, action: onDelete) {
           Image(systemName: "trash")

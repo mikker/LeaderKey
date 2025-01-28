@@ -1,4 +1,5 @@
 import Cocoa
+import Defaults
 import KeyboardShortcuts
 import Settings
 import Sparkle
@@ -31,6 +32,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, SPUStandardUserDriverDelegat
   )
 
   func applicationDidFinishLaunching(_: Notification) {
+    ensureConfigDir()
+
     guard ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != "1" else { return }
 
     UNUserNotificationCenter.current().delegate = self
@@ -84,6 +87,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, SPUStandardUserDriverDelegat
     }
   }
 
+  func applicationWillTerminate(_ notification: Notification) {
+    config.saveConfig()
+  }
+
+  private func ensureConfigDir() {
+    if Defaults[.configDir] == CONFIG_DIR_EMPTY {
+      Defaults[.configDir] = UserConfig.defaultDirectory()
+    }
+  }
+
   @IBAction
   func settingsMenuItemActionHandler(_: NSMenuItem) {
     settingsWindowController.show()
@@ -107,14 +120,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, SPUStandardUserDriverDelegat
   func standardUserDriverWillHandleShowingUpdate(
     _ handleShowingUpdate: Bool, forUpdate update: SUAppcastItem, state: SPUUserUpdateState
   ) {
-    // When an update alert will be presented, place the app in the foreground
     NSApp.setActivationPolicy(.regular)
 
     if !state.userInitiated {
-      // Add a badge to the app's dock icon indicating one alert occurred
       NSApp.dockTile.badgeLabel = "1"
 
-      // Post a user notification
       let content = UNMutableNotificationContent()
       content.title = "Leader Key Update Available"
       content.body = "Version \(update.displayVersionString) is now available"
@@ -126,17 +136,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, SPUStandardUserDriverDelegat
   }
 
   func standardUserDriverDidReceiveUserAttention(forUpdate update: SUAppcastItem) {
-    // Clear the dock badge indicator for the update
     NSApp.dockTile.badgeLabel = ""
 
-    // Dismiss active update notifications
     UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [
       UPDATE_NOTIFICATION_IDENTIFIER
     ])
   }
 
   func standardUserDriverWillFinishUpdateSession() {
-    // Put app back in background when update session finishes
     NSApp.setActivationPolicy(.accessory)
   }
 
@@ -149,7 +156,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, SPUStandardUserDriverDelegat
     if response.notification.request.identifier == UPDATE_NOTIFICATION_IDENTIFIER
       && response.actionIdentifier == UNNotificationDefaultActionIdentifier
     {
-      // If notification is clicked, bring update in focus
       updaterController.checkForUpdates(nil)
     }
     completionHandler()
