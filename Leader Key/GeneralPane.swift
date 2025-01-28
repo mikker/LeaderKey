@@ -73,6 +73,7 @@ struct GeneralPane: View {
 
       Settings.Section(title: "App") {
         LaunchAtLogin.Toggle()
+        Defaults.Toggle("Show Leader Key in menubar", key: .showMenuBarIcon)
       }
     }
   }
