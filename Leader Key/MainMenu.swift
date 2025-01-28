@@ -7,13 +7,20 @@ class MainMenu: NSMenu {
     let appMenu = NSMenuItem()
     appMenu.submenu = NSMenu(title: "Leader Key")
     appMenu.submenu?.items = [
-      NSMenuItem(title: "About Leader Key", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: ""),
+      NSMenuItem(
+        title: "About Leader Key",
+        action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: ""),
       .separator(),
-      NSMenuItem(title: "Preferences...", action: #selector(AppDelegate.settingsMenuItemActionHandler(_:)), keyEquivalent: ","),
+      NSMenuItem(
+        title: "Preferences...", action: #selector(AppDelegate.settingsMenuItemActionHandler(_:)),
+        keyEquivalent: ","),
       .separator(),
-      NSMenuItem(title: "Close Window", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w"),
+      NSMenuItem(
+        title: "Close Window", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w"),
       .separator(),
-      NSMenuItem(title: "Quit Leader Key", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"),
+      NSMenuItem(
+        title: "Quit Leader Key", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"
+      ),
     ]
 
     let editMenu = NSMenuItem()

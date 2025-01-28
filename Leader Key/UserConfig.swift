@@ -2,8 +2,10 @@ import Cocoa
 import Combine
 import Defaults
 
+let emptyRoot = Group(key: "🚫", label: "Config error", actions: [])
+
 class UserConfig: ObservableObject {
-  @Published var root = Group(actions: [])
+  @Published var root = emptyRoot
 
   let fileName = "config.json"
   let fileMonitor = FileMonitor()
@@ -67,7 +69,7 @@ class UserConfig: ObservableObject {
         alert.alertStyle = .critical
         alert.messageText = "\(error)"
         alert.runModal()
-        root = Group(actions: [])
+        root = emptyRoot
       }
     }
 
@@ -92,10 +94,10 @@ class UserConfig: ObservableObject {
           handleConfigError(error)
         }
       } else {
-        root = Group(actions: [])
+        root = emptyRoot
       }
     } else {
-      root = Group(actions: [])
+      root = emptyRoot
     }
   }
 
@@ -104,7 +106,7 @@ class UserConfig: ObservableObject {
     alert.alertStyle = .critical
     alert.messageText = "\(error)"
     alert.runModal()
-    root = Group(actions: [])
+    root = emptyRoot
   }
 
   func reloadConfig() {
@@ -113,7 +115,6 @@ class UserConfig: ObservableObject {
   }
 
   func saveConfig() {
-    // Stop monitoring temporarily
     fileMonitor.stopMonitoring()
 
     do {
@@ -167,16 +168,52 @@ enum Type: String, Codable {
   case folder
 }
 
-struct Action: Codable {
-  var key: String
-  var type: Type
-  var value: String
+protocol Item {
+  var key: String? { get }
+  var type: Type { get }
+  var label: String? { get }
+  var displayName: String { get }
 }
 
-struct Group: Codable {
+struct Action: Item, Codable {
+  var key: String?
+  var type: Type
+  var label: String?
+
+  var value: String
+
+  var displayName: String {
+    guard let labelValue = label else { return bestGuessDisplayName }
+    guard !labelValue.isEmpty else { return bestGuessDisplayName }
+    return labelValue
+  }
+
+  var bestGuessDisplayName: String {
+    switch type {
+    case .application:
+      return (value as NSString).lastPathComponent.replacingOccurrences(
+        of: ".app", with: "")
+    case .command:
+      return value.components(separatedBy: " ").first ?? value
+    case .folder:
+      return (value as NSString).lastPathComponent
+    case .url:
+      return "URL"
+    default:
+      return value
+    }
+  }
+}
+
+struct Group: Item, Codable {
   var key: String?
   var type: Type = .group
+  var label: String?
   var actions: [ActionOrGroup]
+
+  var displayName: String {
+    return label ?? "Group"
+  }
 }
 
 enum ActionOrGroup: Codable {
@@ -184,20 +221,22 @@ enum ActionOrGroup: Codable {
   case group(Group)
 
   private enum CodingKeys: String, CodingKey {
-    case key, type, value, actions
+    case key, type, value, actions, label
   }
 
   init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
-    let key = try container.decode(String.self, forKey: .key)
+    let key = try container.decode(String?.self, forKey: .key)
     let type = try container.decode(Type.self, forKey: .type)
+    let label = try container.decodeIfPresent(String.self, forKey: .label) ?? ""
+
     switch type {
     case .group:
       let actions = try container.decode([ActionOrGroup].self, forKey: .actions)
-      self = .group(Group(key: key, actions: actions))
+      self = .group(Group(key: key, label: label, actions: actions))
     default:
       let value = try container.decode(String.self, forKey: .value)
-      self = .action(Action(key: key, type: type, value: value))
+      self = .action(Action(key: key, type: type, label: label, value: value))
     }
   }
 
@@ -208,10 +247,12 @@ enum ActionOrGroup: Codable {
       try container.encode(action.key, forKey: .key)
       try container.encode(action.type, forKey: .type)
       try container.encode(action.value, forKey: .value)
+      try container.encode(action.label, forKey: .label)
     case let .group(group):
       try container.encode(group.key, forKey: .key)
       try container.encode(Type.group, forKey: .type)
       try container.encode(group.actions, forKey: .actions)
+      try container.encode(group.label, forKey: .label)
     }
   }
 }

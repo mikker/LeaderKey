@@ -11,11 +11,11 @@ struct MainView: View {
   @EnvironmentObject var userState: UserState
 
   var body: some View {
-    VStack(spacing: 8) {
-      Text(userState.currentGroup?.key ?? userState.display ?? "●").fontDesign(.rounded).fontWeight(
-        .semibold
-      ).font(.system(size: 28, weight: .semibold, design: .rounded))
-    }.frame(width: 200, height: 200, alignment: .center)
+    Text(userState.currentGroup?.key ?? userState.display ?? "●")
+      .fontDesign(.rounded)
+      .fontWeight(.semibold)
+      .font(.system(size: 28, weight: .semibold, design: .rounded))
+      .frame(width: 200, height: 200, alignment: .center)
       .background(
         VisualEffectView(material: .hudWindow, blendingMode: .behindWindow)
       )

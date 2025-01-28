@@ -8,7 +8,9 @@ import UserNotifications
 let UPDATE_NOTIFICATION_IDENTIFIER = "UpdateCheck"
 
 @NSApplicationMain
-class AppDelegate: NSObject, NSApplicationDelegate, SPUStandardUserDriverDelegate, UNUserNotificationCenterDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, SPUStandardUserDriverDelegate,
+  UNUserNotificationCenterDelegate
+{
   var window: Window!
   var controller: Controller!
 
@@ -32,7 +34,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, SPUStandardUserDriverDelegat
     guard ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != "1" else { return }
 
     UNUserNotificationCenter.current().delegate = self
-    UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
+    UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) {
+      granted, error in
       if let error = error {
         print("Error requesting notification permission: \(error)")
       }
@@ -101,7 +104,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, SPUStandardUserDriverDelegat
     return true
   }
 
-  func standardUserDriverWillHandleShowingUpdate(_ handleShowingUpdate: Bool, forUpdate update: SUAppcastItem, state: SPUUserUpdateState) {
+  func standardUserDriverWillHandleShowingUpdate(
+    _ handleShowingUpdate: Bool, forUpdate update: SUAppcastItem, state: SPUUserUpdateState
+  ) {
     // When an update alert will be presented, place the app in the foreground
     NSApp.setActivationPolicy(.regular)
 
@@ -114,7 +119,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, SPUStandardUserDriverDelegat
       content.title = "Leader Key Update Available"
       content.body = "Version \(update.displayVersionString) is now available"
 
-      let request = UNNotificationRequest(identifier: UPDATE_NOTIFICATION_IDENTIFIER, content: content, trigger: nil)
+      let request = UNNotificationRequest(
+        identifier: UPDATE_NOTIFICATION_IDENTIFIER, content: content, trigger: nil)
       UNUserNotificationCenter.current().add(request)
     }
   }
@@ -124,7 +130,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, SPUStandardUserDriverDelegat
     NSApp.dockTile.badgeLabel = ""
 
     // Dismiss active update notifications
-    UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [UPDATE_NOTIFICATION_IDENTIFIER])
+    UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [
+      UPDATE_NOTIFICATION_IDENTIFIER
+    ])
   }
 
   func standardUserDriverWillFinishUpdateSession() {
@@ -134,8 +142,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, SPUStandardUserDriverDelegat
 
   // MARK: - UNUserNotificationCenter Delegate
 
-  func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
-    if response.notification.request.identifier == UPDATE_NOTIFICATION_IDENTIFIER && response.actionIdentifier == UNNotificationDefaultActionIdentifier {
+  func userNotificationCenter(
+    _ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
+    withCompletionHandler completionHandler: @escaping () -> Void
+  ) {
+    if response.notification.request.identifier == UPDATE_NOTIFICATION_IDENTIFIER
+      && response.actionIdentifier == UNNotificationDefaultActionIdentifier
+    {
       // If notification is clicked, bring update in focus
       updaterController.checkForUpdates(nil)
     }

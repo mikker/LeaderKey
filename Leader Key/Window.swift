@@ -2,7 +2,23 @@ import Cocoa
 import QuartzCore
 import SwiftUI
 
-class Window: NSPanel, NSWindowDelegate {
+class PanelWindow: NSPanel {
+  init(contentRect: NSRect) {
+    super.init(
+      contentRect: contentRect,
+      styleMask: [.nonactivatingPanel],
+      backing: .buffered, defer: false
+    )
+
+    isFloatingPanel = true
+    isReleasedWhenClosed = false
+    animationBehavior = .none
+    backgroundColor = .clear
+    isOpaque = false
+  }
+}
+
+class Window: PanelWindow, NSWindowDelegate {
   override var acceptsFirstResponder: Bool { return true }
   override var canBecomeKey: Bool { return true }
   override var canBecomeMain: Bool { return true }
@@ -12,23 +28,12 @@ class Window: NSPanel, NSWindowDelegate {
   init(controller: Controller) {
     self.controller = controller
 
-    super.init(
-      contentRect: NSRect(x: 0, y: 0, width: 500, height: 550),
-      styleMask: [.nonactivatingPanel],
-      backing: .buffered, defer: false
-    )
-
-    isFloatingPanel = true
-    isReleasedWhenClosed = false
-    animationBehavior = .none
+    super.init(contentRect: NSRect(x: 0, y: 0, width: 500, height: 550))
 
     center()
 
     let view = MainView().environmentObject(self.controller.userState)
     contentView = NSHostingView(rootView: view)
-
-    backgroundColor = .clear
-    isOpaque = false
 
     delegate = self
   }

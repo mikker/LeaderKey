@@ -4,7 +4,7 @@ import Settings
 import SwiftUI
 
 struct GeneralPane: View {
-  private let contentWidth = 600.0
+  private let contentWidth = 680.0
   @EnvironmentObject private var config: UserConfig
 
   var body: some View {
@@ -15,7 +15,7 @@ struct GeneralPane: View {
         VStack(alignment: .leading) {
           VStack {
             ConfigEditorView(group: $config.root)
-              .frame(height: 400)
+              .frame(height: 500)
           }
           .padding(8)
           .overlay(

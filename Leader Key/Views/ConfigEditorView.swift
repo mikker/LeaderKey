@@ -75,22 +75,32 @@ struct ConfigEditorView: View {
 struct ActionOrGroupRow: View {
   @Binding var item: ActionOrGroup
   let onDelete: () -> Void
-  
+
   var body: some View {
     switch item {
-    case .action(let action):
+    case .action:
       ActionRow(
         action: Binding(
-          get: { action },
-          set: { item = .action($0) }
+          get: {
+            if case let .action(action) = item { return action }
+            fatalError("Unexpected state")
+          },
+          set: { newAction in
+            item = .action(newAction)
+          }
         ),
         onDelete: onDelete
       )
-    case .group(let group):
+    case .group:
       GroupRow(
         group: Binding(
-          get: { group },
-          set: { item = .group($0) }
+          get: {
+            if case let .group(group) = item { return group }
+            fatalError("Unexpected state")
+          },
+          set: { newGroup in
+            item = .group(newGroup)
+          }
         ),
         onDelete: onDelete
       )
@@ -105,7 +115,11 @@ struct ActionRow: View {
 
   var body: some View {
     HStack(spacing: PADDING) {
-      KeyField(text: $action.key, placeholder: "Key")
+      KeyField(
+        text: Binding(
+          get: { action.key ?? "" },
+          set: { action.key = $0 }
+        ), placeholder: "Key")
 
       Picker("Type", selection: $action.type) {
         Text("Application").tag(Type.application)
@@ -116,7 +130,8 @@ struct ActionRow: View {
       .frame(width: 110)
       .labelsHidden()
 
-      if action.type == .application {
+      switch action.type {
+      case .application:
         Button("Choose...") {
           let panel = NSOpenPanel()
           panel.allowsMultipleSelection = false
@@ -128,7 +143,8 @@ struct ActionRow: View {
             action.value = panel.url?.path ?? ""
           }
         }
-      } else if action.type == .folder {
+        Text(action.value)
+      case .folder:
         Button("Choose...") {
           let panel = NSOpenPanel()
           panel.allowsMultipleSelection = false
@@ -139,9 +155,14 @@ struct ActionRow: View {
             action.value = panel.url?.path ?? ""
           }
         }
+        Text(action.value)
+      default:
+        TextField("Value", text: $action.value)
       }
 
-      TextField("Value", text: $action.value)
+      Spacer()
+
+      TextField(action.bestGuessDisplayName, text: $action.label ?? "").frame(width: 80)
 
       Button(role: .destructive, action: onDelete) {
         Image(systemName: "trash")
@@ -179,6 +200,8 @@ struct GroupRow: View {
 
         Spacer(minLength: 0)
 
+        TextField("Label", text: $group.label ?? "").frame(width: 80)
+
         Button(role: .destructive, action: onDelete) {
           Image(systemName: "trash")
         }
@@ -203,54 +226,56 @@ struct GroupRow: View {
 }
 
 #Preview {
-  let group = Group(actions: [
-    // Level 1 actions
-    .action(
-      Action(key: "t", type: .application, value: "/Applications/WezTerm.app")),
-    .action(
-      Action(key: "f", type: .application, value: "/Applications/Firefox.app")),
+  let group = Group(
+    key: "",
+    actions: [
+      // Level 1 actions
+      .action(
+        Action(key: "t", type: .application, value: "/Applications/WezTerm.app")),
+      .action(
+        Action(key: "f", type: .application, value: "/Applications/Firefox.app")),
 
-    // Level 1 group with actions
-    .group(
-      Group(
-        key: "b",
-        actions: [
-          .action(
-            Action(
-              key: "c", type: .application,
-              value: "/Applications/Google Chrome.app")),
-          .action(
-            Action(
-              key: "s", type: .application, value: "/Applications/Safari.app")),
-        ])),
+      // Level 1 group with actions
+      .group(
+        Group(
+          key: "b",
+          actions: [
+            .action(
+              Action(
+                key: "c", type: .application,
+                value: "/Applications/Google Chrome.app")),
+            .action(
+              Action(
+                key: "s", type: .application, value: "/Applications/Safari.app")),
+          ])),
 
-    // Level 1 group with subgroups
-    .group(
-      Group(
-        key: "r",
-        actions: [
-          .action(
-            Action(
-              key: "e", type: .url,
-              value:
-                "raycast://extensions/raycast/emoji-symbols/search-emoji-symbols"
-            )),
-          .group(
-            Group(
-              key: "w",
-              actions: [
-                .action(
-                  Action(
-                    key: "f", type: .url,
-                    value: "raycast://window-management/maximize")),
-                .action(
-                  Action(
-                    key: "h", type: .url,
-                    value: "raycast://window-management/left-half")),
-              ])),
-        ])),
-  ])
+      // Level 1 group with subgroups
+      .group(
+        Group(
+          key: "r",
+          actions: [
+            .action(
+              Action(
+                key: "e", type: .url,
+                value:
+                  "raycast://extensions/raycast/emoji-symbols/search-emoji-symbols"
+              )),
+            .group(
+              Group(
+                key: "w",
+                actions: [
+                  .action(
+                    Action(
+                      key: "f", type: .url,
+                      value: "raycast://window-management/maximize")),
+                  .action(
+                    Action(
+                      key: "h", type: .url,
+                      value: "raycast://window-management/left-half")),
+                ])),
+          ])),
+    ])
 
-  return ConfigEditorView(group: .constant(group))
+  ConfigEditorView(group: .constant(group))
     .frame(width: 600, height: 500)
 }

@@ -4,6 +4,7 @@ struct KeyField: View {
   @Binding var text: String
   let placeholder: String
   @FocusState private var isFocused: Bool
+  @State private var textField: NSTextField?
 
   var body: some View {
     TextField(placeholder, text: $text)
@@ -16,31 +17,52 @@ struct KeyField: View {
         }
       }
       .focused($isFocused)
-      .onChange(of: isFocused) { focused in
-        if focused {
-          DispatchQueue.main.async {
-            NSApp.keyWindow?.firstResponder?.tryToPerform(#selector(NSText.selectAll(_:)), with: nil)
-          }
-        }
+      .background(TextFieldWrapper(textField: $textField))
+  }
+}
+
+// Helper view to get NSTextField reference
+struct TextFieldWrapper: NSViewRepresentable {
+  @Binding var textField: NSTextField?
+
+  func makeNSView(context: Context) -> NSView {
+    let view = NSView()
+    DispatchQueue.main.async {
+      self.textField = view.firstSubview(ofType: NSTextField.self)
+    }
+    return view
+  }
+
+  func updateNSView(_ nsView: NSView, context: Context) {}
+}
+
+extension NSView {
+  func firstSubview<T: NSView>(ofType type: T.Type) -> T? {
+    for subview in subviews {
+      if let view = subview as? T {
+        return view
       }
-      .onReceive(NotificationCenter.default.publisher(for: NSControl.textDidChangeNotification)) { _ in
-        NSApp.keyWindow?.firstResponder?.tryToPerform(#selector(NSText.selectAll(_:)), with: nil)
+      if let foundView = subview.firstSubview(ofType: type) {
+        return foundView
       }
+    }
+    return nil
   }
 }
 
 #Preview {
   struct Container: View {
     @State var text = "a"
-    
+
     var body: some View {
       VStack(spacing: 20) {
         KeyField(text: $text, placeholder: "Key")
         Text("Current value: '\(text)'")
       }
       .padding()
+      .frame(width: 300)
     }
   }
-  
+
   return Container()
-} 
+}

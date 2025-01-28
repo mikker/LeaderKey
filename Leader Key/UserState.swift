@@ -1,3 +1,5 @@
+import Combine
+import Foundation
 import SwiftUI
 
 final class UserState: ObservableObject {
