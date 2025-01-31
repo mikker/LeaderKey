@@ -6,4 +6,6 @@ extension Defaults.Keys {
   static let watchConfigFile = Key<Bool>("watchConfigFile", default: false)
   static let configDir = Key<String>("configDir", default: CONFIG_DIR_EMPTY)
   static let showMenuBarIcon = Key<Bool>("showInMenubar", default: true)
+  static let useEnglishKeyMap = Key<Bool>("useEnglishKeyMap", default: true)
+
 }

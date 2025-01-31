@@ -74,6 +74,7 @@ struct GeneralPane: View {
       Settings.Section(title: "App") {
         LaunchAtLogin.Toggle()
         Defaults.Toggle("Show Leader Key in menubar", key: .showMenuBarIcon)
+        Defaults.Toggle("Force English QWERTY keyboard layout", key: .useEnglishKeyMap)
       }
     }
   }
