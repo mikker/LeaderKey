@@ -30,7 +30,8 @@ struct GroupContentView: View {
       ForEach(group.actions.indices, id: \.self) { index in
         ActionOrGroupRow(
           item: binding(for: index),
-          onDelete: { group.actions.remove(at: index) }
+          onDelete: { group.actions.remove(at: index) },
+          onDuplicate: { group.actions.insert(group.actions[index], at: index) }
         )
         .id(index)
       }
@@ -75,6 +76,7 @@ struct ConfigEditorView: View {
 struct ActionOrGroupRow: View {
   @Binding var item: ActionOrGroup
   let onDelete: () -> Void
+  let onDuplicate: () -> Void
 
   var body: some View {
     switch item {
@@ -89,7 +91,8 @@ struct ActionOrGroupRow: View {
             item = .action(newAction)
           }
         ),
-        onDelete: onDelete
+        onDelete: onDelete,
+        onDuplicate: onDuplicate
       )
     case .group:
       GroupRow(
@@ -102,7 +105,8 @@ struct ActionOrGroupRow: View {
             item = .group(newGroup)
           }
         ),
-        onDelete: onDelete
+        onDelete: onDelete,
+        onDuplicate: onDuplicate
       )
     }
   }
@@ -111,6 +115,7 @@ struct ActionOrGroupRow: View {
 struct ActionRow: View {
   @Binding var action: Action
   let onDelete: () -> Void
+  let onDuplicate: () -> Void
   @FocusState private var isKeyFocused: Bool
 
   var body: some View {
@@ -165,7 +170,11 @@ struct ActionRow: View {
       Spacer()
 
       TextField(action.bestGuessDisplayName, text: $action.label ?? "").frame(width: 120)
+        .padding(.trailing, PADDING)
 
+      Button(role: .none, action: onDuplicate) {
+        Image(systemName: "document.on.document")
+      }
       Button(role: .destructive, action: onDelete) {
         Image(systemName: "trash")
       }
@@ -179,6 +188,7 @@ struct GroupRow: View {
   @State private var isExpanded = true
   @FocusState private var isKeyFocused: Bool
   let onDelete: () -> Void
+  let onDuplicate: () -> Void
 
   var body: some View {
     VStack(spacing: PADDING) {
@@ -203,7 +213,11 @@ struct GroupRow: View {
         Spacer(minLength: 0)
 
         TextField("Label", text: $group.label ?? "").frame(width: 120)
-
+          .padding(.trailing, PADDING)
+          
+        Button(role: .none, action: onDuplicate) {
+          Image(systemName: "document.on.document")
+        }
         Button(role: .destructive, action: onDelete) {
           Image(systemName: "trash")
         }
