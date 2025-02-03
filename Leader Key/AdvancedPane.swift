@@ -42,7 +42,7 @@ struct AdvancedPane: View {
         }
       }
 
-      Settings.Section(title: "App") {
+      Settings.Section(title: "Other") {
         Defaults.Toggle("Show Leader Key in menubar", key: .showMenuBarIcon)
         Defaults.Toggle("Force English keyboard layout", key: .forceEnglishKeyboardLayout)
       }

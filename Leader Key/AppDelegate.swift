@@ -35,7 +35,8 @@ class AppDelegate: NSObject, NSApplicationDelegate,
         contentView: {
           AdvancedPane().environmentObject(self.config)
         }),
-    ]
+    ],
+    style: .segmentedControl
   )
 
   func applicationDidFinishLaunching(_: Notification) {
