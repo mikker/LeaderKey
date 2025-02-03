@@ -28,9 +28,10 @@ class Controller {
     window.show()
   }
 
-  func hide() {
+  func hide(afterClose: (() -> Void)? = nil) {
     window.hide {
       self.clear()
+      afterClose?()
     }
     cheatsheetWindow?.orderOut(nil)
   }
@@ -97,8 +98,9 @@ class Controller {
 
       switch hit {
       case let .action(action):
-        runAction(action)
-        hide()
+        hide() {
+          self.runAction(action)
+        }
       case let .group(group):
         userState.display = group.key
         userState.currentGroup = group
