@@ -7,6 +7,8 @@
 
 import SwiftUI
 
+let MAIN_VIEW_SIZE: CGFloat = 200
+
 struct MainView: View {
   @EnvironmentObject var userState: UserState
 
@@ -15,7 +17,7 @@ struct MainView: View {
       .fontDesign(.rounded)
       .fontWeight(.semibold)
       .font(.system(size: 28, weight: .semibold, design: .rounded))
-      .frame(width: 200, height: 200, alignment: .center)
+      .frame(width: MAIN_VIEW_SIZE, height: MAIN_VIEW_SIZE, alignment: .center)
       .background(
         VisualEffectView(material: .hudWindow, blendingMode: .behindWindow)
       )

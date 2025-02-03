@@ -150,7 +150,6 @@
 			isa = PBXGroup;
 			children = (
 				427C181F2BD31C3D00955B98 /* AppDelegate.swift */,
-				42F4CDCE2D46E2B300D0DD76 /* Cheatsheet.swift */,
 				426E625A2D2E6A98009FD2F2 /* CommandRunner.swift */,
 				427C181B2BD314B500955B98 /* Constants.swift */,
 				427C18272BD31E2E00955B98 /* Controller.swift */,
@@ -212,6 +211,7 @@
 		427C18392BD3268000955B98 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				42F4CDCE2D46E2B300D0DD76 /* Cheatsheet.swift */,
 				42A0CE812D2D226800879029 /* ConfigEditorView.swift */,
 				427C182C2BD31F9500955B98 /* Settings.swift */,
 				427C18372BD3262100955B98 /* VisualEffectBackground.swift */,

@@ -106,6 +106,18 @@ enum Cheatsheet {
       return 640
     }
 
+    // Constrain to edge of screen
+    var preferredWidth: CGFloat {
+      if let screen = NSScreen.main {
+        let screenHalf = screen.visibleFrame.width / 2
+        let desiredWidth: CGFloat = 580
+        let margin: CGFloat = 20
+        let w = min(desiredWidth, screenHalf - margin * 2 - MAIN_VIEW_SIZE / 2)
+        return w
+      }
+      return 580
+    }
+
     var actions: [ActionOrGroup] {
       (userState.currentGroup != nil)
         ? userState.currentGroup!.actions : userState.userConfig.root.actions
@@ -144,7 +156,7 @@ enum Cheatsheet {
           }
         )
       }
-      .frame(width: 580)
+      .frame(width: preferredWidth)
       .frame(height: min(contentHeight, maxHeight))
       .background(
         VisualEffectView(material: .hudWindow, blendingMode: .behindWindow)
