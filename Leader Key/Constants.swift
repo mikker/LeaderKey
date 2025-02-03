@@ -3,3 +3,13 @@ import KeyboardShortcuts
 extension KeyboardShortcuts.Name {
   static let activate = Self("activate")
 }
+
+// Key map for English characters based on US QWERTY keyboard layout
+let ENGLISH_KEYMAP: [UInt16: String] = [
+  0x00: "a", 0x0B: "b", 0x08: "c", 0x02: "d", 0x0E: "e", 0x03: "f",
+  0x05: "g", 0x04: "h", 0x22: "i", 0x26: "j", 0x28: "k", 0x25: "l",
+  0x2E: "m", 0x2D: "n", 0x1F: "o", 0x23: "p", 0x0C: "q", 0x0F: "r",
+  0x01: "s", 0x11: "t", 0x20: "u", 0x09: "v", 0x0D: "w", 0x07: "x",
+  0x10: "y", 0x06: "z",
+]
+

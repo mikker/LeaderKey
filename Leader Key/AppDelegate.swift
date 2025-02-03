@@ -28,7 +28,13 @@ class AppDelegate: NSObject, NSApplicationDelegate,
         identifier: .general, title: "General",
         toolbarIcon: NSImage(named: NSImage.preferencesGeneralName)!,
         contentView: { GeneralPane().environmentObject(self.config) }
-      )
+      ),
+      Settings.Pane(
+        identifier: .advanced, title: "Advanced",
+        toolbarIcon: NSImage(named: NSImage.advancedName)!,
+        contentView: {
+          AdvancedPane().environmentObject(self.config)
+        }),
     ]
   )
 

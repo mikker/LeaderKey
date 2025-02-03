@@ -1,5 +1,6 @@
 import Cocoa
 import Combine
+import Defaults
 import SwiftUI
 
 enum KeyHelpers: UInt16 {
@@ -13,16 +14,6 @@ enum KeyHelpers: UInt16 {
 class Controller {
   var userState: UserState
   var userConfig: UserConfig
-
-  // Key map for English characters based on US QWERTY keyboard layout
-  let englishKeyMap: [UInt16: String] = [
-    // Letters a-z (verified)
-    0x00: "a", 0x0B: "b", 0x08: "c", 0x02: "d", 0x0E: "e", 0x03: "f",
-    0x05: "g", 0x04: "h", 0x22: "i", 0x26: "j", 0x28: "k", 0x25: "l",
-    0x2E: "m", 0x2D: "n", 0x1F: "o", 0x23: "p", 0x0C: "q", 0x0F: "r",
-    0x01: "s", 0x11: "t", 0x20: "u", 0x09: "v", 0x0D: "w", 0x07: "x",
-    0x10: "y", 0x06: "z",
-  ]
 
   var window: Window!
   var cheatsheetWindow: NSWindow?
@@ -70,11 +61,13 @@ class Controller {
     case KeyHelpers.Escape.rawValue:
       hide()
     default:
-      // Map key code to English character, ignoring the current input layout
       let keyCode = event.keyCode
-      var char = (UserDefaults.standard.bool(forKey: "useEnglishKeyMap") ? englishKeyMap[keyCode] : event.charactersIgnoringModifiers) ?? event.charactersIgnoringModifiers ?? ""
+      var char: String =
+        (Defaults[.forceEnglishKeyboardLayout]
+          ? ENGLISH_KEYMAP[keyCode]
+          : event.charactersIgnoringModifiers) ?? ""
 
-      // Check if Shift is pressed and convert to uppercase if needed
+      // Check if Shift is pressed and convert to uppercase if so
       if event.modifierFlags.contains(.shift) {
         char = char.uppercased()
       }
