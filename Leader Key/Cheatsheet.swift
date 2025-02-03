@@ -5,6 +5,7 @@
 //  Created by Mikkel Malmberg on 26/01/2025.
 //
 
+import Defaults
 import SwiftUI
 
 enum Cheatsheet {
@@ -60,6 +61,7 @@ enum Cheatsheet {
   }
 
   struct GroupRow: SwiftUI.View {
+    @Default(.expandGroupsInCheatsheet) var expand
     let group: Group
     let indent: Int
 
@@ -79,12 +81,14 @@ enum Cheatsheet {
             .lineLimit(1)
             .truncationMode(.middle)
         }
-        ForEach(Array(group.actions.enumerated()), id: \.offset) { _, item in
-          switch item {
-          case .action(let action):
-            Cheatsheet.ActionRow(action: action, indent: indent + 1)
-          case .group(let group):
-            Cheatsheet.GroupRow(group: group, indent: indent + 1)
+        if expand {
+          ForEach(Array(group.actions.enumerated()), id: \.offset) { _, item in
+            switch item {
+            case .action(let action):
+              Cheatsheet.ActionRow(action: action, indent: indent + 1)
+            case .group(let group):
+              Cheatsheet.GroupRow(group: group, indent: indent + 1)
+            }
           }
         }
       }

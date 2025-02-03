@@ -8,4 +8,6 @@ extension Defaults.Keys {
   static let showMenuBarIcon = Key<Bool>("showInMenubar", default: true)
   static let forceEnglishKeyboardLayout = Key<Bool>("forceEnglishKeyboardLayout", default: false)
 
+  static let alwaysShowCheatsheet = Key<Bool>("alwaysShowCheatsheet", default: false)
+  static let expandGroupsInCheatsheet = Key<Bool>("expandGroupsInCheatsheet", default: false)
 }

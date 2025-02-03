@@ -16,7 +16,7 @@ class Controller {
   var userConfig: UserConfig
 
   var window: Window!
-  var cheatsheetWindow: NSWindow?
+  var cheatsheetWindow: NSWindow!
 
   init(userState: UserState, userConfig: UserConfig) {
     self.userState = userState
@@ -26,6 +26,9 @@ class Controller {
 
   func show() {
     window.show()
+    if Defaults[.alwaysShowCheatsheet] {
+      showCheatsheet()
+    }
   }
 
   func hide(afterClose: (() -> Void)? = nil) {
@@ -98,7 +101,7 @@ class Controller {
 
       switch hit {
       case let .action(action):
-        hide() {
+        hide {
           self.runAction(action)
         }
       case let .group(group):

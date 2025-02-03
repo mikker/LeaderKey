@@ -42,6 +42,11 @@ struct AdvancedPane: View {
         }
       }
 
+      Settings.Section(title: "Cheatsheet", bottomDivider: true) {
+        Defaults.Toggle("Always show cheatsheet", key: .alwaysShowCheatsheet)
+        Defaults.Toggle("Show expanded groups in cheatsheet", key: .expandGroupsInCheatsheet)
+      }
+
       Settings.Section(title: "Other") {
         Defaults.Toggle("Show Leader Key in menubar", key: .showMenuBarIcon)
         Defaults.Toggle("Force English keyboard layout", key: .forceEnglishKeyboardLayout)

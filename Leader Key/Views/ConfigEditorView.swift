@@ -214,7 +214,7 @@ struct GroupRow: View {
 
         TextField("Label", text: $group.label ?? "").frame(width: 120)
           .padding(.trailing, PADDING)
-          
+
         Button(role: .none, action: onDuplicate) {
           Image(systemName: "document.on.document")
         }

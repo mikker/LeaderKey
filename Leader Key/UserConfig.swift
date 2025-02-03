@@ -211,7 +211,9 @@ struct Group: Item, Codable {
   var actions: [ActionOrGroup]
 
   var displayName: String {
-    return label ?? "Group"
+    guard let labelValue = label else { return "Group" }
+    if labelValue.isEmpty { return "Group" }
+    return labelValue
   }
 }
 
