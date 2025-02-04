@@ -142,9 +142,7 @@ class Controller {
         at: URL(fileURLWithPath: action.value),
         configuration: NSWorkspace.OpenConfiguration())
     case .url:
-      NSWorkspace.shared.open(
-        URL(string: action.value)!,
-        configuration: DontActivateConfiguration.shared.configuration)
+      openURL(action)
     case .command:
       CommandRunner.run(action.value)
     case .folder:
@@ -156,6 +154,39 @@ class Controller {
 
   private func clear() {
     userState.clear()
+  }
+
+  private func openURL(_ action: Action) {
+    guard let url = URL(string: action.value) else {
+      showAlert(title: "Invalid URL", message: "Failed to parse URL: \(action.value)")
+      return
+    }
+
+    guard let scheme = url.scheme else {
+      showAlert(
+        title: "Invalid URL",
+        message: "URL is missing protocol (e.g. https://, raycast://): \(action.value)")
+      return
+    }
+
+    if scheme == "http" || scheme == "https" {
+      NSWorkspace.shared.open(
+        url,
+        configuration: NSWorkspace.OpenConfiguration())
+    } else {
+      NSWorkspace.shared.open(
+        url,
+        configuration: DontActivateConfiguration.shared.configuration)
+    }
+  }
+
+  private func showAlert(title: String, message: String) {
+    let alert = NSAlert()
+    alert.messageText = title
+    alert.informativeText = message
+    alert.alertStyle = .warning
+    alert.addButton(withTitle: "OK")
+    alert.runModal()
   }
 }
 
