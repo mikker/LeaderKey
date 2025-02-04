@@ -126,7 +126,7 @@ enum Cheatsheet {
     var body: some SwiftUI.View {
       ScrollView {
         SwiftUI.VStack(alignment: .leading, spacing: 4) {
-          if let group = userState.currentGroup {
+          if let group = userState.currentGroup, group.key != nil {
             HStack {
               KeyBadge(key: group.key ?? "")
               Text(group.displayName)
