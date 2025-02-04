@@ -9,6 +9,7 @@ struct AdvancedPane: View {
   @EnvironmentObject private var config: UserConfig
   @Default(.configDir) var configDir
   @Default(.requiredShakeCount) private var requiredShakeCount
+  @State private var shakeSettingsChanged = false
 
   var body: some View {
     Settings.Container(contentWidth: contentWidth) {
@@ -46,13 +47,31 @@ struct AdvancedPane: View {
       Settings.Section(title: "Shake Mouse", bottomDivider: true) {
         Defaults.Toggle("Enable shake to show menu", key: .enableShakeToShow)
           .help("Shake mouse cursor horizontally to show the menu")
+          .onChange(of: Defaults[.enableShakeToShow]) { _ in
+            shakeSettingsChanged = true
+          }
 
         if Defaults[.enableShakeToShow] {
           HStack {
             Text("Required shakes:")
             Stepper("\(requiredShakeCount)", value: $requiredShakeCount, in: 2...9)
               .help("Number of direction changes needed to trigger the menu")
+              .onChange(of: requiredShakeCount) { _ in
+                shakeSettingsChanged = true
+              }
           }
+        }
+
+        if shakeSettingsChanged {
+          HStack {
+            Text("Restart required to apply changes")
+              .foregroundColor(.secondary)
+            Button("Restart Now") {
+              restartApp()
+            }
+            .buttonStyle(.borderedProminent)
+          }
+          .padding(.top, 8)
         }
       }
 
@@ -65,6 +84,14 @@ struct AdvancedPane: View {
         Defaults.Toggle("Show Leader Key in menubar", key: .showMenuBarIcon)
         Defaults.Toggle("Force English keyboard layout", key: .forceEnglishKeyboardLayout)
       }
+    }
+  }
+
+  private func restartApp() {
+    let url = Bundle.main.bundleURL
+    let configuration = NSWorkspace.OpenConfiguration()
+    NSWorkspace.shared.openApplication(at: url, configuration: configuration) { _, _ in
+      NSApp.terminate(nil)
     }
   }
 }

@@ -115,7 +115,6 @@ class AppDelegate: NSObject, NSApplicationDelegate,
     }
 
     startMouseTracking()
-    observeShakeSettings()
   }
 
   func applicationWillTerminate(_ notification: Notification) {
@@ -188,19 +187,6 @@ class AppDelegate: NSObject, NSApplicationDelegate,
     }
 
     return directionChanges >= Defaults[.requiredShakeCount]
-  }
-
-  private func observeShakeSettings() {
-    Task {
-      for await value in Defaults.updates(.enableShakeToShow) {
-        if value {
-          startMouseTracking()
-        } else {
-          mouseTimer?.invalidate()
-          mouseTimer = nil
-        }
-      }
-    }
   }
 
   // MARK: - Sparkle Gentle Reminders
