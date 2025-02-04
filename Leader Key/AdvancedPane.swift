@@ -8,6 +8,7 @@ struct AdvancedPane: View {
   private let contentWidth = 640.0
   @EnvironmentObject private var config: UserConfig
   @Default(.configDir) var configDir
+  @Default(.requiredShakeCount) private var requiredShakeCount
 
   var body: some View {
     Settings.Container(contentWidth: contentWidth) {
@@ -38,6 +39,19 @@ struct AdvancedPane: View {
 
           Button("Reset") {
             configDir = UserConfig.defaultDirectory()
+          }
+        }
+      }
+
+      Settings.Section(title: "Shake Mouse", bottomDivider: true) {
+        Defaults.Toggle("Enable shake to show menu", key: .enableShakeToShow)
+          .help("Shake mouse cursor horizontally to show the menu")
+
+        if Defaults[.enableShakeToShow] {
+          HStack {
+            Text("Required shakes:")
+            Stepper("\(requiredShakeCount)", value: $requiredShakeCount, in: 2...9)
+              .help("Number of direction changes needed to trigger the menu")
           }
         }
       }

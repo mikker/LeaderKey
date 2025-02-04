@@ -114,8 +114,8 @@ class AppDelegate: NSObject, NSApplicationDelegate,
       }
     }
 
-    // Replace mouseTracker initialization with direct timer setup
     startMouseTracking()
+    observeShakeSettings()
   }
 
   func applicationWillTerminate(_ notification: Notification) {
@@ -145,8 +145,10 @@ class AppDelegate: NSObject, NSApplicationDelegate,
 
   // Mouse tracking methods
   private func startMouseTracking() {
-    mouseTimer = Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true) { [weak self] _ in
-      self?.checkMouseMovement()
+    if Defaults[.enableShakeToShow] {
+      mouseTimer = Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true) { [weak self] _ in
+        self?.checkMouseMovement()
+      }
     }
   }
 
@@ -185,7 +187,20 @@ class AppDelegate: NSObject, NSApplicationDelegate,
       lastDirection = currentDirection
     }
 
-    return directionChanges >= requiredShakes
+    return directionChanges >= Defaults[.requiredShakeCount]
+  }
+
+  private func observeShakeSettings() {
+    Task {
+      for await value in Defaults.updates(.enableShakeToShow) {
+        if value {
+          startMouseTracking()
+        } else {
+          mouseTimer?.invalidate()
+          mouseTimer = nil
+        }
+      }
+    }
   }
 
   // MARK: - Sparkle Gentle Reminders
