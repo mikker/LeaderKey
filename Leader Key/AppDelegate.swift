@@ -22,6 +22,13 @@ class AppDelegate: NSObject, NSApplicationDelegate,
   var state: UserState!
   @IBOutlet var updaterController: SPUStandardUpdaterController!
 
+  // Mouse tracking properties
+  private var lastPositions: [(point: CGPoint, timestamp: TimeInterval)] = []
+  private let requiredShakes = 3
+  private let timeWindow: TimeInterval = 0.5
+  private let minimumDistance: CGFloat = 20
+  private var mouseTimer: Timer?
+
   lazy var settingsWindowController = SettingsWindowController(
     panes: [
       Settings.Pane(
@@ -106,9 +113,13 @@ class AppDelegate: NSObject, NSApplicationDelegate,
         self.show()
       }
     }
+
+    // Replace mouseTracker initialization with direct timer setup
+    startMouseTracking()
   }
 
   func applicationWillTerminate(_ notification: Notification) {
+    mouseTimer?.invalidate()
     config.saveConfig()
   }
 
@@ -130,6 +141,51 @@ class AppDelegate: NSObject, NSApplicationDelegate,
 
   func hide() {
     controller.hide()
+  }
+
+  // Mouse tracking methods
+  private func startMouseTracking() {
+    mouseTimer = Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true) { [weak self] _ in
+      self?.checkMouseMovement()
+    }
+  }
+
+  private func checkMouseMovement() {
+    let currentPos = NSEvent.mouseLocation
+    let now = Date().timeIntervalSince1970
+
+    lastPositions.append((currentPos, now))
+    lastPositions = lastPositions.filter { now - $0.timestamp < timeWindow }
+
+    if detectShake() {
+      if !window.isVisible {
+        show()
+      }
+      lastPositions.removeAll()
+    }
+  }
+
+  private func detectShake() -> Bool {
+    guard lastPositions.count >= 4 else { return false }
+
+    var directionChanges = 0
+    var lastDirection: CGFloat?
+
+    for i in 1..<lastPositions.count {
+      let dx = lastPositions[i].point.x - lastPositions[i - 1].point.x
+
+      if abs(dx) < minimumDistance { continue }
+
+      let currentDirection: CGFloat = dx > 0 ? 1 : -1
+
+      if let last = lastDirection, last != currentDirection {
+        directionChanges += 1
+      }
+
+      lastDirection = currentDirection
+    }
+
+    return directionChanges >= requiredShakes
   }
 
   // MARK: - Sparkle Gentle Reminders
