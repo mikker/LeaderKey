@@ -65,16 +65,7 @@ class Controller {
     case KeyHelpers.Escape.rawValue:
       hide()
     default:
-      let keyCode = event.keyCode
-      var char: String =
-        (Defaults[.forceEnglishKeyboardLayout]
-          ? ENGLISH_KEYMAP[keyCode]
-          : event.charactersIgnoringModifiers) ?? ""
-
-      // Check if Shift is pressed and convert to uppercase if so
-      if event.modifierFlags.contains(.shift) {
-        char = char.uppercased()
-      }
+      let char = charForEvent(event)
 
       if char == "?" {
         showCheatsheet()
@@ -116,6 +107,21 @@ class Controller {
     delay(1) {
       self.positionCheatsheetWindow()
     }
+  }
+
+  private func charForEvent(_ event: NSEvent) -> String? {
+    if Defaults[.forceEnglishKeyboardLayout] {
+      if let mapped = ENGLISH_KEYMAP[event.keyCode] {
+        // Check if Shift is pressed and convert to uppercase if so
+        if event.modifierFlags.contains(.shift) {
+          return mapped.uppercased()
+        }
+
+        return mapped
+      }
+    }
+
+    return event.charactersIgnoringModifiers
   }
 
   private func positionCheatsheetWindow() {
