@@ -27,7 +27,7 @@ class Controller {
   func show() {
     window.show()
 
-    if Defaults[.alwaysShowCheatsheet] && !userState.isLoading {
+    if Defaults[.alwaysShowCheatsheet] && !userState.isShowingRefreshState {
       showCheatsheet()
     }
   }
