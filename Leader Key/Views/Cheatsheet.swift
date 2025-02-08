@@ -9,6 +9,8 @@ import Defaults
 import SwiftUI
 
 enum Cheatsheet {
+  private static let iconSize = CGFloat(24)
+  
   struct KeyBadge: SwiftUI.View {
     let key: String
 
@@ -45,8 +47,16 @@ enum Cheatsheet {
             Text("  ")
           }
           KeyBadge(key: action.key ?? "●")
-          Image(systemName: icon)
-            .foregroundStyle(.secondary)
+          
+          if action.type == .application {
+            AppIconImage(appPath: action.value, size: iconSize)
+          } else {
+            ZStack {
+              Image(systemName: icon)
+                .foregroundStyle(.secondary)
+            }.frame(width: iconSize, height: iconSize, alignment: .center)
+          }
+          
           Text(action.displayName)
             .lineLimit(1)
             .truncationMode(.middle)
@@ -56,10 +66,6 @@ enum Cheatsheet {
           .foregroundStyle(.secondary)
           .lineLimit(1)
           .truncationMode(.middle)
-        
-        if action.value.hasSuffix(".app") {
-          AppIconImage(appPath: action.value)
-        }
       }
     }
   }
@@ -78,6 +84,7 @@ enum Cheatsheet {
           KeyBadge(key: group.key ?? "")
           Image(systemName: "folder")
             .foregroundStyle(.secondary)
+            .frame(width: iconSize, height: iconSize)
           Text(group.displayName)
           Spacer()
           Text("\(group.actions.count.description) item(s)")
@@ -198,9 +205,14 @@ struct CheatsheetView_Previews: PreviewProvider {
 
 struct AppIconImage: View {
   let appPath: String
+  let size: CGFloat
   let defaultSystemName: String = "questionmark.circle"
-  let size: CGFloat = 32
 
+  init(appPath: String, size: CGFloat = 24) {
+    self.appPath = appPath
+    self.size = size
+  }
+  
   var body: some View {
     let image = if let icon = getAppIcon(path: appPath) {
       Image(nsImage: icon)
