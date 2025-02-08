@@ -10,6 +10,7 @@ extension Defaults.Keys {
 
   static let alwaysShowCheatsheet = Key<Bool>("alwaysShowCheatsheet", default: false)
   static let expandGroupsInCheatsheet = Key<Bool>("expandGroupsInCheatsheet", default: false)
+  static let showAppIconsInCheatsheet = Key<Bool>("showAppIconsInCheatsheet", default: false)
   static let modifierKeyForGroupSequence = Key<ModifierKey>(
     "modifierKeyForGroupSequence", default: .none)
 }

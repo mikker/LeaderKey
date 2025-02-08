@@ -29,6 +29,7 @@ enum Cheatsheet {
   struct ActionRow: SwiftUI.View {
     let action: Action
     let indent: Int
+    @Default(.showAppIconsInCheatsheet) var showAppIcons
 
     var icon: String {
       switch action.type {
@@ -48,7 +49,7 @@ enum Cheatsheet {
           }
           KeyBadge(key: action.key ?? "●")
           
-          if action.type == .application {
+          if action.type == .application && showAppIcons {
             AppIconImage(appPath: action.value, size: iconSize)
           } else {
             ZStack {
