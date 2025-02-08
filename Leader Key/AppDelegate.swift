@@ -68,10 +68,11 @@ class AppDelegate: NSObject, NSApplicationDelegate,
 
     config.afterReload = { _ in
       self.state.display = "🔃"
-
+      self.state.isLoading = true
       self.show()
       delay(1000) {
         self.hide()
+        self.state.isLoading = false
       }
     }
 
