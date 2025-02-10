@@ -9,7 +9,7 @@ import Defaults
 import SwiftUI
 
 enum Cheatsheet {
-  private static let iconSize = CGFloat(24)
+  private static let iconSize = NSSize(width: 24, height: 24)
   
   struct KeyBadge: SwiftUI.View {
     let key: String
@@ -54,7 +54,7 @@ enum Cheatsheet {
           } else {
             Image(systemName: icon)
               .foregroundStyle(.secondary)
-              .frame(width: iconSize, alignment: .center)
+              .frame(width: iconSize.width, height: iconSize.height, alignment: .center)
           }
           
           Text(action.displayName)
@@ -84,7 +84,7 @@ enum Cheatsheet {
           KeyBadge(key: group.key ?? "")
           Image(systemName: "folder")
             .foregroundStyle(.secondary)
-            .frame(width: iconSize, height: iconSize)
+            .frame(width: iconSize.width, height: iconSize.height, alignment: .center)
           Text(group.displayName)
           Spacer()
           Text("\(group.actions.count.description) item(s)")
@@ -205,10 +205,10 @@ struct CheatsheetView_Previews: PreviewProvider {
 
 struct AppIconImage: View {
   let appPath: String
-  let size: CGFloat
+  let size: NSSize
   let defaultSystemName: String = "questionmark.circle"
 
-  init(appPath: String, size: CGFloat = 24) {
+  init(appPath: String, size: NSSize = NSSize(width: 24, height: 24)) {
     self.appPath = appPath
     self.size = size
   }
@@ -221,19 +221,20 @@ struct AppIconImage: View {
     }
     image.resizable()
       .scaledToFit()
-      .frame(width: size, height: size)
+      .frame(width: size.width, height: size.height)
   }
   
   private func getAppIcon(path: String) -> NSImage? {
     guard FileManager.default.fileExists(atPath: path) else {
       return nil
     }
-
+    
     let icon = NSWorkspace.shared.icon(forFile: path)
-    let resizedIcon = NSImage(size: NSSize(width: size, height: size))
-    resizedIcon.lockFocus()
-    icon.draw(in: NSRect(x: 0, y: 0, width: size, height: size), from: NSRect(x: 0, y: 0, width: icon.size.width, height: icon.size.height), operation: .sourceOver, fraction: 1.0)
-    resizedIcon.unlockFocus()
+    let resizedIcon = NSImage(size: size, flipped: false) { rect in
+      let iconRect = NSRect(origin: .zero, size: icon.size)
+      icon.draw(in: rect, from: iconRect, operation: .sourceOver, fraction: 1)
+      return true
+    }
     return resizedIcon
   }
 }
