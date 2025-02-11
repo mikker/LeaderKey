@@ -9,7 +9,10 @@ final class UserState: ObservableObject {
   @Published var currentGroup: Group?
   @Published var isShowingRefreshState: Bool
 
-  init(userConfig: UserConfig!, lastChar: String? = nil, currentGroup: Group? = nil, isShowingRefreshState: Bool = false) {
+  init(
+    userConfig: UserConfig!, lastChar: String? = nil, currentGroup: Group? = nil,
+    isShowingRefreshState: Bool = false
+  ) {
     self.userConfig = userConfig
     display = lastChar
     self.currentGroup = currentGroup

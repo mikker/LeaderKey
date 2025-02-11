@@ -10,7 +10,7 @@ import SwiftUI
 
 enum Cheatsheet {
   private static let iconSize = NSSize(width: 24, height: 24)
-  
+
   struct KeyBadge: SwiftUI.View {
     let key: String
 
@@ -48,7 +48,7 @@ enum Cheatsheet {
             Text("  ")
           }
           KeyBadge(key: action.key ?? "●")
-          
+
           if action.type == .application && showAppIcons {
             AppIconImage(appPath: action.value, size: iconSize)
           } else {
@@ -56,7 +56,7 @@ enum Cheatsheet {
               .foregroundStyle(.secondary)
               .frame(width: iconSize.width, height: iconSize.height, alignment: .center)
           }
-          
+
           Text(action.displayName)
             .lineLimit(1)
             .truncationMode(.middle)
@@ -212,23 +212,24 @@ struct AppIconImage: View {
     self.appPath = appPath
     self.size = size
   }
-  
+
   var body: some View {
-    let image = if let icon = getAppIcon(path: appPath) {
-      Image(nsImage: icon)
-    } else {
-      Image(systemName: defaultSystemName)
-    }
+    let image =
+      if let icon = getAppIcon(path: appPath) {
+        Image(nsImage: icon)
+      } else {
+        Image(systemName: defaultSystemName)
+      }
     image.resizable()
       .scaledToFit()
       .frame(width: size.width, height: size.height)
   }
-  
+
   private func getAppIcon(path: String) -> NSImage? {
     guard FileManager.default.fileExists(atPath: path) else {
       return nil
     }
-    
+
     let icon = NSWorkspace.shared.icon(forFile: path)
     let resizedIcon = NSImage(size: size, flipped: false) { rect in
       let iconRect = NSRect(origin: .zero, size: icon.size)
@@ -238,7 +239,6 @@ struct AppIconImage: View {
     return resizedIcon
   }
 }
-
 
 struct AppImage_Preview: PreviewProvider {
   static var previews: some View {

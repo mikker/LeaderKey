@@ -25,7 +25,10 @@ class Controller {
   }
 
   func show() {
-    window.show()
+    Events.send(.willActivate)
+    window.show {
+      Events.send(.didActivate)
+    }
 
     if Defaults[.alwaysShowCheatsheet] && !userState.isShowingRefreshState {
       showCheatsheet()
@@ -33,10 +36,14 @@ class Controller {
   }
 
   func hide(afterClose: (() -> Void)? = nil) {
+    Events.send(.willDeactivate)
+
     window.hide {
       self.clear()
       afterClose?()
+      Events.send(.didDeactivate)
     }
+
     cheatsheetWindow?.orderOut(nil)
   }
 

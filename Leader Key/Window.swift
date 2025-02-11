@@ -2,22 +2,6 @@ import Cocoa
 import QuartzCore
 import SwiftUI
 
-class PanelWindow: NSPanel {
-  init(contentRect: NSRect) {
-    super.init(
-      contentRect: contentRect,
-      styleMask: [.nonactivatingPanel],
-      backing: .buffered, defer: false
-    )
-
-    isFloatingPanel = true
-    isReleasedWhenClosed = false
-    animationBehavior = .none
-    backgroundColor = .clear
-    isOpaque = false
-  }
-}
-
 class Window: PanelWindow, NSWindowDelegate {
   override var acceptsFirstResponder: Bool { return true }
   override var canBecomeKey: Bool { return true }
@@ -61,11 +45,14 @@ class Window: PanelWindow, NSWindowDelegate {
     controller.keyDown(with: event)
   }
 
-  func show() {
+  func show(afterOpen: (() -> Void)? = nil) {
     center()
 
     makeKeyAndOrderFront(nil)
-    fadeInAndUp()
+
+    fadeInAndUp {
+      afterOpen?()
+    }
   }
 
   func hide(afterClose: (() -> Void)? = nil) {

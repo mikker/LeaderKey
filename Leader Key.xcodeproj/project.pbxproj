@@ -34,6 +34,8 @@
 		427C18502BD6652500955B98 /* Util.swift in Sources */ = {isa = PBXBuildFile; fileRef = 427C184F2BD6652500955B98 /* Util.swift */; };
 		427C18542BD6E59300955B98 /* NSWindow+Animations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 427C18532BD6E59300955B98 /* NSWindow+Animations.swift */; };
 		42A0CE822D2D226800879029 /* ConfigEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42A0CE812D2D226800879029 /* ConfigEditorView.swift */; };
+		42DFCD722D5B7D48002EA111 /* Events.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42DFCD712D5B7D46002EA111 /* Events.swift */; };
+		42DFCD742D5B89E3002EA111 /* PanelWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42DFCD732D5B89DF002EA111 /* PanelWindow.swift */; };
 		42E70A572C823FF200FCF902 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 42E70A562C823FF200FCF902 /* Sparkle */; };
 		42F4CDC92D458FF700D0DD76 /* MainMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42F4CDC82D458FF700D0DD76 /* MainMenu.swift */; };
 		42F4CDCD2D45B13600D0DD76 /* KeyField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42F4CDCC2D45B13600D0DD76 /* KeyField.swift */; };
@@ -88,6 +90,8 @@
 		427C184F2BD6652500955B98 /* Util.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Util.swift; sourceTree = "<group>"; };
 		427C18532BD6E59300955B98 /* NSWindow+Animations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSWindow+Animations.swift"; sourceTree = "<group>"; };
 		42A0CE812D2D226800879029 /* ConfigEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigEditorView.swift; sourceTree = "<group>"; };
+		42DFCD712D5B7D46002EA111 /* Events.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Events.swift; sourceTree = "<group>"; };
+		42DFCD732D5B89DF002EA111 /* PanelWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelWindow.swift; sourceTree = "<group>"; };
 		42F4CDC82D458FF700D0DD76 /* MainMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainMenu.swift; sourceTree = "<group>"; };
 		42F4CDCC2D45B13600D0DD76 /* KeyField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyField.swift; sourceTree = "<group>"; };
 		42F4CDCE2D46E2B300D0DD76 /* Cheatsheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cheatsheet.swift; sourceTree = "<group>"; };
@@ -149,6 +153,7 @@
 		427C17E92BD311B400955B98 /* Leader Key */ = {
 			isa = PBXGroup;
 			children = (
+				42DFCD712D5B7D46002EA111 /* Events.swift */,
 				427C181F2BD31C3D00955B98 /* AppDelegate.swift */,
 				426E625A2D2E6A98009FD2F2 /* CommandRunner.swift */,
 				427C181B2BD314B500955B98 /* Constants.swift */,
@@ -211,6 +216,7 @@
 		427C18392BD3268000955B98 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				42DFCD732D5B89DF002EA111 /* PanelWindow.swift */,
 				42F4CDCE2D46E2B300D0DD76 /* Cheatsheet.swift */,
 				42A0CE812D2D226800879029 /* ConfigEditorView.swift */,
 				427C182C2BD31F9500955B98 /* Settings.swift */,
@@ -379,11 +385,13 @@
 				427C18292BD31E2E00955B98 /* Window.swift in Sources */,
 				42FDC31A2D51687B004F5C5C /* AdvancedPane.swift in Sources */,
 				42F4CDCF2D46E2B300D0DD76 /* Cheatsheet.swift in Sources */,
+				42DFCD722D5B7D48002EA111 /* Events.swift in Sources */,
 				427C182D2BD31F9500955B98 /* Settings.swift in Sources */,
 				426E625B2D2E6A98009FD2F2 /* CommandRunner.swift in Sources */,
 				427C18382BD3262100955B98 /* VisualEffectBackground.swift in Sources */,
 				427C18312BD3209C00955B98 /* MainView.swift in Sources */,
 				427C183B2BD329F900955B98 /* UserConfig.swift in Sources */,
+				42DFCD742D5B89E3002EA111 /* PanelWindow.swift in Sources */,
 				427C18542BD6E59300955B98 /* NSWindow+Animations.swift in Sources */,
 				427C18282BD31E2E00955B98 /* GeneralPane.swift in Sources */,
 				42A0CE822D2D226800879029 /* ConfigEditorView.swift in Sources */,
