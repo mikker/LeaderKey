@@ -1,41 +1,13 @@
 import Cocoa
-import Combine
 import Sparkle
 
 class StatusItem {
-  enum Appearance {
-    case normal
-    case active
-  }
-
-  var appearance: Appearance = .normal {
-    didSet {
-      updateStatusItemAppearance()
-    }
-  }
-
   var statusItem: NSStatusItem?
-  private var cancellables = Set<AnyCancellable>()
 
   var handlePreferences: (() -> Void)?
   var handleReloadConfig: (() -> Void)?
   var handleRevealConfig: (() -> Void)?
   var handleCheckForUpdates: (() -> Void)?
-
-  init() {
-    Events.sink { event in
-      switch event {
-      case .willActivate:
-        self.appearance = .active
-        break
-      case .willDeactivate:
-        self.appearance = .normal
-        break
-      default:
-        break
-      }
-    }.store(in: &cancellables)
-  }
 
   func enable() {
     statusItem = NSStatusBar.system.statusItem(
@@ -45,8 +17,10 @@ class StatusItem {
       print("No status item")
       return
     }
-    
-    updateStatusItemAppearance()
+
+    if let menubarButton = item.button {
+      menubarButton.image = NSImage(named: NSImage.Name("StatusItem"))
+    }
 
     let menu = NSMenu()
 
@@ -112,20 +86,5 @@ class StatusItem {
 
   @objc func checkForUpdates() {
     handleCheckForUpdates?()
-  }
-
-  private func updateStatusItemAppearance() {
-    guard let button = statusItem?.button else { return }
-
-    switch appearance {
-    case .normal:
-      button.image = NSImage(named: NSImage.Name("StatusItem"))
-      button.image?.isTemplate = true
-    case .active:
-      if let image = tintedImage(named: "StatusItem", color: .controlAccentColor) {
-        button.image = image
-        button.image?.isTemplate = false
-      }
-    }
   }
 }
