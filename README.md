@@ -30,7 +30,7 @@ $ brew install leader-key
 
 ## FAQ
 
-#### What to I set as my Leader Key?
+#### What do I set as my Leader Key?
 
 Any key can be your leader key, but **only modifiers will not work**.
 
