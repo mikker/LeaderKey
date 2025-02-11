@@ -118,7 +118,7 @@ class UserConfig: ObservableObject {
 
     do {
       let encoder = JSONEncoder()
-      encoder.outputFormatting = [.prettyPrinted, .withoutEscapingSlashes]
+      encoder.outputFormatting = [.prettyPrinted, .withoutEscapingSlashes, .sortedKeys]
       let jsonData = try encoder.encode(root)
       try jsonData.write(to: fileURL())
     } catch {
