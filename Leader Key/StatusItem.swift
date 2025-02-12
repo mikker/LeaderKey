@@ -1,8 +1,21 @@
 import Cocoa
+import Combine
 import Sparkle
 
 class StatusItem {
+  enum Appearance {
+    case normal
+    case active
+  }
+
+  var appearance: Appearance = .normal {
+    didSet {
+      updateStatusItemAppearance()
+    }
+  }
+
   var statusItem: NSStatusItem?
+  private var cancellables = Set<AnyCancellable>()
 
   var handlePreferences: (() -> Void)?
   var handleReloadConfig: (() -> Void)?
@@ -64,10 +77,28 @@ class StatusItem {
       ))
 
     item.menu = menu
+
+    updateStatusItemAppearance()
+
+    Events.sink { event in
+      switch event {
+      case .willActivate:
+        self.appearance = .active
+        break
+      case .willDeactivate:
+        self.appearance = .normal
+        break
+      default:
+        break
+      }
+    }.store(in: &cancellables)
+
   }
 
   func disable() {
     guard let item = statusItem else { return }
+    
+    cancellables.removeAll()
     NSStatusBar.system.removeStatusItem(item)
     statusItem = nil
   }
@@ -86,5 +117,16 @@ class StatusItem {
 
   @objc func checkForUpdates() {
     handleCheckForUpdates?()
+  }
+
+  private func updateStatusItemAppearance() {
+    guard let button = statusItem?.button else { return }
+
+    switch appearance {
+    case .normal:
+      button.image = NSImage(named: NSImage.Name("StatusItem"))
+    case .active:
+      button.image = NSImage(named: NSImage.Name("StatusItem-filled"))
+    }
   }
 }
