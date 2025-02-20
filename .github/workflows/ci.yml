@@ -25,6 +25,11 @@ jobs:
           swift-format lint --recursive .
           swift-format format --in-place --recursive .
 
+      - name: Clean Package.resolved
+        run: |
+          rm -f "Leader Key.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved"
+          rm -f *.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+
       - name: Build and Test
         run: |
           xcodebuild test \
