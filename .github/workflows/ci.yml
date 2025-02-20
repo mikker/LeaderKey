@@ -16,7 +16,7 @@ jobs:
 
       - uses: swift-actions/setup-swift@v1
         with:
-          swift-version: "5.11.0"
+          swift-version: "5"
 
       - name: Select Xcode 15.2
         run: sudo xcode-select -s /Applications/Xcode_15.2.app
