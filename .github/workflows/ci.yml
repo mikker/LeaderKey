@@ -7,35 +7,27 @@ on:
     branches: [main]
 
 jobs:
-  build-and-test:
-    name: Build and Test
-    runs-on: macos-14 # Using macOS Sonoma runner which has Xcode 15.2
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: norio-nomura/action-swiftlint@3.2.1
+
+  format:
+    runs-on: macos-14
 
     steps:
       - uses: actions/checkout@v4
+      - run: brew install swift-format
+      - run: swift-format format --in-place --recursive .
 
-      - uses: swift-actions/setup-swift@v1
-        with:
-          swift-version: "5"
+  test:
+    runs-on: macos-14
 
-      - name: Select Xcode 15.2
-        run: sudo xcode-select -s /Applications/Xcode_15.2.app
-
-      - name: Install swift-format
-        run: brew install swift-format
-
-      - name: Run swift-format
-        run: |
-          swift-format lint --recursive .
-          swift-format format --in-place --recursive .
-
-      - name: Clean Package.resolved
-        run: |
-          rm -f "Leader Key.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved"
-          rm -f *.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
-
-      - name: Build and Test
-        run: |
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo xcode-select -s /Applications/Xcode_16.app
+      - run: |
           xcodebuild test \
             -project "Leader Key.xcodeproj" \
             -scheme "Leader Key" \
