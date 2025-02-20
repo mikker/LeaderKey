@@ -25,8 +25,8 @@ final class UserConfigTests: XCTestCase {
     super.setUp()
 
     // Create a temporary UserDefaults suite for testing
-    originalSuite = SUITE
-    SUITE = UserDefaults(suiteName: UUID().uuidString)!
+    originalSuite = defaultsSuite
+    defaultsSuite = UserDefaults(suiteName: UUID().uuidString)!
 
     // Create a unique temporary directory for each test
     tempBaseDir = NSTemporaryDirectory().appending("/LeaderKeyTests-\(UUID().uuidString)")
@@ -44,7 +44,7 @@ final class UserConfigTests: XCTestCase {
     testAlertManager.reset()
 
     // Restore original UserDefaults suite
-    SUITE = originalSuite
+    defaultsSuite = originalSuite
 
     subject = nil
     super.tearDown()

@@ -55,7 +55,7 @@
 
 /* Begin PBXFileReference section */
 		423632122D676F5200878D92 /* FileMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileMonitor.swift; sourceTree = "<group>"; };
-		423632142D678F4400878D92 /* TestPlan.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; name = TestPlan.xctestplan; path = "Leader Key/Support/TestPlan.xctestplan"; sourceTree = "<group>"; };
+		423632142D678F4400878D92 /* TestPlan.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = TestPlan.xctestplan; sourceTree = "<group>"; };
 		426E625A2D2E6A98009FD2F2 /* CommandRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandRunner.swift; sourceTree = "<group>"; };
 		4279AFEA2C6A08B100952A83 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = "Leader Key/Support/Info.plist"; sourceTree = SOURCE_ROOT; };
 		427C17E72BD311B400955B98 /* Leader Key.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Leader Key.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -116,7 +116,6 @@
 		427C17DE2BD311B400955B98 = {
 			isa = PBXGroup;
 			children = (
-				423632142D678F4400878D92 /* TestPlan.xctestplan */,
 				427C17E92BD311B400955B98 /* Leader Key */,
 				427C17FB2BD311B500955B98 /* Leader KeyTests */,
 				427C17E82BD311B400955B98 /* Products */,
@@ -181,6 +180,7 @@
 			isa = PBXGroup;
 			children = (
 				4279AFEA2C6A08B100952A83 /* Info.plist */,
+				423632142D678F4400878D92 /* TestPlan.xctestplan */,
 				427C17F02BD311B500955B98 /* Preview Content */,
 				427C17F32BD311B500955B98 /* Leader_Key.entitlements */,
 				427C18342BD3232200955B98 /* Main.storyboard */,
@@ -223,6 +223,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				423632182D67951500878D92 /* PBXTargetDependency */,
 			);
 			name = "Leader Key";
 			packageProductDependencies = (
@@ -288,6 +289,7 @@
 				427C18212BD31DF100955B98 /* XCRemoteSwiftPackageReference "Settings" */,
 				4279AFE92C6A070300952A83 /* XCRemoteSwiftPackageReference "Sparkle" */,
 				4279AFEB2C6A175500952A83 /* XCRemoteSwiftPackageReference "LaunchAtLogin-Modern" */,
+				423632162D67950500878D92 /* XCRemoteSwiftPackageReference "SwiftFormatPlugins" */,
 			);
 			productRefGroup = 427C17E82BD311B400955B98 /* Products */;
 			projectDirPath = "";
@@ -363,6 +365,10 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		423632182D67951500878D92 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			productRef = 423632172D67951500878D92 /* Lint */;
+		};
 		427C17FA2BD311B500955B98 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 427C17E62BD311B400955B98 /* Leader Key */;
@@ -636,6 +642,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		423632162D67950500878D92 /* XCRemoteSwiftPackageReference "SwiftFormatPlugins" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/StarLard/SwiftFormatPlugins.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.1;
+			};
+		};
 		4279AFE92C6A070300952A83 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/sparkle-project/Sparkle";
@@ -679,6 +693,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		423632172D67951500878D92 /* Lint */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 423632162D67950500878D92 /* XCRemoteSwiftPackageReference "SwiftFormatPlugins" */;
+			productName = "plugin:Lint";
+		};
 		4279AFEC2C6A175500952A83 /* LaunchAtLogin */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 4279AFEB2C6A175500952A83 /* XCRemoteSwiftPackageReference "LaunchAtLogin-Modern" */;

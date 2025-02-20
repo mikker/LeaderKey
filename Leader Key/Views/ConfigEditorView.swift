@@ -1,13 +1,13 @@
 import SwiftUI
 
-let PADDING: CGFloat = 8
+let generalPadding: CGFloat = 8
 
 struct AddButtons: View {
   let onAddAction: () -> Void
   let onAddGroup: () -> Void
 
   var body: some View {
-    HStack(spacing: PADDING) {
+    HStack(spacing: generalPadding) {
       Button(action: onAddAction) {
         Image(systemName: "rays")
         Text("Add action")
@@ -26,7 +26,7 @@ struct GroupContentView: View {
   var isRoot: Bool = false
 
   var body: some View {
-    VStack(spacing: PADDING) {
+    VStack(spacing: generalPadding) {
       ForEach(group.actions.indices, id: \.self) { index in
         ActionOrGroupRow(
           item: binding(for: index),
@@ -49,7 +49,7 @@ struct GroupContentView: View {
           }
         }
       )
-      .padding(.top, PADDING * 0.5)
+      .padding(.top, generalPadding * 0.5)
     }
   }
 
@@ -68,7 +68,10 @@ struct ConfigEditorView: View {
   var body: some View {
     ScrollView {
       GroupContentView(group: $group, isRoot: isRoot)
-        .padding(EdgeInsets(top: PADDING, leading: PADDING, bottom: PADDING, trailing: 0))
+        .padding(
+          EdgeInsets(
+            top: generalPadding, leading: generalPadding,
+            bottom: generalPadding, trailing: 0))
     }
   }
 }
@@ -84,7 +87,7 @@ struct ActionOrGroupRow: View {
       ActionRow(
         action: Binding(
           get: {
-            if case let .action(action) = item { return action }
+            if case .action(let action) = item { return action }
             fatalError("Unexpected state")
           },
           set: { newAction in
@@ -98,7 +101,7 @@ struct ActionOrGroupRow: View {
       GroupRow(
         group: Binding(
           get: {
-            if case let .group(group) = item { return group }
+            if case .group(let group) = item { return group }
             fatalError("Unexpected state")
           },
           set: { newGroup in
@@ -119,7 +122,7 @@ struct ActionRow: View {
   @FocusState private var isKeyFocused: Bool
 
   var body: some View {
-    HStack(spacing: PADDING) {
+    HStack(spacing: generalPadding) {
       KeyField(
         text: Binding(
           get: { action.key ?? "" },
@@ -169,8 +172,10 @@ struct ActionRow: View {
 
       Spacer()
 
-      TextField(action.bestGuessDisplayName, text: $action.label ?? "").frame(width: 120)
-        .padding(.trailing, PADDING)
+      TextField(action.bestGuessDisplayName, text: $action.label ?? "").frame(
+        width: 120
+      )
+      .padding(.trailing, generalPadding)
 
       Button(role: .none, action: onDuplicate) {
         Image(systemName: "document.on.document")
@@ -178,7 +183,7 @@ struct ActionRow: View {
       Button(role: .destructive, action: onDelete) {
         Image(systemName: "trash")
       }
-      .padding(.trailing, PADDING)
+      .padding(.trailing, generalPadding)
     }
   }
 }
@@ -191,8 +196,8 @@ struct GroupRow: View {
   let onDuplicate: () -> Void
 
   var body: some View {
-    VStack(spacing: PADDING) {
-      HStack(spacing: PADDING) {
+    VStack(spacing: generalPadding) {
+      HStack(spacing: generalPadding) {
         KeyField(
           text: Binding(
             get: { group.key ?? "" },
@@ -208,12 +213,12 @@ struct GroupRow: View {
               isExpanded.toggle()
             }
           }
-          .padding(.leading, PADDING / 3)
+          .padding(.leading, generalPadding / 3)
 
         Spacer(minLength: 0)
 
         TextField("Label", text: $group.label ?? "").frame(width: 120)
-          .padding(.trailing, PADDING)
+          .padding(.trailing, generalPadding)
 
         Button(role: .none, action: onDuplicate) {
           Image(systemName: "document.on.document")
@@ -221,7 +226,7 @@ struct GroupRow: View {
         Button(role: .destructive, action: onDelete) {
           Image(systemName: "trash")
         }
-        .padding(.trailing, PADDING)
+        .padding(.trailing, generalPadding)
       }
 
       if isExpanded {
@@ -229,11 +234,11 @@ struct GroupRow: View {
           Rectangle()
             .fill(Color.gray.opacity(0.2))
             .frame(width: 1)
-            .padding(.leading, PADDING)
-            .padding(.trailing, PADDING / 3)
+            .padding(.leading, generalPadding)
+            .padding(.trailing, generalPadding / 3)
 
           GroupContentView(group: $group)
-            .padding(.leading, PADDING)
+            .padding(.leading, generalPadding)
         }
       }
     }
@@ -247,9 +252,11 @@ struct GroupRow: View {
     actions: [
       // Level 1 actions
       .action(
-        Action(key: "t", type: .application, value: "/Applications/WezTerm.app")),
+        Action(key: "t", type: .application, value: "/Applications/WezTerm.app")
+      ),
       .action(
-        Action(key: "f", type: .application, value: "/Applications/Firefox.app")),
+        Action(key: "f", type: .application, value: "/Applications/Firefox.app")
+      ),
 
       // Level 1 group with actions
       .group(
@@ -262,7 +269,8 @@ struct GroupRow: View {
                 value: "/Applications/Google Chrome.app")),
             .action(
               Action(
-                key: "s", type: .application, value: "/Applications/Safari.app")),
+                key: "s", type: .application, value: "/Applications/Safari.app")
+            ),
           ])),
 
       // Level 1 group with subgroups

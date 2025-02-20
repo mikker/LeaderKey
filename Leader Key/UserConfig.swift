@@ -69,11 +69,6 @@ class UserConfig: ObservableObject {
     let dir = Defaults[.configDir]
     let defaultDir = Self.defaultDirectory()
 
-    if dir == CONFIG_DIR_EMPTY {
-      Defaults[.configDir] = defaultDir
-      return
-    }
-
     if !fileManager.fileExists(atPath: dir) {
       alertHandler.showAlert(
         style: .warning,
@@ -286,12 +281,12 @@ enum ActionOrGroup: Codable, Equatable {
   func encode(to encoder: Encoder) throws {
     var container = encoder.container(keyedBy: CodingKeys.self)
     switch self {
-    case let .action(action):
+    case .action(let action):
       try container.encode(action.key, forKey: .key)
       try container.encode(action.type, forKey: .type)
       try container.encode(action.value, forKey: .value)
       try container.encode(action.label, forKey: .label)
-    case let .group(group):
+    case .group(let group):
       try container.encode(group.key, forKey: .key)
       try container.encode(Type.group, forKey: .type)
       try container.encode(group.actions, forKey: .actions)

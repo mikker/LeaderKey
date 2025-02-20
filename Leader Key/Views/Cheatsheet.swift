@@ -123,7 +123,7 @@ enum Cheatsheet {
         let screenHalf = screen.visibleFrame.width / 2
         let desiredWidth: CGFloat = 580
         let margin: CGFloat = 20
-        let w = min(desiredWidth, screenHalf - margin * 2 - MAIN_VIEW_SIZE / 2)
+        let w = min(desiredWidth, screenHalf - margin * 2 - mainViewSize / 2)
         return w
       }
       return 580

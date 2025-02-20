@@ -4,11 +4,11 @@ import Defaults
 import SwiftUI
 
 enum KeyHelpers: UInt16 {
-  case Return = 36
-  case Tab = 48
-  case Space = 49
-  case Backspace = 51
-  case Escape = 53
+  case enter = 36
+  case tab = 48
+  case space = 49
+  case backspace = 51
+  case escape = 53
 }
 
 class Controller {
@@ -68,9 +68,9 @@ class Controller {
     }
 
     switch event.keyCode {
-    case KeyHelpers.Backspace.rawValue:
+    case KeyHelpers.backspace.rawValue:
       clear()
-    case KeyHelpers.Escape.rawValue:
+    case KeyHelpers.escape.rawValue:
       hide()
     default:
       let char = charForEvent(event)
@@ -86,11 +86,11 @@ class Controller {
 
       let hit = list?.actions.first { item in
         switch item {
-        case let .group(group):
+        case .group(let group):
           if group.key == char {
             return true
           }
-        case let .action(action):
+        case .action(let action):
           if action.key == char {
             return true
           }
@@ -99,11 +99,11 @@ class Controller {
       }
 
       switch hit {
-      case let .action(action):
+      case .action(let action):
         hide {
           self.runAction(action)
         }
-      case let .group(group):
+      case .group(let group):
         if shouldRunGroupSequence(event) {
           hide {
             self.runGroup(group)
@@ -133,7 +133,7 @@ class Controller {
 
   private func charForEvent(_ event: NSEvent) -> String? {
     if Defaults[.forceEnglishKeyboardLayout] {
-      if let mapped = ENGLISH_KEYMAP[event.keyCode] {
+      if let mapped = englishKeymap[event.keyCode] {
         // Check if Shift is pressed and convert to uppercase if so
         if event.modifierFlags.contains(.shift) {
           return mapped.uppercased()
@@ -164,12 +164,11 @@ class Controller {
   }
 
   private func runGroup(_ group: Group) {
-    group.actions.forEach { groupOrAction in
-      switch groupOrAction
-      {
-      case let .group(group):
+    for groupOrAction in group.actions {
+      switch groupOrAction {
+      case .group(let group):
         runGroup(group)
-      case let .action(action):
+      case .action(let action):
         runAction(action)
       }
     }

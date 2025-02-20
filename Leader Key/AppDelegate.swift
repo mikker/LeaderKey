@@ -6,7 +6,7 @@ import Sparkle
 import SwiftUI
 import UserNotifications
 
-let UPDATE_NOTIFICATION_IDENTIFIER = "UpdateCheck"
+let updateLocationIdentifier = "UpdateCheck"
 
 @NSApplicationMain
 class AppDelegate: NSObject, NSApplicationDelegate,
@@ -173,7 +173,7 @@ class AppDelegate: NSObject, NSApplicationDelegate,
       content.body = "Version \(update.displayVersionString) is now available"
 
       let request = UNNotificationRequest(
-        identifier: UPDATE_NOTIFICATION_IDENTIFIER, content: content,
+        identifier: updateLocationIdentifier, content: content,
         trigger: nil)
       UNUserNotificationCenter.current().add(request)
     }
@@ -186,7 +186,7 @@ class AppDelegate: NSObject, NSApplicationDelegate,
 
     UNUserNotificationCenter.current().removeDeliveredNotifications(
       withIdentifiers: [
-        UPDATE_NOTIFICATION_IDENTIFIER
+        updateLocationIdentifier
       ])
   }
 
@@ -202,7 +202,7 @@ class AppDelegate: NSObject, NSApplicationDelegate,
     withCompletionHandler completionHandler: @escaping () -> Void
   ) {
     if response.notification.request.identifier
-      == UPDATE_NOTIFICATION_IDENTIFIER
+      == updateLocationIdentifier
       && response.actionIdentifier == UNNotificationDefaultActionIdentifier
     {
       updaterController.checkForUpdates(nil)
@@ -216,4 +216,3 @@ class AppDelegate: NSObject, NSApplicationDelegate,
     return true
   }
 }
-
