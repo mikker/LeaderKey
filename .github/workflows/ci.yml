@@ -22,10 +22,8 @@ jobs:
 
       - name: Run swift-format
         run: |
-          find . -name "*.swift" -not -path "./.build/*" -not -path "./Updates/*" | while read file; do
-            swift-format lint "$file"
-            swift-format format --in-place "$file"
-          done
+          swift-format lint --recursive .
+          swift-format format --in-place --recursive .
 
       - name: Build and Test
         run: |

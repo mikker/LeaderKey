@@ -18,9 +18,9 @@ class AppDelegate: NSObject, NSApplicationDelegate,
 
   let statusItem = StatusItem()
   let config = UserConfig()
-  
+
   var fileMonitor: FileMonitor!
-  
+
   var booting = true
 
   var state: UserState!
@@ -82,14 +82,16 @@ class AppDelegate: NSObject, NSApplicationDelegate,
     Task {
       for await _ in Defaults.updates(.configDir) {
         self.fileMonitor?.stopMonitoring()
-        
-        self.fileMonitor = FileMonitor(fileURL: config.url, callback: {
-          self.config.reloadConfig()
-        })
+
+        self.fileMonitor = FileMonitor(
+          fileURL: config.url,
+          callback: {
+            self.config.reloadConfig()
+          })
         self.fileMonitor.startMonitoring()
       }
     }
-    
+
     statusItem.handlePreferences = {
       self.settingsWindowController.show()
       NSApp.activate(ignoringOtherApps: true)

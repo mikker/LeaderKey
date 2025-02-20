@@ -100,8 +100,9 @@ final class UserConfigTests: XCTestCase {
     XCTAssertEqual(subject.root, emptyRoot)
     XCTAssertGreaterThan(testAlertManager.shownAlerts.count, 0)
     // Verify that at least one critical alert was shown
-    XCTAssertTrue(testAlertManager.shownAlerts.contains { alert in
-      alert.style == .critical
-    })
+    XCTAssertTrue(
+      testAlertManager.shownAlerts.contains { alert in
+        alert.style == .critical
+      })
   }
 }
