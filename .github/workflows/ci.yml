@@ -7,19 +7,13 @@ on:
     branches: [main]
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
+  format:
+    runs-on: macos-14
+
     steps:
       - uses: actions/checkout@v4
-      - uses: norio-nomura/action-swiftlint@3.2.1
-
-  # format:
-  #   runs-on: macos-14
-
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - run: brew install swift-format
-  #     - run: swift-format format --in-place --recursive .
+      - run: brew install swift-format
+      - run: swift-format format lint --recursive .
 
   test:
     runs-on: macos-14
@@ -33,5 +27,7 @@ jobs:
             -scheme "Leader Key" \
             -destination "platform=macOS" \
             -testPlan "TestPlan" \
+            -skipPackagePluginValidation \
+            -skipMacroValidation \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO

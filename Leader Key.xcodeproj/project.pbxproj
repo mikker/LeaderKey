@@ -223,7 +223,7 @@
 			buildRules = (
 			);
 			dependencies = (
-				423632182D67951500878D92 /* PBXTargetDependency */,
+				4236321E2D6799C600878D92 /* PBXTargetDependency */,
 			);
 			name = "Leader Key";
 			packageProductDependencies = (
@@ -289,7 +289,7 @@
 				427C18212BD31DF100955B98 /* XCRemoteSwiftPackageReference "Settings" */,
 				4279AFE92C6A070300952A83 /* XCRemoteSwiftPackageReference "Sparkle" */,
 				4279AFEB2C6A175500952A83 /* XCRemoteSwiftPackageReference "LaunchAtLogin-Modern" */,
-				423632162D67950500878D92 /* XCRemoteSwiftPackageReference "SwiftFormatPlugins" */,
+				4236321C2D6799B900878D92 /* XCRemoteSwiftPackageReference "SwiftFormatPlugins" */,
 			);
 			productRefGroup = 427C17E82BD311B400955B98 /* Products */;
 			projectDirPath = "";
@@ -365,9 +365,9 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		423632182D67951500878D92 /* PBXTargetDependency */ = {
+		4236321E2D6799C600878D92 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			productRef = 423632172D67951500878D92 /* Lint */;
+			productRef = 4236321D2D6799C600878D92 /* Lint */;
 		};
 		427C17FA2BD311B500955B98 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -642,7 +642,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		423632162D67950500878D92 /* XCRemoteSwiftPackageReference "SwiftFormatPlugins" */ = {
+		4236321C2D6799B900878D92 /* XCRemoteSwiftPackageReference "SwiftFormatPlugins" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/StarLard/SwiftFormatPlugins.git";
 			requirement = {
@@ -693,9 +693,9 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		423632172D67951500878D92 /* Lint */ = {
+		4236321D2D6799C600878D92 /* Lint */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 423632162D67950500878D92 /* XCRemoteSwiftPackageReference "SwiftFormatPlugins" */;
+			package = 4236321C2D6799B900878D92 /* XCRemoteSwiftPackageReference "SwiftFormatPlugins" */;
 			productName = "plugin:Lint";
 		};
 		4279AFEC2C6A175500952A83 /* LaunchAtLogin */ = {

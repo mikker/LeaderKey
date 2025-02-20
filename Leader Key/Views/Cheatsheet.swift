@@ -123,8 +123,7 @@ enum Cheatsheet {
         let screenHalf = screen.visibleFrame.width / 2
         let desiredWidth: CGFloat = 580
         let margin: CGFloat = 20
-        let w = min(desiredWidth, screenHalf - margin * 2 - mainViewSize / 2)
-        return w
+        return min(desiredWidth, screenHalf - margin * 2 - mainViewSize / 2)
       }
       return 580
     }
@@ -240,7 +239,7 @@ struct AppIconImage: View {
   }
 }
 
-struct AppImage_Preview: PreviewProvider {
+struct AppImagePreview: PreviewProvider {
   static var previews: some View {
     let appPaths = ["/Applications/Xcode.app", "/Applications/Safari.app", "/invalid/path"]
     VStack {
