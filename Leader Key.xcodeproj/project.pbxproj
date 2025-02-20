@@ -55,6 +55,7 @@
 
 /* Begin PBXFileReference section */
 		423632122D676F5200878D92 /* FileMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileMonitor.swift; sourceTree = "<group>"; };
+		423632142D678F4400878D92 /* TestPlan.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; name = TestPlan.xctestplan; path = "Leader Key/Support/TestPlan.xctestplan"; sourceTree = "<group>"; };
 		426E625A2D2E6A98009FD2F2 /* CommandRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandRunner.swift; sourceTree = "<group>"; };
 		4279AFEA2C6A08B100952A83 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = "Leader Key/Support/Info.plist"; sourceTree = SOURCE_ROOT; };
 		427C17E72BD311B400955B98 /* Leader Key.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Leader Key.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -82,7 +83,6 @@
 		42B21FBB2D67566100F4A2C7 /* Alerts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Alerts.swift; sourceTree = "<group>"; };
 		42DFCD712D5B7D46002EA111 /* Events.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Events.swift; sourceTree = "<group>"; };
 		42DFCD732D5B89DF002EA111 /* PanelWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelWindow.swift; sourceTree = "<group>"; };
-		42E78CD12D675C4000E5342F /* Leader Key.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Leader Key.xctestplan"; sourceTree = "<group>"; };
 		42F4CDC82D458FF700D0DD76 /* MainMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainMenu.swift; sourceTree = "<group>"; };
 		42F4CDCC2D45B13600D0DD76 /* KeyField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyField.swift; sourceTree = "<group>"; };
 		42F4CDCE2D46E2B300D0DD76 /* Cheatsheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cheatsheet.swift; sourceTree = "<group>"; };
@@ -116,6 +116,7 @@
 		427C17DE2BD311B400955B98 = {
 			isa = PBXGroup;
 			children = (
+				423632142D678F4400878D92 /* TestPlan.xctestplan */,
 				427C17E92BD311B400955B98 /* Leader Key */,
 				427C17FB2BD311B500955B98 /* Leader KeyTests */,
 				427C17E82BD311B400955B98 /* Products */,
@@ -183,7 +184,6 @@
 				427C17F02BD311B500955B98 /* Preview Content */,
 				427C17F32BD311B500955B98 /* Leader_Key.entitlements */,
 				427C18342BD3232200955B98 /* Main.storyboard */,
-				42E78CD12D675C4000E5342F /* Leader Key.xctestplan */,
 			);
 			path = Support;
 			sourceTree = "<group>";

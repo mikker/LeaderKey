@@ -1,23 +1,18 @@
 {
   "configurations" : [
     {
-      "id" : "23ED3EC9-2DBD-41D9-9D31-C63B273BE240",
-      "name" : "Test Scheme Action",
+      "id" : "1DE516A3-9AD7-49EC-B153-CBB6A36C0B13",
+      "name" : "Configuration 1",
       "options" : {
 
       }
     }
   ],
   "defaultOptions" : {
-    "targetForVariableExpansion" : {
-      "containerPath" : "container:Leader Key.xcodeproj",
-      "identifier" : "427C17E62BD311B400955B98",
-      "name" : "Leader Key"
-    }
+    "testTimeoutsEnabled" : true
   },
   "testTargets" : [
     {
-      "parallelizable" : false,
       "target" : {
         "containerPath" : "container:Leader Key.xcodeproj",
         "identifier" : "427C17F72BD311B500955B98",
