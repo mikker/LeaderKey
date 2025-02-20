@@ -1,16 +1,29 @@
+import Cocoa
 import Defaults
 
 let CONFIG_DIR_EMPTY = "CONFIG_DIR_EMPTY"
 
-extension Defaults.Keys {
-  static let watchConfigFile = Key<Bool>("watchConfigFile", default: false)
-  static let configDir = Key<String>("configDir", default: CONFIG_DIR_EMPTY)
-  static let showMenuBarIcon = Key<Bool>("showInMenubar", default: true)
-  static let forceEnglishKeyboardLayout = Key<Bool>("forceEnglishKeyboardLayout", default: false)
+var SUITE =
+  ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+  ? UserDefaults(suiteName: UUID().uuidString)!
+  : .standard
 
-  static let alwaysShowCheatsheet = Key<Bool>("alwaysShowCheatsheet", default: false)
-  static let expandGroupsInCheatsheet = Key<Bool>("expandGroupsInCheatsheet", default: false)
-  static let showAppIconsInCheatsheet = Key<Bool>("showAppIconsInCheatsheet", default: true)
+extension Defaults.Keys {
+  static let watchConfigFile = Key<Bool>(
+    "watchConfigFile", default: false, suite: SUITE)
+  static let configDir = Key<String>(
+    "configDir", default: UserConfig.defaultDirectory(), suite: SUITE)
+  static let showMenuBarIcon = Key<Bool>(
+    "showInMenubar", default: true, suite: SUITE)
+  static let forceEnglishKeyboardLayout = Key<Bool>(
+    "forceEnglishKeyboardLayout", default: false, suite: SUITE)
+
+  static let alwaysShowCheatsheet = Key<Bool>(
+    "alwaysShowCheatsheet", default: false, suite: SUITE)
+  static let expandGroupsInCheatsheet = Key<Bool>(
+    "expandGroupsInCheatsheet", default: false, suite: SUITE)
+  static let showAppIconsInCheatsheet = Key<Bool>(
+    "showAppIconsInCheatsheet", default: true, suite: SUITE)
   static let modifierKeyForGroupSequence = Key<ModifierKey>(
-    "modifierKeyForGroupSequence", default: .none)
+    "modifierKeyForGroupSequence", default: .none, suite: SUITE)
 }

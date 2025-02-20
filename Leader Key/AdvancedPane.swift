@@ -31,7 +31,7 @@ struct AdvancedPane: View {
           }
           Button("Reveal") {
             NSWorkspace.shared.activateFileViewerSelecting([
-              config.fileURL()
+              config.url
             ])
           }
 
@@ -60,7 +60,8 @@ struct AdvancedPane: View {
       }
 
       Settings.Section(title: "Cheatsheet", bottomDivider: true) {
-        Defaults.Toggle("Always show cheatsheet (press `?` to toggle manually)", key: .alwaysShowCheatsheet)
+        Defaults.Toggle(
+          "Always show cheatsheet (press `?` to toggle manually)", key: .alwaysShowCheatsheet)
         Defaults.Toggle(
           "Show expanded groups in cheatsheet", key: .expandGroupsInCheatsheet)
         Defaults.Toggle("Show application icons", key: .showAppIconsInCheatsheet)

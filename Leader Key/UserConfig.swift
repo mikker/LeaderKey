@@ -8,104 +8,25 @@ class UserConfig: ObservableObject {
   @Published var root = emptyRoot
 
   let fileName = "config.json"
-  let fileMonitor = FileMonitor()
+  private let alertHandler: AlertHandler
+  private let fileManager: FileManager
 
   var afterReload: ((_ success: Bool) -> Void)?
 
-  static func defaultDirectory() -> String {
-    let appSupportDir = FileManager.default.urls(
-      for: .applicationSupportDirectory, in: .userDomainMask)[0]
-    let path = (appSupportDir.path as NSString).appendingPathComponent("Leader Key")
-    do {
-      try FileManager.default.createDirectory(atPath: path, withIntermediateDirectories: true)
-    } catch {
-      fatalError("Failed to create config directory")
-    }
-    return path
+  init(
+    alertHandler: AlertHandler = DefaultAlertHandler(),
+    fileManager: FileManager = .default
+  ) {
+    self.alertHandler = alertHandler
+    self.fileManager = fileManager
   }
 
-  func fileURL() -> URL {
-    let dir = Defaults[.configDir]
-    let filePath = (dir as NSString).appendingPathComponent(fileName)
-    return URL(fileURLWithPath: filePath)
-  }
+  // MARK: - Public Interface
 
-  func configExists() -> Bool {
-    let path = fileURL().path
-    return FileManager.default.fileExists(atPath: path)
-  }
-
-  func bootstrapConfig() throws {
-    guard let data = defaultConfig.data(using: .utf8) else {
-      throw NSError(
-        domain: "UserConfig", code: 1,
-        userInfo: [NSLocalizedDescriptionKey: "Failed to encode default config"])
-    }
-    let url = fileURL()
-    try data.write(to: url, options: [.atomic])
-  }
-
-  func readConfigFile() -> String {
-    do {
-      let path = fileURL().path
-      let str = try String(contentsOfFile: path, encoding: .utf8)
-      return str
-    } catch {
-      let alert = NSAlert()
-      alert.alertStyle = .critical
-      alert.messageText = "\(error)"
-      alert.runModal()
-      return "{}"
-    }
-  }
-
-  func loadAndWatch() {
-    if !configExists() {
-      do {
-        try bootstrapConfig()
-      } catch {
-        let alert = NSAlert()
-        alert.alertStyle = .critical
-        alert.messageText = "\(error)"
-        alert.runModal()
-        root = emptyRoot
-      }
-    }
-
+  func ensureAndLoad() {
+    ensureValidConfigDirectory()
+    ensureConfigFileExists()
     loadConfig()
-    startWatching()
-  }
-
-  private func startWatching() {
-    self.fileMonitor.startMonitoring(fileURL: fileURL()) {
-      self.reloadConfig()
-    }
-  }
-
-  func loadConfig() {
-    if FileManager.default.fileExists(atPath: fileURL().path) {
-      if let jsonData = readConfigFile().data(using: .utf8) {
-        let decoder = JSONDecoder()
-        do {
-          let root_ = try decoder.decode(Group.self, from: jsonData)
-          root = root_
-        } catch {
-          handleConfigError(error)
-        }
-      } else {
-        root = emptyRoot
-      }
-    } else {
-      root = emptyRoot
-    }
-  }
-
-  private func handleConfigError(_ error: Error) {
-    let alert = NSAlert()
-    alert.alertStyle = .critical
-    alert.messageText = "\(error)"
-    alert.runModal()
-    root = emptyRoot
   }
 
   func reloadConfig() {
@@ -114,20 +35,137 @@ class UserConfig: ObservableObject {
   }
 
   func saveConfig() {
-    fileMonitor.stopMonitoring()
-
     do {
       let encoder = JSONEncoder()
-      encoder.outputFormatting = [.prettyPrinted, .withoutEscapingSlashes, .sortedKeys]
+      encoder.outputFormatting = [
+        .prettyPrinted, .withoutEscapingSlashes, .sortedKeys,
+      ]
       let jsonData = try encoder.encode(root)
-      try jsonData.write(to: fileURL())
+      try writeFile(data: jsonData)
     } catch {
-      handleConfigError(error)
+      handleError(error, critical: true)
     }
 
-    // Resume monitoring
     reloadConfig()
-    startWatching()
+  }
+
+  // MARK: - Directory Management
+
+  static func defaultDirectory() -> String {
+    let appSupportDir = FileManager.default.urls(
+      for: .applicationSupportDirectory, in: .userDomainMask)[0]
+    let path = (appSupportDir.path as NSString).appendingPathComponent(
+      "Leader Key")
+    do {
+      try FileManager.default.createDirectory(
+        atPath: path, withIntermediateDirectories: true)
+    } catch {
+      fatalError("Failed to create config directory")
+    }
+    return path
+  }
+
+  private func ensureValidConfigDirectory() {
+    let dir = Defaults[.configDir]
+    let defaultDir = Self.defaultDirectory()
+
+    if dir == CONFIG_DIR_EMPTY {
+      Defaults[.configDir] = defaultDir
+      return
+    }
+
+    if !fileManager.fileExists(atPath: dir) {
+      alertHandler.showAlert(
+        style: .warning,
+        message:
+          "Config directory does not exist: \(dir)\nResetting to default location."
+      )
+      Defaults[.configDir] = defaultDir
+    }
+  }
+
+  // MARK: - File Operations
+
+  /// The path to the config file
+  var path: String {
+    (Defaults[.configDir] as NSString).appendingPathComponent(fileName)
+  }
+
+  /// The URL to the config file
+  var url: URL {
+    URL(fileURLWithPath: path)
+  }
+
+  /// Whether the config file exists
+  var exists: Bool {
+    fileManager.fileExists(atPath: path)
+  }
+
+  private func ensureConfigFileExists() {
+    guard !exists else { return }
+
+    do {
+      try bootstrapConfig()
+    } catch {
+      handleError(error, critical: true)
+    }
+  }
+
+  private func bootstrapConfig() throws {
+    guard let data = defaultConfig.data(using: .utf8) else {
+      throw NSError(
+        domain: "UserConfig",
+        code: 1,
+        userInfo: [NSLocalizedDescriptionKey: "Failed to encode default config"]
+      )
+    }
+    try writeFile(data: data)
+  }
+
+  private func writeFile(data: Data) throws {
+    try data.write(to: url, options: [.atomic])
+  }
+
+  private func readFile() throws -> String {
+    try String(contentsOfFile: path, encoding: .utf8)
+  }
+
+  // MARK: - Config Loading
+
+  private func loadConfig() {
+    guard exists else {
+      root = emptyRoot
+      return
+    }
+
+    do {
+      let configString = try readFile()
+
+      guard let jsonData = configString.data(using: .utf8) else {
+        throw NSError(
+          domain: "UserConfig",
+          code: 1,
+          userInfo: [
+            NSLocalizedDescriptionKey: "Failed to encode config file as UTF-8"
+          ]
+        )
+      }
+
+      let decoder = JSONDecoder()
+      root = try decoder.decode(Group.self, from: jsonData)
+    } catch {
+      handleError(error, critical: true)
+    }
+  }
+
+  // MARK: - Error Handling
+
+  private func handleError(_ error: Error, critical: Bool) {
+    alertHandler.showAlert(
+      style: critical ? .critical : .warning, message: "\(error)")
+    if critical {
+      root = emptyRoot
+    }
   }
 }
 
@@ -174,11 +212,10 @@ protocol Item {
   var displayName: String { get }
 }
 
-struct Action: Item, Codable {
+struct Action: Item, Codable, Equatable {
   var key: String?
   var type: Type
   var label: String?
-
   var value: String
 
   var displayName: String {
@@ -204,7 +241,7 @@ struct Action: Item, Codable {
   }
 }
 
-struct Group: Item, Codable {
+struct Group: Item, Codable, Equatable {
   var key: String?
   var type: Type = .group
   var label: String?
@@ -215,9 +252,14 @@ struct Group: Item, Codable {
     if labelValue.isEmpty { return "Group" }
     return labelValue
   }
+
+  static func == (lhs: Group, rhs: Group) -> Bool {
+    return lhs.key == rhs.key && lhs.type == rhs.type && lhs.label == rhs.label
+      && lhs.actions == rhs.actions
+  }
 }
 
-enum ActionOrGroup: Codable {
+enum ActionOrGroup: Codable, Equatable {
   case action(Action)
   case group(Group)
 
@@ -258,7 +300,9 @@ enum ActionOrGroup: Codable {
   }
 }
 
-enum ModifierKey: String, Codable, Defaults.Serializable, CaseIterable, Identifiable {
+enum ModifierKey: String, Codable, Defaults.Serializable, CaseIterable,
+  Identifiable
+{
   case none
   case control
   case option

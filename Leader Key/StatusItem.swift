@@ -97,7 +97,7 @@ class StatusItem {
 
   func disable() {
     guard let item = statusItem else { return }
-    
+
     cancellables.removeAll()
     NSStatusBar.system.removeStatusItem(item)
     statusItem = nil

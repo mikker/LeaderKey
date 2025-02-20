@@ -1,0 +1,29 @@
+{
+  "configurations" : [
+    {
+      "id" : "23ED3EC9-2DBD-41D9-9D31-C63B273BE240",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:Leader Key.xcodeproj",
+      "identifier" : "427C17E62BD311B400955B98",
+      "name" : "Leader Key"
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : false,
+      "target" : {
+        "containerPath" : "container:Leader Key.xcodeproj",
+        "identifier" : "427C17F72BD311B500955B98",
+        "name" : "Leader KeyTests"
+      }
+    }
+  ],
+  "version" : 1
+}
