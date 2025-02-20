@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Install swift-format
+        run: brew install swift-format
+
+      - name: Run swift-format
+        run: |
+          find . -name "*.swift" -not -path "./.build/*" -not -path "./Updates/*" | while read file; do
+            swift-format lint "$file"
+            swift-format format --in-place "$file"
+          done
+
+      - name: Build and Test
+        run: |
+          xcodebuild test \
+            -project "Leader Key.xcodeproj" \
+            -scheme "Leader Key" \
+            -destination "platform=macOS" \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO
