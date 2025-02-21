@@ -2,35 +2,37 @@ import Cocoa
 import QuartzCore
 import SwiftUI
 
-class Window: PanelWindow, NSWindowDelegate {
+class PanelWindow: NSPanel {
+  init(contentRect: NSRect) {
+    super.init(
+      contentRect: contentRect,
+      styleMask: [.nonactivatingPanel],
+      backing: .buffered, defer: false
+    )
+
+    isFloatingPanel = true
+    isReleasedWhenClosed = false
+    animationBehavior = .none
+    backgroundColor = .clear
+    isOpaque = false
+  }
+}
+
+class MainWindow: PanelWindow, NSWindowDelegate {
   override var acceptsFirstResponder: Bool { return true }
   override var canBecomeKey: Bool { return true }
   override var canBecomeMain: Bool { return true }
 
   var controller: Controller
 
-  init(controller: Controller) {
+  init(controller: Controller, contentRect: NSRect) {
     self.controller = controller
-
-    super.init(contentRect: NSRect(x: 0, y: 0, width: 500, height: 550))
-
-    center()
-
-    let view = MainView().environmentObject(self.controller.userState)
-    contentView = NSHostingView(rootView: view)
-
+    super.init(contentRect: contentRect)
     delegate = self
   }
 
-  func windowWillClose(_: Notification) {}
-
-  // Hide when focus shifts elsewhere
   func windowDidResignKey(_ notification: Notification) {
     controller.hide()
-  }
-
-  override func makeKeyAndOrderFront(_ sender: Any?) {
-    super.makeKeyAndOrderFront(sender)
   }
 
   override func performKeyEquivalent(with event: NSEvent) -> Bool {
@@ -45,20 +47,16 @@ class Window: PanelWindow, NSWindowDelegate {
     controller.keyDown(with: event)
   }
 
-  func show(afterOpen: (() -> Void)? = nil) {
-    center()
-
+  func show(after: (() -> Void)?) {
     makeKeyAndOrderFront(nil)
-
-    fadeInAndUp {
-      afterOpen?()
-    }
+    after?()
   }
 
-  func hide(afterClose: (() -> Void)? = nil) {
-    fadeOutAndDown {
-      self.close()
-      afterClose?()
-    }
+  func hide(after: (() -> Void)?) {
+    close()
+    after?()
+  }
+
+  func notFound() {
   }
 }

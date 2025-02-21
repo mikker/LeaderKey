@@ -13,12 +13,10 @@ class AppDelegate: NSObject, NSApplicationDelegate,
   SPUStandardUserDriverDelegate,
   UNUserNotificationCenterDelegate
 {
-  var window: Window!
   var controller: Controller!
 
   let statusItem = StatusItem()
   let config = UserConfig()
-
   var fileMonitor: FileMonitor!
 
   var booting = true
@@ -64,8 +62,6 @@ class AppDelegate: NSObject, NSApplicationDelegate,
     state = UserState(userConfig: config)
 
     controller = Controller(userState: state, userConfig: config)
-    window = Window(controller: controller)
-    controller.window = window
 
     config.afterReload = { _ in
       self.state.display = "🔃"
@@ -117,8 +113,11 @@ class AppDelegate: NSObject, NSApplicationDelegate,
     }
 
     KeyboardShortcuts.onKeyUp(for: .activate) {
-      if self.window.isVisible && self.window.isKeyWindow {
+      if self.controller.window.isKeyWindow {
         self.hide()
+      } else if self.controller.window.isVisible {
+        // should never happen as the window will self-hide when not key
+        self.controller.window.makeKeyAndOrderFront(nil)
       } else {
         self.show()
       }
@@ -129,6 +128,8 @@ class AppDelegate: NSObject, NSApplicationDelegate,
     // If this is the first activation, don't show as we're just booting the app
     if booting {
       booting = false
+    } else if settingsWindowController.window?.isVisible == true {
+      // nothing
     } else {
       // If activated again, user ran the app twice so show the window
       controller.show()

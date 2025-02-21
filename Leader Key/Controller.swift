@@ -15,12 +15,13 @@ class Controller {
   var userState: UserState
   var userConfig: UserConfig
 
-  var window: Window!
+  var window: MainWindow!
   var cheatsheetWindow: NSWindow!
 
   init(userState: UserState, userConfig: UserConfig) {
     self.userState = userState
     self.userConfig = userConfig
+    self.window = MysteryBox.Window(controller: self)
     self.cheatsheetWindow = Cheatsheet.createWindow(for: userState)
   }
 
@@ -113,7 +114,7 @@ class Controller {
           userState.currentGroup = group
         }
       case .none:
-        window.shake()
+        window.notFound()
       }
     }
 
