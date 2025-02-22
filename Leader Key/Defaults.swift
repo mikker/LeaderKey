@@ -15,12 +15,30 @@ extension Defaults.Keys {
     "forceEnglishKeyboardLayout", default: false, suite: defaultsSuite)
   static let modifierKeyForGroupSequence = Key<ModifierKey>(
     "modifierKeyForGroupSequence", default: .none, suite: defaultsSuite)
-  static let theme = Key<Theme>("theme", default: .mysteryBox, suite: defaultsSuite)
+  static let theme = Key<Theme>(
+    "theme", default: .mysteryBox, suite: defaultsSuite)
 
+  // Remove this in a few months
   static let alwaysShowCheatsheet = Key<Bool>(
     "alwaysShowCheatsheet", default: false, suite: defaultsSuite)
+
+  static let autoOpenCheatsheet = Key<AutoOpenCheatsheetSetting>(
+    "autoOpenCheatsheet", default: .delay, suite: defaultsSuite)
+  static let cheatsheetDelayMS = Key<Int>(
+    "cheatsheetDelayMS", default: 500, suite: defaultsSuite)
   static let expandGroupsInCheatsheet = Key<Bool>(
     "expandGroupsInCheatsheet", default: false, suite: defaultsSuite)
   static let showAppIconsInCheatsheet = Key<Bool>(
     "showAppIconsInCheatsheet", default: true, suite: defaultsSuite)
+}
+
+enum AutoOpenCheatsheetSetting: String, Defaults.Serializable {
+  case never
+  case always
+  case delay
+
+  // Remove this in a few months
+  static func defaultFromOldSetting(_ on: Bool) -> AutoOpenCheatsheetSetting {
+    return on ? .always : .delay
+  }
 }

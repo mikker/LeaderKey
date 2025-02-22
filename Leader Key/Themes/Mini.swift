@@ -1,8 +1,8 @@
 import SwiftUI
 
 enum Mini {
-  static let size = 44.0
-  static let margin = 20.0
+  static let size = 36.0
+  static let margin = 8.0
 
   class Window: MainWindow {
     required init(controller: Controller) {
@@ -58,6 +58,7 @@ enum Mini {
         .fontWeight(.bold)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         .font(.system(size: 16, weight: .semibold, design: .rounded))
+        .foregroundStyle(userState.currentGroup?.key == nil ? .secondary : .primary)
         .background(
           VisualEffectView(material: .hudWindow, blendingMode: .behindWindow)
         )
