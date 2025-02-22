@@ -25,6 +25,13 @@ class MainWindow: PanelWindow, NSWindowDelegate {
 
   var controller: Controller
 
+  required init(controller: Controller) {
+    // Here to provide general interface
+    // Themes should call super.init(controller:, contentRect:) to get a frame as well
+    self.controller = controller
+    super.init(contentRect: NSRect())
+  }
+
   init(controller: Controller, contentRect: NSRect) {
     self.controller = controller
     super.init(contentRect: contentRect)
@@ -58,5 +65,9 @@ class MainWindow: PanelWindow, NSWindowDelegate {
   }
 
   func notFound() {
+  }
+
+  func cheatsheetOrigin(cheatsheetSize: NSSize) -> NSPoint {
+    return NSPoint(x: 0, y: 0)
   }
 }

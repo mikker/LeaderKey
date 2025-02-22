@@ -123,7 +123,7 @@ enum Cheatsheet {
         let screenHalf = screen.visibleFrame.width / 2
         let desiredWidth: CGFloat = 580
         let margin: CGFloat = 20
-        return min(desiredWidth, screenHalf - margin * 2 - mysteryBoxSize / 2)
+        return desiredWidth > screenHalf ? screenHalf - margin : desiredWidth
       }
       return 580
     }

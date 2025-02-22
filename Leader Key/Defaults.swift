@@ -7,14 +7,15 @@ var defaultsSuite =
   : .standard
 
 extension Defaults.Keys {
-  static let watchConfigFile = Key<Bool>(
-    "watchConfigFile", default: false, suite: defaultsSuite)
   static let configDir = Key<String>(
     "configDir", default: UserConfig.defaultDirectory(), suite: defaultsSuite)
   static let showMenuBarIcon = Key<Bool>(
     "showInMenubar", default: true, suite: defaultsSuite)
   static let forceEnglishKeyboardLayout = Key<Bool>(
     "forceEnglishKeyboardLayout", default: false, suite: defaultsSuite)
+  static let modifierKeyForGroupSequence = Key<ModifierKey>(
+    "modifierKeyForGroupSequence", default: .none, suite: defaultsSuite)
+  static let theme = Key<Theme>("theme", default: .mysteryBox, suite: defaultsSuite)
 
   static let alwaysShowCheatsheet = Key<Bool>(
     "alwaysShowCheatsheet", default: false, suite: defaultsSuite)
@@ -22,6 +23,4 @@ extension Defaults.Keys {
     "expandGroupsInCheatsheet", default: false, suite: defaultsSuite)
   static let showAppIconsInCheatsheet = Key<Bool>(
     "showAppIconsInCheatsheet", default: true, suite: defaultsSuite)
-  static let modifierKeyForGroupSequence = Key<ModifierKey>(
-    "modifierKeyForGroupSequence", default: .none, suite: defaultsSuite)
 }

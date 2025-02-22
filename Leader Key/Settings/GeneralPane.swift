@@ -8,6 +8,7 @@ struct GeneralPane: View {
   private let contentWidth = 720.0
   @EnvironmentObject private var config: UserConfig
   @Default(.configDir) var configDir
+  @Default(.theme) var theme
 
   var body: some View {
     Settings.Container(contentWidth: contentWidth) {
@@ -41,6 +42,13 @@ struct GeneralPane: View {
 
       Settings.Section(title: "Shortcut") {
         KeyboardShortcuts.Recorder(for: .activate)
+      }
+
+      Settings.Section(title: "Theme") {
+        Picker("Theme", selection: $theme) {
+          Text("Mystery Box").tag(Theme.mysteryBox)
+          Text("Mini").tag(Theme.mini)
+        }.frame(maxWidth: 170).labelsHidden()
       }
 
       Settings.Section(title: "App") {

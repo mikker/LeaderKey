@@ -21,12 +21,20 @@ class Controller {
   init(userState: UserState, userConfig: UserConfig) {
     self.userState = userState
     self.userConfig = userConfig
-    self.window = MysteryBox.Window(controller: self)
+
+    Task {
+      for await value in Defaults.updates(.theme) {
+        let windowClass = Theme.classFor(value)
+        self.window = await windowClass.init(controller: self)
+      }
+    }
+
     self.cheatsheetWindow = Cheatsheet.createWindow(for: userState)
   }
 
   func show() {
     Events.send(.willActivate)
+
     window.show {
       Events.send(.didActivate)
     }
@@ -151,12 +159,8 @@ class Controller {
     guard let mainWindow = window, let cheatsheet = cheatsheetWindow else {
       return
     }
-    let frame = mainWindow.frame
-    let point = NSPoint(
-      x: frame.maxX + 20,
-      y: frame.midY - cheatsheet.frame.height / 2
-    )
-    cheatsheet.setFrameOrigin(point)
+
+    cheatsheet.setFrameOrigin(mainWindow.cheatsheetOrigin(cheatsheetSize: cheatsheet.frame.size))
   }
 
   private func showCheatsheet() {

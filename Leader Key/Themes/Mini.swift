@@ -7,32 +7,38 @@
 
 import SwiftUI
 
-enum MysteryBox {
-  static let size: CGFloat = 200
+enum Mini {
+  static let size = 44.0
+  static let margin = 20.0
 
   class Window: MainWindow {
     required init(controller: Controller) {
       super.init(
         controller: controller,
-        contentRect: NSRect(x: 0, y: 0, width: MysteryBox.size, height: MysteryBox.size))
-      center()
+        contentRect: NSRect(x: 0, y: 0, width: 0, height: 0))
 
       let view = MainView().environmentObject(self.controller.userState)
       contentView = NSHostingView(rootView: view)
     }
 
     override func show(after: (() -> Void)? = nil) {
-      center()
+      let screen = NSScreen.main == nil ? NSSize() : NSScreen.main!.frame.size
+
+      self.setFrame(
+        CGRect(
+          x: screen.width - Mini.size - Mini.margin,
+          y: Mini.margin, width: Mini.size, height: Mini.size),
+        display: true)
 
       makeKeyAndOrderFront(nil)
 
-      fadeInAndUp {
+      fadeIn {
         after?()
       }
     }
 
     override func hide(after: (() -> Void)? = nil) {
-      fadeOutAndDown {
+      fadeOut {
         super.hide(after: after)
       }
     }
@@ -42,10 +48,11 @@ enum MysteryBox {
     }
 
     override func cheatsheetOrigin(cheatsheetSize: NSSize) -> NSPoint {
+      let screen = NSScreen.main == nil ? NSSize() : NSScreen.main!.frame.size
+
       return NSPoint(
-        x: frame.maxX + 20,
-        y: frame.midY - cheatsheetSize.height / 2
-      )
+        x: screen.width - cheatsheetSize.width - Mini.margin,
+        y: Mini.margin + frame.height + Mini.margin)
     }
   }
 
@@ -55,19 +62,21 @@ enum MysteryBox {
     var body: some View {
       Text(userState.currentGroup?.key ?? userState.display ?? "●")
         .fontDesign(.rounded)
-        .fontWeight(.semibold)
-        .font(.system(size: 28, weight: .semibold, design: .rounded))
+        .fontWeight(.bold)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        .font(.system(size: 16, weight: .semibold, design: .rounded))
         .background(
           VisualEffectView(material: .hudWindow, blendingMode: .behindWindow)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 25.0, style: .continuous))
     }
   }
 }
 
-struct MysteryBox_MainView_Previews: PreviewProvider {
+struct Invisible_MainView_Previews: PreviewProvider {
   static var previews: some View {
-    MysteryBox.MainView().environmentObject(UserState(userConfig: UserConfig()))
+    VStack {
+      MysteryBox.MainView().environmentObject(
+        UserState(userConfig: UserConfig()))
+    }.frame(width: Mini.size, height: Mini.size, alignment: .center)
   }
 }
