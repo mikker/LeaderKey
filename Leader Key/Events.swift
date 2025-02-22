@@ -1,10 +1,3 @@
-//
-//  Events.swift
-//  Leader Key
-//
-//  Created by Mikkel Malmberg on 11/02/2025.
-//
-
 import Combine
 
 enum EventKey {

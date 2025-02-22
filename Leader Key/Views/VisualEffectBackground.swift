@@ -1,10 +1,3 @@
-//
-//  VisualEffectBackground.swift
-//  Leader Key
-//
-//  Created by Mikkel Malmberg on 25/10/2020.
-//
-
 import SwiftUI
 
 struct VisualEffectView: NSViewRepresentable {

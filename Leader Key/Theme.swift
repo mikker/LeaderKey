@@ -1,10 +1,3 @@
-//
-//  Theme.swift
-//  Leader Key
-//
-//  Created by Mikkel Malmberg on 22/02/2025.
-//
-
 import Defaults
 
 enum Theme: String, Defaults.Serializable {

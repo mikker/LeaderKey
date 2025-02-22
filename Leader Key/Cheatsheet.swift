@@ -1,10 +1,3 @@
-//
-//  CheatsheetView.swift
-//  Leader Key
-//
-//  Created by Mikkel Malmberg on 26/01/2025.
-//
-
 import Defaults
 import SwiftUI
 

@@ -1,10 +1,3 @@
-//
-//  MysteryBox.swift
-//  Leader Key
-//
-//  Created by Mikkel Malmberg on 21/02/2025.
-//
-
 import SwiftUI
 
 enum MysteryBox {
