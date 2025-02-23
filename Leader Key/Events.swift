@@ -1,10 +1,15 @@
 import Combine
 
 enum EventKey {
+  // Lifecycle
   case willActivate
   case didActivate
   case willDeactivate
   case didDeactivate
+  
+  // Config
+  case willReload
+  case didReload
 }
 
 class Events {

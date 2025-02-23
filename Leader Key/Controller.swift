@@ -18,6 +18,8 @@ class Controller {
   var window: MainWindow!
   var cheatsheetWindow: NSWindow!
   private var cheatsheetTimer: Timer?
+  
+  private var cancellables = Set<AnyCancellable>()
 
   init(userState: UserState, userConfig: UserConfig) {
     self.userState = userState
@@ -30,6 +32,21 @@ class Controller {
       }
     }
 
+    Events.sink { event in
+      switch event {
+      case .didReload:
+        // This should all be handled by the themes
+        self.userState.isShowingRefreshState = true
+        self.show()
+        // Delay for 4 * 300ms to wait for animation to be noticeable
+        delay(Int(Pulsate.singleDurationS * 1000) * 3) {
+          self.hide()
+          self.userState.isShowingRefreshState = false
+        }
+      default: break
+      }
+    }.store(in: &cancellables)
+    
     self.cheatsheetWindow = Cheatsheet.createWindow(for: userState)
   }
 

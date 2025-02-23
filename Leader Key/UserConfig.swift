@@ -11,8 +11,6 @@ class UserConfig: ObservableObject {
   private let alertHandler: AlertHandler
   private let fileManager: FileManager
 
-  var afterReload: ((_ success: Bool) -> Void)?
-
   init(
     alertHandler: AlertHandler = DefaultAlertHandler(),
     fileManager: FileManager = .default
@@ -30,8 +28,9 @@ class UserConfig: ObservableObject {
   }
 
   func reloadConfig() {
+    Events.send(.willReload)
     loadConfig()
-    afterReload?(true)
+    Events.send(.didReload)
   }
 
   func saveConfig() {

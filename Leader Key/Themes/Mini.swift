@@ -59,7 +59,7 @@ enum Mini {
           .fontWeight(.bold)
 
         if userState.isShowingRefreshState {
-          text.pulsate(duration: 0.3, targetScale: 1.3)
+          text.pulsate()
         } else {
           text
         }

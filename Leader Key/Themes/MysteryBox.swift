@@ -53,7 +53,7 @@ enum MysteryBox {
           .font(.system(size: 28, weight: .semibold, design: .rounded))
 
         if userState.isShowingRefreshState {
-          text.pulsate(duration: 0.3, targetScale: 1.3)
+          text.pulsate()
         } else {
           text
         }
