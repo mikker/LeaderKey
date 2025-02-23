@@ -17,6 +17,7 @@ class Controller {
 
   var window: MainWindow!
   var cheatsheetWindow: NSWindow!
+  private var cheatsheetTimer: Timer?
 
   init(userState: UserState, userConfig: UserConfig) {
     self.userState = userState
@@ -39,8 +40,12 @@ class Controller {
       Events.send(.didActivate)
     }
 
-    if Defaults[.alwaysShowCheatsheet] && !userState.isShowingRefreshState {
-      showCheatsheet()
+    switch Defaults[.autoOpenCheatsheet] {
+    case .always:
+      if !userState.isShowingRefreshState { showCheatsheet() }
+    case .delay:
+      if !userState.isShowingRefreshState { scheduleCheatsheet() }
+    default: break
     }
   }
 
@@ -54,9 +59,15 @@ class Controller {
     }
 
     cheatsheetWindow?.orderOut(nil)
+    cheatsheetTimer?.invalidate()
   }
 
   func keyDown(with event: NSEvent) {
+    // Reset the delay timer
+    if Defaults[.autoOpenCheatsheet] == .delay {
+      scheduleCheatsheet()
+    }
+
     if event.modifierFlags.contains(.command) {
       switch event.charactersIgnoringModifiers {
       case ",":
@@ -160,12 +171,23 @@ class Controller {
       return
     }
 
-    cheatsheet.setFrameOrigin(mainWindow.cheatsheetOrigin(cheatsheetSize: cheatsheet.frame.size))
+    cheatsheet.setFrameOrigin(
+      mainWindow.cheatsheetOrigin(cheatsheetSize: cheatsheet.frame.size))
   }
 
   private func showCheatsheet() {
     positionCheatsheetWindow()
     cheatsheetWindow?.orderFront(nil)
+  }
+
+  private func scheduleCheatsheet() {
+    cheatsheetTimer?.invalidate()
+
+    cheatsheetTimer = Timer.scheduledTimer(
+      withTimeInterval: Double(Defaults[.cheatsheetDelayMS]) / 1000.0, repeats: false
+    ) { [weak self] _ in
+      self?.showCheatsheet()
+    }
   }
 
   private func runGroup(_ group: Group) {
@@ -202,14 +224,17 @@ class Controller {
 
   private func openURL(_ action: Action) {
     guard let url = URL(string: action.value) else {
-      showAlert(title: "Invalid URL", message: "Failed to parse URL: \(action.value)")
+      showAlert(
+        title: "Invalid URL", message: "Failed to parse URL: \(action.value)")
       return
     }
 
     guard let scheme = url.scheme else {
       showAlert(
         title: "Invalid URL",
-        message: "URL is missing protocol (e.g. https://, raycast://): \(action.value)")
+        message:
+          "URL is missing protocol (e.g. https://, raycast://): \(action.value)"
+      )
       return
     }
 
