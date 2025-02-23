@@ -53,14 +53,22 @@ enum Mini {
     @EnvironmentObject var userState: UserState
 
     var body: some View {
-      Text(userState.currentGroup?.key ?? userState.display ?? "●")
-        .fontDesign(.rounded)
-        .fontWeight(.bold)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-        .font(.system(size: 16, weight: .semibold, design: .rounded))
-        .background(
-          VisualEffectView(material: .hudWindow, blendingMode: .behindWindow)
-        )
+      ZStack {
+        let text = Text(userState.currentGroup?.key ?? userState.display ?? "●")
+          .fontDesign(.rounded)
+          .fontWeight(.bold)
+
+        if userState.isShowingRefreshState {
+          text.pulsate(duration: 0.3, targetScale: 1.3)
+        } else {
+          text
+        }
+      }
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+      .font(.system(size: 16, weight: .semibold, design: .rounded))
+      .background(
+        VisualEffectView(material: .hudWindow, blendingMode: .behindWindow)
+      )
     }
   }
 }
