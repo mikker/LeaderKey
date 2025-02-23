@@ -6,22 +6,22 @@
 //
 
 import Foundation
-import SwiftUICore
 import SwiftUI
+import SwiftUICore
 
 public struct Pulsate: ViewModifier {
   @State var scale: Bool = true
-  
+
   static let singleDurationS = 0.15
-  
+
   let duration: TimeInterval
   let targetScale: CGFloat
-  
+
   init(duration: TimeInterval, targetScale: CGFloat) {
     self.duration = duration
     self.targetScale = targetScale
   }
-  
+
   public func body(content: Content) -> some View {
     content.onAppear {
       withAnimation(Animation.easeInOut(duration: duration).repeatForever(autoreverses: true)) {
@@ -33,7 +33,9 @@ public struct Pulsate: ViewModifier {
 }
 
 extension View {
-  func pulsate(duration: TimeInterval = Pulsate.singleDurationS, targetScale: CGFloat = 1.3) -> some View {
+  func pulsate(duration: TimeInterval = Pulsate.singleDurationS, targetScale: CGFloat = 1.3)
+    -> some View
+  {
     self.modifier(Pulsate(duration: duration, targetScale: targetScale))
   }
 }

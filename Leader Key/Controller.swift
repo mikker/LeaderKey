@@ -18,7 +18,7 @@ class Controller {
   var window: MainWindow!
   var cheatsheetWindow: NSWindow!
   private var cheatsheetTimer: Timer?
-  
+
   private var cancellables = Set<AnyCancellable>()
 
   init(userState: UserState, userConfig: UserConfig) {
@@ -46,7 +46,7 @@ class Controller {
       default: break
       }
     }.store(in: &cancellables)
-    
+
     self.cheatsheetWindow = Cheatsheet.createWindow(for: userState)
   }
 

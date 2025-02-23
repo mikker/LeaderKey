@@ -6,7 +6,7 @@ enum EventKey {
   case didActivate
   case willDeactivate
   case didDeactivate
-  
+
   // Config
   case willReload
   case didReload
