@@ -46,15 +46,23 @@ enum MysteryBox {
     @EnvironmentObject var userState: UserState
 
     var body: some View {
-      Text(userState.currentGroup?.key ?? userState.display ?? "●")
-        .fontDesign(.rounded)
-        .fontWeight(.semibold)
-        .font(.system(size: 28, weight: .semibold, design: .rounded))
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-        .background(
-          VisualEffectView(material: .hudWindow, blendingMode: .behindWindow)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 25.0, style: .continuous))
+      ZStack {
+        let text = Text(userState.currentGroup?.key ?? userState.display ?? "●")
+          .fontDesign(.rounded)
+          .fontWeight(.semibold)
+          .font(.system(size: 28, weight: .semibold, design: .rounded))
+
+        if userState.isShowingRefreshState {
+          text.pulsate(duration: 0.3, targetScale: 1.3)
+        } else {
+          text
+        }
+      }
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+      .background(
+        VisualEffectView(material: .hudWindow, blendingMode: .behindWindow)
+      )
+      .clipShape(RoundedRectangle(cornerRadius: 25.0, style: .continuous))
     }
   }
 }
