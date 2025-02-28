@@ -9,6 +9,7 @@ struct GeneralPane: View {
   @EnvironmentObject private var config: UserConfig
   @Default(.configDir) var configDir
   @Default(.theme) var theme
+  @State private var expandedGroups = Set<[Int]>()
 
   var body: some View {
     Settings.Container(contentWidth: contentWidth) {
@@ -17,8 +18,10 @@ struct GeneralPane: View {
       ) {
         VStack(alignment: .leading, spacing: 8) {
           VStack {
-            ConfigEditorView(group: $config.root)
+            ConfigEditorView(group: $config.root, expandedGroups: $expandedGroups)
               .frame(height: 500)
+              // Probably horrible for accessibility but improves performance a ton
+              .focusable(false)
           }
           .padding(8)
           .overlay(
@@ -29,12 +32,38 @@ struct GeneralPane: View {
           )
 
           HStack {
-            Button("Save to file") {
-              config.saveConfig()
+            // Left-aligned buttons
+            HStack(spacing: 8) {
+              Button("Save to file") {
+                config.saveConfig()
+              }
+
+              Button("Reload from file") {
+                config.reloadConfig()
+              }
             }
 
-            Button("Reload from file") {
-              config.reloadConfig()
+            Spacer()
+
+            // Right-aligned buttons
+            HStack(spacing: 8) {
+              Button(action: {
+                withAnimation(.easeOut(duration: 0.1)) {
+                  expandAllGroups(in: config.root, parentPath: [])
+                }
+              }) {
+                Image(systemName: "chevron.down")
+                Text("Expand all")
+              }
+
+              Button(action: {
+                withAnimation(.easeOut(duration: 0.1)) {
+                  expandedGroups.removeAll()
+                }
+              }) {
+                Image(systemName: "chevron.right")
+                Text("Collapse all")
+              }
             }
           }
         }
@@ -53,6 +82,16 @@ struct GeneralPane: View {
 
       Settings.Section(title: "App") {
         LaunchAtLogin.Toggle()
+      }
+    }
+  }
+
+  private func expandAllGroups(in group: Group, parentPath: [Int]) {
+    for (index, item) in group.actions.enumerated() {
+      let currentPath = parentPath + [index]
+      if case .group(let subgroup) = item {
+        expandedGroups.insert(currentPath)
+        expandAllGroups(in: subgroup, parentPath: currentPath)
       }
     }
   }

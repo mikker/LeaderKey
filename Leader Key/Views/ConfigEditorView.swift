@@ -26,6 +26,7 @@ struct GroupContentView: View {
   @EnvironmentObject var userConfig: UserConfig
   var isRoot: Bool = false
   var parentPath: [Int] = []
+  @Binding var expandedGroups: Set<[Int]>
 
   var body: some View {
     VStack(spacing: generalPadding) {
@@ -35,7 +36,8 @@ struct GroupContentView: View {
           item: binding(for: index),
           path: currentPath,
           onDelete: { group.actions.remove(at: index) },
-          onDuplicate: { group.actions.insert(group.actions[index], at: index) }
+          onDuplicate: { group.actions.insert(group.actions[index], at: index) },
+          expandedGroups: $expandedGroups
         )
         .id(index)
       }
@@ -69,14 +71,17 @@ struct ConfigEditorView: View {
   @Binding var group: Group
   @EnvironmentObject var userConfig: UserConfig
   var isRoot: Bool = true
+  @Binding var expandedGroups: Set<[Int]>
 
   var body: some View {
     ScrollView {
-      GroupContentView(group: $group, isRoot: isRoot, parentPath: [])
-        .padding(
-          EdgeInsets(
-            top: generalPadding, leading: generalPadding,
-            bottom: generalPadding, trailing: 0))
+      GroupContentView(
+        group: $group, isRoot: isRoot, parentPath: [], expandedGroups: $expandedGroups
+      )
+      .padding(
+        EdgeInsets(
+          top: generalPadding, leading: generalPadding,
+          bottom: generalPadding, trailing: 0))
     }
   }
 }
@@ -87,6 +92,7 @@ struct ActionOrGroupRow: View {
   let onDelete: () -> Void
   let onDuplicate: () -> Void
   @EnvironmentObject var userConfig: UserConfig
+  @Binding var expandedGroups: Set<[Int]>
 
   var body: some View {
     switch item {
@@ -117,6 +123,7 @@ struct ActionOrGroupRow: View {
           }
         ),
         path: path,
+        expandedGroups: $expandedGroups,
         onDelete: onDelete,
         onDuplicate: onDuplicate
       )
@@ -193,9 +200,12 @@ struct ActionRow: View {
       Button(role: .none, action: onDuplicate) {
         Image(systemName: "document.on.document")
       }
+      .buttonStyle(.plain)
+
       Button(role: .destructive, action: onDelete) {
         Image(systemName: "trash")
       }
+      .buttonStyle(.plain)
       .padding(.trailing, generalPadding)
     }
   }
@@ -219,11 +229,23 @@ struct ActionRow: View {
 struct GroupRow: View {
   @Binding var group: Group
   var path: [Int]
-  @State private var isExpanded = false
+  @Binding var expandedGroups: Set<[Int]>
   @FocusState private var isKeyFocused: Bool
   let onDelete: () -> Void
   let onDuplicate: () -> Void
   @EnvironmentObject var userConfig: UserConfig
+
+  private var isExpanded: Bool {
+    expandedGroups.contains(path)
+  }
+
+  private func toggleExpanded() {
+    if isExpanded {
+      expandedGroups.remove(path)
+    } else {
+      expandedGroups.insert(path)
+    }
+  }
 
   var body: some View {
     VStack(spacing: generalPadding) {
@@ -238,14 +260,19 @@ struct GroupRow: View {
           onKeyChanged: { userConfig.finishEditingKey() }
         )
 
-        Image(systemName: "chevron.right")
-          .rotationEffect(.degrees(isExpanded ? 90 : 0))
-          .onTapGesture {
+        Button(
+          role: .none,
+          action: {
             withAnimation(.easeOut(duration: 0.1)) {
-              isExpanded.toggle()
+              toggleExpanded()
             }
+
           }
-          .padding(.leading, generalPadding / 3)
+        ) {
+          Image(systemName: "chevron.right")
+            .rotationEffect(.degrees(isExpanded ? 90 : 0))
+            .padding(.leading, generalPadding / 3)
+        }.buttonStyle(.plain)
 
         Spacer(minLength: 0)
 
@@ -255,9 +282,12 @@ struct GroupRow: View {
         Button(role: .none, action: onDuplicate) {
           Image(systemName: "document.on.document")
         }
+        .buttonStyle(.plain)
+
         Button(role: .destructive, action: onDelete) {
           Image(systemName: "trash")
         }
+        .buttonStyle(.plain)
         .padding(.trailing, generalPadding)
       }
 
@@ -269,7 +299,7 @@ struct GroupRow: View {
             .padding(.leading, generalPadding)
             .padding(.trailing, generalPadding / 3)
 
-          GroupContentView(group: $group, parentPath: path)
+          GroupContentView(group: $group, parentPath: path, expandedGroups: $expandedGroups)
             .padding(.leading, generalPadding)
         }
       }
@@ -349,7 +379,7 @@ struct GroupRow: View {
 
   let userConfig = UserConfig()
 
-  return ConfigEditorView(group: .constant(group))
+  return ConfigEditorView(group: .constant(group), expandedGroups: .constant(Set<[Int]>()))
     .frame(width: 600, height: 500)
     .environmentObject(userConfig)
 }
