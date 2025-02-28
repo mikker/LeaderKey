@@ -123,7 +123,7 @@ struct ActionRow: View {
 
   var body: some View {
     HStack(spacing: generalPadding) {
-      KeyField(
+      KeyButton(
         text: Binding(
           get: { action.key ?? "" },
           set: { action.key = $0 }
@@ -198,7 +198,7 @@ struct GroupRow: View {
   var body: some View {
     VStack(spacing: generalPadding) {
       HStack(spacing: generalPadding) {
-        KeyField(
+        KeyButton(
           text: Binding(
             get: { group.key ?? "" },
             set: { group.key = $0 }

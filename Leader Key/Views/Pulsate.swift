@@ -45,7 +45,7 @@ struct Pulsate_Preview: PreviewProvider {
     ZStack {
       Text("●")
         .font(.system(size: 28, weight: .semibold, design: .rounded))
-        .pulsate(duration: 1)
-    }.padding(16)
+        .pulsate(duration: Pulsate.singleDurationS)
+    }.padding(32)
   }
 }

@@ -70,5 +70,6 @@ enum MysteryBox {
 struct MysteryBox_MainView_Previews: PreviewProvider {
   static var previews: some View {
     MysteryBox.MainView().environmentObject(UserState(userConfig: UserConfig()))
+      .frame(width: MysteryBox.size, height: MysteryBox.size, alignment: .center)
   }
 }
