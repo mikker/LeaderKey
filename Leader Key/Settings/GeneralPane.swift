@@ -77,6 +77,7 @@ struct GeneralPane: View {
         Picker("Theme", selection: $theme) {
           Text("Mystery Box").tag(Theme.mysteryBox)
           Text("Mini").tag(Theme.mini)
+          Text("Breadcrumbs").tag(Theme.breadcrumbs)
         }.frame(maxWidth: 170).labelsHidden()
       }
 

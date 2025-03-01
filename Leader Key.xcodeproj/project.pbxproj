@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		130196C62D73B3DE0093148B /* Breadcrumbs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 130196C52D73B3DC0093148B /* Breadcrumbs.swift */; };
 		423632132D676F5200878D92 /* FileMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 423632122D676F5200878D92 /* FileMonitor.swift */; };
 		423632222D68CA6500878D92 /* MysteryBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 423632212D68CA6500878D92 /* MysteryBox.swift */; };
 		423632262D68CDBB00878D92 /* Mini.swift in Sources */ = {isa = PBXBuildFile; fileRef = 423632252D68CDBB00878D92 /* Mini.swift */; };
@@ -58,6 +59,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		130196C52D73B3DC0093148B /* Breadcrumbs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Breadcrumbs.swift; sourceTree = "<group>"; };
 		423632122D676F5200878D92 /* FileMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileMonitor.swift; sourceTree = "<group>"; };
 		423632142D678F4400878D92 /* TestPlan.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = TestPlan.xctestplan; sourceTree = "<group>"; };
 		423632212D68CA6500878D92 /* MysteryBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MysteryBox.swift; sourceTree = "<group>"; };
@@ -124,6 +126,7 @@
 		423632232D68CB0F00878D92 /* Themes */ = {
 			isa = PBXGroup;
 			children = (
+				130196C52D73B3DC0093148B /* Breadcrumbs.swift */,
 				423632212D68CA6500878D92 /* MysteryBox.swift */,
 				423632252D68CDBB00878D92 /* Mini.swift */,
 			);
@@ -371,6 +374,7 @@
 				42B21FBC2D67566100F4A2C7 /* Alerts.swift in Sources */,
 				427C183B2BD329F900955B98 /* UserConfig.swift in Sources */,
 				427C18542BD6E59300955B98 /* NSWindow+Animations.swift in Sources */,
+				130196C62D73B3DE0093148B /* Breadcrumbs.swift in Sources */,
 				423632262D68CDBB00878D92 /* Mini.swift in Sources */,
 				427C18282BD31E2E00955B98 /* GeneralPane.swift in Sources */,
 				423632282D6A806700878D92 /* Theme.swift in Sources */,

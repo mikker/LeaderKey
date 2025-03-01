@@ -147,7 +147,7 @@ class Controller {
           }
         } else {
           userState.display = group.key
-          userState.currentGroup = group
+          userState.navigateToGroup(group)
         }
       case .none:
         window.notFound()
