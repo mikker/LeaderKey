@@ -23,6 +23,7 @@ enum Cheatsheet {
     let action: Action
     let indent: Int
     @Default(.showAppIconsInCheatsheet) var showAppIcons
+    @Default(.showDetailsInCheatsheet) var showDetails
 
     var icon: String {
       switch action.type {
@@ -55,16 +56,19 @@ enum Cheatsheet {
             .truncationMode(.middle)
         }
         Spacer()
-        Text(action.value)
-          .foregroundStyle(.secondary)
-          .lineLimit(1)
-          .truncationMode(.middle)
+        if showDetails {
+          Text(action.value)
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .truncationMode(.middle)
+        }
       }
     }
   }
 
   struct GroupRow: SwiftUI.View {
     @Default(.expandGroupsInCheatsheet) var expand
+    @Default(.showDetailsInCheatsheet) var showDetails
     let group: Group
     let indent: Int
 
@@ -80,10 +84,12 @@ enum Cheatsheet {
             .frame(width: iconSize.width, height: iconSize.height, alignment: .center)
           Text(group.displayName)
           Spacer()
-          Text("\(group.actions.count.description) item(s)")
-            .foregroundStyle(.secondary)
-            .lineLimit(1)
-            .truncationMode(.middle)
+          if showDetails {
+            Text("\(group.actions.count.description) item(s)")
+              .foregroundStyle(.secondary)
+              .lineLimit(1)
+              .truncationMode(.middle)
+          }
         }
         if expand {
           ForEach(Array(group.actions.enumerated()), id: \.offset) { _, item in

@@ -89,6 +89,9 @@ struct AdvancedPane: View {
           "Show expanded groups in cheatsheet", key: .expandGroupsInCheatsheet)
         Defaults.Toggle(
           "Show application icons", key: .showAppIconsInCheatsheet)
+        Defaults.Toggle(
+          "Show item details in cheatsheet", key: .showDetailsInCheatsheet)
+
       }
 
       Settings.Section(title: "Other") {

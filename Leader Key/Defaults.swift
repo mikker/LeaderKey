@@ -1,4 +1,4 @@
-import Cocoa
+Defaults.swift timport Cocoa
 import Defaults
 
 var defaultsSuite =
@@ -27,6 +27,8 @@ extension Defaults.Keys {
     "expandGroupsInCheatsheet", default: false, suite: defaultsSuite)
   static let showAppIconsInCheatsheet = Key<Bool>(
     "showAppIconsInCheatsheet", default: true, suite: defaultsSuite)
+  static let showDetailsInCheatsheet = Key<Bool>(
+    "showDetailsInCheatsheet", default: true, suite: defaultsSuite)
 }
 
 enum AutoOpenCheatsheetSetting: String, Defaults.Serializable {
