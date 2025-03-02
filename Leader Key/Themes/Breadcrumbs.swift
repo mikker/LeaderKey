@@ -17,9 +17,8 @@ enum Breadcrumbs {
 
     override func show(after: (() -> Void)? = nil) {
       let screen = NSScreen.main == nil ? NSSize() : NSScreen.main!.frame.size
-      let navigationPath = controller.userState.navigationPath
 
-      if navigationPath == nil || navigationPath?.isEmpty == true {
+      if controller.userState.navigationPath.isEmpty == true {
         self.setFrame(
           CGRect(
             x: Breadcrumbs.margin,
@@ -72,10 +71,7 @@ enum Breadcrumbs {
     @EnvironmentObject var userState: UserState
 
     var breadcrumbPath: [String] {
-      guard let navPath = userState.navigationPath, !navPath.isEmpty else {
-        return []
-      }
-      return navPath.map(\.displayName)
+      return userState.navigationPath.map(\.displayName)
     }
 
     var body: some View {
