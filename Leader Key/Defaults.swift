@@ -1,4 +1,4 @@
-Defaults.swift timport Cocoa
+import Cocoa
 import Defaults
 
 var defaultsSuite =
