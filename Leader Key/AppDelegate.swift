@@ -98,7 +98,7 @@ class AppDelegate: NSObject, NSApplicationDelegate,
       }
     }
 
-    KeyboardShortcuts.onKeyUp(for: .navigate) {
+    KeyboardShortcuts.onKeyUp(for: .activate) {
       if self.controller.window.isKeyWindow {
         self.hide()
       } else if self.controller.window.isVisible {

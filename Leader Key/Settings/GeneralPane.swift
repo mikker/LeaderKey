@@ -70,7 +70,7 @@ struct GeneralPane: View {
       }
 
       Settings.Section(title: "Shortcut") {
-        KeyboardShortcuts.Recorder(for: .navigate)
+        KeyboardShortcuts.Recorder(for: .activate)
       }
 
       Settings.Section(title: "Theme") {

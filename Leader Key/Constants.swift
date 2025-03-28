@@ -1,7 +1,7 @@
 import KeyboardShortcuts
 
 extension KeyboardShortcuts.Name {
-  static let navigate = Self("navigate")
+  static let activate = Self("navigate")
 }
 
 // Key map for English characters based on US QWERTY keyboard layout
