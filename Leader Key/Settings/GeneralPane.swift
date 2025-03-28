@@ -75,9 +75,9 @@ struct GeneralPane: View {
 
       Settings.Section(title: "Theme") {
         Picker("Theme", selection: $theme) {
-          Text("Mystery Box").tag(Theme.mysteryBox)
-          Text("Mini").tag(Theme.mini)
-          Text("Breadcrumbs").tag(Theme.breadcrumbs)
+          ForEach(Theme.all, id: \.self) { value in
+            Text(Theme.name(value)).tag(value)
+          }
         }.frame(maxWidth: 170).labelsHidden()
       }
 

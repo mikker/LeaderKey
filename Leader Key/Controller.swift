@@ -108,7 +108,7 @@ class Controller {
     case KeyHelpers.backspace.rawValue:
       clear()
     case KeyHelpers.escape.rawValue:
-      hide()
+      window.resignKey()
     default:
       guard let char = charForEvent(event) else { return }
       handleKey(char, withModifiers: event.modifierFlags)

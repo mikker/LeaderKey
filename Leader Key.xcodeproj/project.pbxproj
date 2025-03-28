@@ -14,6 +14,7 @@
 		423632282D6A806700878D92 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 423632272D6A806700878D92 /* Theme.swift */; };
 		42454DDB2D71CB39004E1374 /* ConfigValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42454DDA2D71CB39004E1374 /* ConfigValidator.swift */; };
 		42454DDD2D71CBAB004E1374 /* ConfigValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42454DDC2D71CBAB004E1374 /* ConfigValidatorTests.swift */; };
+		425495402D75EFAD0020300E /* ForTheHorde.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4254953F2D75EFAD0020300E /* ForTheHorde.swift */; };
 		426E625B2D2E6A98009FD2F2 /* CommandRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 426E625A2D2E6A98009FD2F2 /* CommandRunner.swift */; };
 		4279AFED2C6A175500952A83 /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = 4279AFEC2C6A175500952A83 /* LaunchAtLogin */; };
 		427C17EF2BD311B500955B98 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 427C17EE2BD311B500955B98 /* Assets.xcassets */; };
@@ -67,6 +68,7 @@
 		423632272D6A806700878D92 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		42454DDA2D71CB39004E1374 /* ConfigValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigValidator.swift; sourceTree = "<group>"; };
 		42454DDC2D71CBAB004E1374 /* ConfigValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigValidatorTests.swift; sourceTree = "<group>"; };
+		4254953F2D75EFAD0020300E /* ForTheHorde.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ForTheHorde.swift; sourceTree = "<group>"; };
 		426E625A2D2E6A98009FD2F2 /* CommandRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandRunner.swift; sourceTree = "<group>"; };
 		4279AFEA2C6A08B100952A83 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = "Leader Key/Support/Info.plist"; sourceTree = SOURCE_ROOT; };
 		427C17E72BD311B400955B98 /* Leader Key.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Leader Key.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -128,6 +130,7 @@
 			children = (
 				130196C52D73B3DC0093148B /* Breadcrumbs.swift */,
 				423632212D68CA6500878D92 /* MysteryBox.swift */,
+				4254953F2D75EFAD0020300E /* ForTheHorde.swift */,
 				423632252D68CDBB00878D92 /* Mini.swift */,
 			);
 			path = Themes;
@@ -388,6 +391,7 @@
 				427C184D2BD65C5C00955B98 /* Defaults.swift in Sources */,
 				427C18292BD31E2E00955B98 /* MainWindow.swift in Sources */,
 				42FDC31A2D51687B004F5C5C /* AdvancedPane.swift in Sources */,
+				425495402D75EFAD0020300E /* ForTheHorde.swift in Sources */,
 				42F4CDCF2D46E2B300D0DD76 /* Cheatsheet.swift in Sources */,
 				42DFCD722D5B7D48002EA111 /* Events.swift in Sources */,
 				423632132D676F5200878D92 /* FileMonitor.swift in Sources */,
