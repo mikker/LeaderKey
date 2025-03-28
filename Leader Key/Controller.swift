@@ -110,48 +110,51 @@ class Controller {
     case KeyHelpers.escape.rawValue:
       hide()
     default:
-      let char = charForEvent(event)
+      guard let char = charForEvent(event) else { return }
+      handleKey(char, withModifiers: event.modifierFlags)
+    }
+  }
 
-      if char == "?" {
-        showCheatsheet()
-        return
-      }
+  func handleKey(_ key: String, withModifiers modifiers: NSEvent.ModifierFlags? = nil) {
+    if key == "?" {
+      showCheatsheet()
+      return
+    }
 
-      let list =
-        (userState.currentGroup != nil)
-        ? userState.currentGroup : userConfig.root
+    let list =
+      (userState.currentGroup != nil)
+      ? userState.currentGroup : userConfig.root
 
-      let hit = list?.actions.first { item in
-        switch item {
-        case .group(let group):
-          if group.key == char {
-            return true
-          }
-        case .action(let action):
-          if action.key == char {
-            return true
-          }
-        }
-        return false
-      }
-
-      switch hit {
-      case .action(let action):
-        hide {
-          self.runAction(action)
-        }
+    let hit = list?.actions.first { item in
+      switch item {
       case .group(let group):
-        if shouldRunGroupSequence(event) {
-          hide {
-            self.runGroup(group)
-          }
-        } else {
-          userState.display = group.key
-          userState.navigateToGroup(group)
+        if group.key == key {
+          return true
         }
-      case .none:
-        window.notFound()
+      case .action(let action):
+        if action.key == key {
+          return true
+        }
       }
+      return false
+    }
+
+    switch hit {
+    case .action(let action):
+      hide {
+        self.runAction(action)
+      }
+    case .group(let group):
+      if let mods = modifiers, shouldRunGroupSequenceWithModifiers(mods) {
+        hide {
+          self.runGroup(group)
+        }
+      } else {
+        userState.display = group.key
+        userState.navigateToGroup(group)
+      }
+    case .none:
+      window.notFound()
     }
 
     // Why do we need to wait here?
@@ -161,11 +164,15 @@ class Controller {
   }
 
   private func shouldRunGroupSequence(_ event: NSEvent) -> Bool {
+    return shouldRunGroupSequenceWithModifiers(event.modifierFlags)
+  }
+
+  private func shouldRunGroupSequenceWithModifiers(_ modifierFlags: NSEvent.ModifierFlags) -> Bool {
     let selectedModifier = Defaults[.modifierKeyForGroupSequence]
     guard let modifierFlag = selectedModifier.flag else {
       return false
     }
-    return event.modifierFlags.contains(modifierFlag)
+    return modifierFlags.contains(modifierFlag)
   }
 
   private func charForEvent(_ event: NSEvent) -> String? {

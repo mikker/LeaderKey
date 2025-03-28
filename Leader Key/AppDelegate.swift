@@ -98,7 +98,7 @@ class AppDelegate: NSObject, NSApplicationDelegate,
       }
     }
 
-    KeyboardShortcuts.onKeyUp(for: .activate) {
+    KeyboardShortcuts.onKeyUp(for: .navigate) {
       if self.controller.window.isKeyWindow {
         self.hide()
       } else if self.controller.window.isVisible {
@@ -189,5 +189,53 @@ class AppDelegate: NSObject, NSApplicationDelegate,
     let environment = ProcessInfo.processInfo.environment
     guard environment["XCTestSessionIdentifier"] != nil else { return false }
     return true
+  }
+
+  // MARK: - URL Scheme Handling
+
+  func application(_ application: NSApplication, open urls: [URL]) {
+    for url in urls {
+      handleURL(url)
+    }
+  }
+
+  private func handleURL(_ url: URL) {
+    guard url.scheme == "leaderkey" else { return }
+
+    // Activate the app first
+    show()
+
+    // Parse the URL components
+    if url.host == "navigate",
+      let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+      let queryItems = components.queryItems,
+      let keysParam = queryItems.first(where: { $0.name == "keys" })?.value
+    {
+      // Split the keys by comma and process them
+      let keys = keysParam.split(separator: ",").map(String.init)
+      processKeys(keys)
+    }
+  }
+
+  private func processKeys(_ keys: [String]) {
+    // Ensure we have keys to process
+    guard !keys.isEmpty else { return }
+
+    // Process the first key
+    controller.handleKey(keys[0])
+
+    // If there are more keys, schedule them with a small delay between each
+    if keys.count > 1 {
+      let remainingKeys = Array(keys.dropFirst())
+
+      // Process remaining keys with a slight delay between each
+      var delayMs = 100
+      for key in remainingKeys {
+        delay(delayMs) { [weak self] in
+          self?.controller.handleKey(key)
+        }
+        delayMs += 100
+      }
+    }
   }
 }
