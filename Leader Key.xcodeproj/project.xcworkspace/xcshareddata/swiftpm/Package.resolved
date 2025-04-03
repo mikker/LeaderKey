@@ -1,5 +1,9 @@
 {
+<<<<<<< HEAD
   "originHash" : "75881dc1b24f80f4c3a93aead540bb97e43fb0e2088ac782470137bb9a7ebe38",
+=======
+  "originHash" : "0d8320498768fe4b5c64fbf9807a94d0d19cfc6c3d9edadd0d04faad06e75a0d",
+>>>>>>> 493e0d3 (fix: add Kingfisher caching for AsyncImage)
   "pins" : [
     {
       "identity" : "defaults",
@@ -17,6 +21,15 @@
       "state" : {
         "revision" : "7ecc38bb6edf7d087d30e737057b8d8a9b7f51eb",
         "version" : "2.2.4"
+      }
+    },
+    {
+      "identity" : "kingfisher",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/onevcat/Kingfisher.git",
+      "state" : {
+        "revision" : "b450a3b30e0767277a6eed7e02dbdebd7d173da0",
+        "version" : "8.3.0"
       }
     },
     {
