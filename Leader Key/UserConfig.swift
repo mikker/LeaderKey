@@ -127,7 +127,7 @@ class UserConfig: ObservableObject {
   }
 
   private func writeFile(data: Data) throws {
-    try data.write(to: url, options: [.atomic])
+    try data.write(to: url)
   }
 
   private func readFile() throws -> String {
