@@ -100,7 +100,14 @@ class AppDelegate: NSObject, NSApplicationDelegate,
 
     KeyboardShortcuts.onKeyUp(for: .activate) {
       if self.controller.window.isKeyWindow {
-        self.hide()
+        switch Defaults[.reactivateBehavior] {
+        case .hide:
+          self.hide()
+        case .reset:
+          self.controller.userState.clear()
+        case .nothing:
+          return
+        }
       } else if self.controller.window.isVisible {
         // should never happen as the window will self-hide when not key
         self.controller.window.makeKeyAndOrderFront(nil)

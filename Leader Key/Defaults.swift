@@ -29,6 +29,8 @@ extension Defaults.Keys {
     "showAppIconsInCheatsheet", default: true, suite: defaultsSuite)
   static let showDetailsInCheatsheet = Key<Bool>(
     "showDetailsInCheatsheet", default: true, suite: defaultsSuite)
+  static let reactivateBehavior = Key<ReactivateBehavior>(
+    "reactivateBehavior", default: .hide, suite: defaultsSuite)
 }
 
 enum AutoOpenCheatsheetSetting: String, Defaults.Serializable {
@@ -51,4 +53,10 @@ enum ModifierKeyConfig: String, Codable, Defaults.Serializable, CaseIterable, Id
       return "⌥ Group sequences, ⌃ Sticky mode"
     }
   }
+}
+
+enum ReactivateBehavior: String, Defaults.Serializable {
+  case hide
+  case reset
+  case nothing
 }

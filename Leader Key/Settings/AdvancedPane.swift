@@ -13,6 +13,7 @@ struct AdvancedPane: View {
   @Default(.modifierKeyConfiguration) var modifierKeyConfiguration
   @Default(.autoOpenCheatsheet) var autoOpenCheatsheet
   @Default(.cheatsheetDelayMS) var cheatsheetDelayMS
+  @Default(.reactivateBehavior) var reactivateBehavior
 
   var body: some View {
     Settings.Container(contentWidth: contentWidth) {
@@ -111,6 +112,23 @@ struct AdvancedPane: View {
 
       }
 
+      Settings.Section(title: "Activation", bottomDivider: true) {
+        VStack(alignment: .leading) {
+          Text(
+            "Pressing the global gshortcut key while Leader Key is active should …"
+          )
+
+          Picker(
+            "Reactivation behavior", selection: $reactivateBehavior
+          ) {
+            Text("Hide Leader Key").tag(ReactivateBehavior.hide)
+            Text("Reset group selection").tag(ReactivateBehavior.reset)
+            Text("Do nothing").tag(ReactivateBehavior.nothing)
+          }
+          .labelsHidden()
+          .frame(width: 220)
+        }
+      }
       Settings.Section(title: "Other") {
         Defaults.Toggle("Show Leader Key in menubar", key: .showMenuBarIcon)
         Defaults.Toggle(
