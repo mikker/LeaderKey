@@ -20,7 +20,7 @@ extension Defaults.Keys {
 
   static let autoOpenCheatsheet = Key<AutoOpenCheatsheetSetting>(
     "autoOpenCheatsheet",
-    default: .delay, suite: defaultsSuite)
+    default: .always, suite: defaultsSuite)
   static let cheatsheetDelayMS = Key<Int>(
     "cheatsheetDelayMS", default: 2000, suite: defaultsSuite)
   static let expandGroupsInCheatsheet = Key<Bool>(

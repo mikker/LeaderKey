@@ -22,6 +22,13 @@ struct AdvancedPane: View {
       ) {
         HStack {
           Text(configDir).lineLimit(1).truncationMode(.middle)
+          Button {
+            let pasteboard = NSPasteboard.general
+            pasteboard.clearContents()
+            pasteboard.setString(configDir, forType: .string)
+          } label: {
+            Image(systemName: "clipboard")
+          }
         }
         HStack {
           Button("Choose…") {
@@ -100,6 +107,8 @@ struct AdvancedPane: View {
         Text(
           "The cheatsheet can always be manually shown by \"?\" when Leader Key is activated."
         )
+        .font(.callout)
+        .foregroundColor(.secondary)
         .padding(.vertical, 2)
 
         Defaults.Toggle(

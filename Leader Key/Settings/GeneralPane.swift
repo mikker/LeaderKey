@@ -71,6 +71,14 @@ struct GeneralPane: View {
 
       Settings.Section(title: "Shortcut") {
         KeyboardShortcuts.Recorder(for: .activate)
+
+        VStack(alignment: .leading, spacing: 8) {
+          Text(
+            "Shortcut to trigger Leader Key"
+          )
+          .font(.callout)
+          .foregroundColor(.secondary)
+        }
       }
 
       Settings.Section(title: "Theme") {
@@ -79,6 +87,14 @@ struct GeneralPane: View {
           Text("Mini").tag(Theme.mini)
           Text("Breadcrumbs").tag(Theme.breadcrumbs)
         }.frame(maxWidth: 170).labelsHidden()
+
+        VStack(alignment: .leading, spacing: 8) {
+          Text(
+            "Theme configures how Leader Key interface looks when triggered"
+          )
+          .font(.callout)
+          .foregroundColor(.secondary)
+        }
       }
 
       Settings.Section(title: "App") {
