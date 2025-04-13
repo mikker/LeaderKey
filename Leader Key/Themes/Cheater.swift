@@ -21,6 +21,10 @@ enum Cheater {
       super.show(after: after)
     }
 
+    override func notFound() {
+      shake()
+    }
+
     override func cheatsheetOrigin(cheatsheetSize: NSSize) -> NSPoint {
       // move out of screen
       return NSPoint(x: -cheatsheetSize.width, y: -cheatsheetSize.height)
