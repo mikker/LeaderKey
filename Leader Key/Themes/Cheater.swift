@@ -20,7 +20,18 @@ enum Cheater {
       let y = size.height / 2 - height / 2
       self.setFrame(CGRect(x: x, y: y, width: width, height: height), display: true)
 
-      super.show(after: after)
+      makeKeyAndOrderFront(nil)
+
+      fadeInAndUp {
+        after?()
+      }
+    }
+
+    override func hide(after: (() -> Void)?) {
+      fadeOutAndDown {
+        self.close()
+        after?()
+      }
     }
 
     override func notFound() {
