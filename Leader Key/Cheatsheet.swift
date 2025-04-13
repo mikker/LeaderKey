@@ -117,7 +117,7 @@ enum Cheatsheet {
     }
 
     // Constrain to edge of screen
-    var preferredWidth: CGFloat {
+    static var preferredWidth: CGFloat {
       if let screen = NSScreen.main {
         let screenHalf = screen.visibleFrame.width / 2
         let desiredWidth: CGFloat = 580
@@ -165,7 +165,7 @@ enum Cheatsheet {
           }
         )
       }
-      .frame(width: preferredWidth)
+      .frame(width: Cheatsheet.CheatsheetView.preferredWidth)
       .frame(height: min(contentHeight, maxHeight))
       .background(
         VisualEffectView(material: .hudWindow, blendingMode: .behindWindow)

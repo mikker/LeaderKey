@@ -47,6 +47,7 @@
 		42F4CDD12D48C52400D0DD76 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42F4CDD02D48C51F00D0DD76 /* Extensions.swift */; };
 		42FDC31A2D51687B004F5C5C /* AdvancedPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42FDC3192D51687B004F5C5C /* AdvancedPane.swift */; };
 		605385A32D523CAD00BEDB4B /* Pulsate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 605385A22D523CAD00BEDB4B /* Pulsate.swift */; };
+		606C56EF2DAB875A00198B9F /* Cheater.swift in Sources */ = {isa = PBXBuildFile; fileRef = 606C56EE2DAB875A00198B9F /* Cheater.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -100,6 +101,7 @@
 		42F4CDD02D48C51F00D0DD76 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		42FDC3192D51687B004F5C5C /* AdvancedPane.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AdvancedPane.swift; sourceTree = "<group>"; };
 		605385A22D523CAD00BEDB4B /* Pulsate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pulsate.swift; sourceTree = "<group>"; };
+		606C56EE2DAB875A00198B9F /* Cheater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cheater.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -132,6 +134,7 @@
 				423632212D68CA6500878D92 /* MysteryBox.swift */,
 				4254953F2D75EFAD0020300E /* ForTheHorde.swift */,
 				423632252D68CDBB00878D92 /* Mini.swift */,
+				606C56EE2DAB875A00198B9F /* Cheater.swift */,
 			);
 			path = Themes;
 			sourceTree = "<group>";
@@ -412,6 +415,7 @@
 				427C18502BD6652500955B98 /* Util.swift in Sources */,
 				427C182A2BD31E2E00955B98 /* StatusItem.swift in Sources */,
 				42F4CDCD2D45B13600D0DD76 /* KeyButton.swift in Sources */,
+				606C56EF2DAB875A00198B9F /* Cheater.swift in Sources */,
 				427C181C2BD314B500955B98 /* Constants.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
