@@ -4,6 +4,8 @@ import SwiftUI
 enum Cheater {
   class Window: MainWindow {
 
+    override var hasCheatsheet: Bool { return false }
+
     required init(controller: Controller) {
       super.init(controller: controller, contentRect: NSRect(x: 0, y: 0, width: 0, height: 0))
       let view = Cheatsheet.CheatsheetView()
@@ -23,11 +25,6 @@ enum Cheater {
 
     override func notFound() {
       shake()
-    }
-
-    override func cheatsheetOrigin(cheatsheetSize: NSSize) -> NSPoint {
-      // move out of screen
-      return NSPoint(x: -cheatsheetSize.width, y: -cheatsheetSize.height)
     }
   }
 }

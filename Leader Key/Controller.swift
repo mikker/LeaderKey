@@ -57,11 +57,15 @@ class Controller {
       Events.send(.didActivate)
     }
 
+    if !window.hasCheatsheet || userState.isShowingRefreshState {
+      return
+    }
+
     switch Defaults[.autoOpenCheatsheet] {
     case .always:
-      if !userState.isShowingRefreshState { showCheatsheet() }
+      showCheatsheet()
     case .delay:
-      if !userState.isShowingRefreshState { scheduleCheatsheet() }
+      scheduleCheatsheet()
     default: break
     }
   }

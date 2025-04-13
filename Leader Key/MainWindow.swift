@@ -23,6 +23,7 @@ class MainWindow: PanelWindow, NSWindowDelegate {
   override var canBecomeKey: Bool { return true }
   override var canBecomeMain: Bool { return true }
 
+  var hasCheatsheet: Bool { return true }
   var controller: Controller
 
   required init(controller: Controller) {
