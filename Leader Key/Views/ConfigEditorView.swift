@@ -136,7 +136,7 @@ struct ActionOrGroupRow: View {
 struct IconPickerMenu: View {
   @Binding var item: ActionOrGroup
   @State private var iconPickerPresented = false
-  
+
   var body: some View {
     Menu {
       Button("App Icon") {
@@ -178,21 +178,23 @@ struct IconPickerMenu: View {
     .sheet(isPresented: $iconPickerPresented) {
       switch item {
       case .action(var action):
-        SymbolPicker(symbol: Binding(
-          get: { action.iconPath },
-          set: { newPath in
-            action.iconPath = newPath
-            item = .action(action)
-          }
-        ))
+        SymbolPicker(
+          symbol: Binding(
+            get: { action.iconPath },
+            set: { newPath in
+              action.iconPath = newPath
+              item = .action(action)
+            }
+          ))
       case .group(var group):
-        SymbolPicker(symbol: Binding(
-          get: { group.iconPath },
-          set: { newPath in
-            group.iconPath = newPath
-            item = .group(group)
-          }
-        ))
+        SymbolPicker(
+          symbol: Binding(
+            get: { group.iconPath },
+            set: { newPath in
+              group.iconPath = newPath
+              item = .group(group)
+            }
+          ))
       }
     }
   }
@@ -225,14 +227,15 @@ struct ActionRow: View {
       .frame(width: 110)
       .labelsHidden()
 
-      IconPickerMenu(item: Binding(
-        get: { .action(action) },
-        set: { newItem in
-          if case .action(let newAction) = newItem {
-            action = newAction
+      IconPickerMenu(
+        item: Binding(
+          get: { .action(action) },
+          set: { newItem in
+            if case .action(let newAction) = newItem {
+              action = newAction
+            }
           }
-        }
-      ))
+        ))
 
       switch action.type {
       case .application:
@@ -336,14 +339,15 @@ struct GroupRow: View {
           onKeyChanged: { userConfig.finishEditingKey() }
         )
 
-        IconPickerMenu(item: Binding(
-          get: { .group(group) },
-          set: { newItem in
-            if case .group(let newGroup) = newItem {
-              group = newGroup
+        IconPickerMenu(
+          item: Binding(
+            get: { .group(group) },
+            set: { newItem in
+              if case .group(let newGroup) = newItem {
+                group = newGroup
+              }
             }
-          }
-        ))
+          ))
 
         Button(
           role: .none,
