@@ -293,6 +293,13 @@ enum ActionOrGroup: Codable, Equatable {
   case action(Action)
   case group(Group)
 
+  var item: Item {
+    switch self {
+    case .group(let group): return group
+    case .action(let action): return action
+    }
+  }
+
   private enum CodingKeys: String, CodingKey {
     case key, type, value, actions, label, iconPath
   }

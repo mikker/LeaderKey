@@ -29,6 +29,8 @@ extension Defaults.Keys {
     "showAppIconsInCheatsheet", default: true, suite: defaultsSuite)
   static let showDetailsInCheatsheet = Key<Bool>(
     "showDetailsInCheatsheet", default: true, suite: defaultsSuite)
+  static let showFaviconsInCheatsheet = Key<Bool>(
+    "showFaviconsInCheatsheet", default: true, suite: defaultsSuite)
   static let reactivateBehavior = Key<ReactivateBehavior>(
     "reactivateBehavior", default: .hide, suite: defaultsSuite)
 }

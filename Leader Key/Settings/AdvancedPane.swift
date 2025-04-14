@@ -14,6 +14,7 @@ struct AdvancedPane: View {
   @Default(.autoOpenCheatsheet) var autoOpenCheatsheet
   @Default(.cheatsheetDelayMS) var cheatsheetDelayMS
   @Default(.reactivateBehavior) var reactivateBehavior
+  @Default(.showAppIconsInCheatsheet) var showAppIconsInCheatsheet
 
   var body: some View {
     Settings.Container(contentWidth: contentWidth) {
@@ -107,6 +108,9 @@ struct AdvancedPane: View {
           "Show expanded groups in cheatsheet", key: .expandGroupsInCheatsheet)
         Defaults.Toggle(
           "Show icons", key: .showAppIconsInCheatsheet)
+        Defaults.Toggle(
+          "Use favicons for URLs", key: .showFaviconsInCheatsheet
+        ).padding(.leading, 20).disabled(!showAppIconsInCheatsheet)
         Defaults.Toggle(
           "Show item details in cheatsheet", key: .showDetailsInCheatsheet)
 

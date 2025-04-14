@@ -172,7 +172,7 @@ struct IconPickerMenu: View {
         }
       }
     } label: {
-      actionIcon(item: item, iconSize: NSSize(width: 24, height: 24))
+      actionIcon(actionOrGroup: item, iconSize: NSSize(width: 24, height: 24))
     }
     .buttonStyle(PlainButtonStyle())
     .sheet(isPresented: $iconPickerPresented) {

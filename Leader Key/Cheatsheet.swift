@@ -35,7 +35,7 @@ enum Cheatsheet {
           KeyBadge(key: action.key ?? "●")
 
           if showIcons {
-            actionIcon(item: ActionOrGroup.action(action), iconSize: iconSize)
+            actionIcon(actionOrGroup: ActionOrGroup.action(action), iconSize: iconSize)
           }
 
           Text(action.displayName)
@@ -70,7 +70,7 @@ enum Cheatsheet {
           KeyBadge(key: group.key ?? "")
 
           if showIcons {
-            actionIcon(item: ActionOrGroup.group(group), iconSize: iconSize)
+            actionIcon(actionOrGroup: ActionOrGroup.group(group), iconSize: iconSize)
           }
 
           Image(systemName: "chevron.right")
@@ -193,77 +193,3 @@ struct CheatsheetView_Previews: PreviewProvider {
   static var previews: some View {
     Cheatsheet.CheatsheetView()
       .environmentObject(UserState(userConfig: UserConfig()))
-<<<<<<< HEAD
-=======
-  }
-}
-
-struct AppIconImage: View {
-  let appPath: String
-  let size: NSSize
-  let defaultSystemName: String = "questionmark.circle"
-
-  init(appPath: String, size: NSSize = NSSize(width: 24, height: 24)) {
-    self.appPath = appPath
-    self.size = size
-  }
-
-  var body: some View {
-    let image =
-      if let icon = getAppIcon(path: appPath) {
-        Image(nsImage: icon)
-      } else {
-        Image(systemName: defaultSystemName)
-      }
-    image.resizable()
-      .scaledToFit()
-      .frame(width: size.width, height: size.height)
-  }
-
-  private func getAppIcon(path: String) -> NSImage? {
-    guard FileManager.default.fileExists(atPath: path) else {
-      return nil
-    }
-
-    let icon = NSWorkspace.shared.icon(forFile: path)
-    let resizedIcon = NSImage(size: size, flipped: false) { rect in
-      let iconRect = NSRect(origin: .zero, size: icon.size)
-      icon.draw(in: rect, from: iconRect, operation: .sourceOver, fraction: 1)
-      return true
-    }
-    return resizedIcon
-  }
-}
-
-struct FavIconImage: View {
-  let url: String
-  let icon: String
-  let size: NSSize
-
-  init(url: String, icon: String, size: NSSize = NSSize(width: 24, height: 24)) {
-    self.url = "https://www.google.com/s2/favicons?sz=128&domain=\(url)"
-    self.size = size
-    self.icon = icon
-  }
-
-  var body: some View {
-    KFImage.url(URL(string: url)).placeholder({
-      Image(systemName: icon).foregroundStyle(.secondary)
-    }).resizable()
-      .padding(4)
-      .frame(width: size.width, height: size.height, alignment: .center)
-  }
-}
-
-struct AppImagePreview: PreviewProvider {
-  static var previews: some View {
-    let appPaths = ["/Applications/Xcode.app", "/Applications/Safari.app", "/invalid/path"]
-    VStack {
-      ForEach(appPaths, id: \.self) { path in
-        AppIconImage(appPath: path)
-      }
-    }
-    .padding()
-  }
-}
->>>>>>> 493e0d3 (fix: add Kingfisher caching for AsyncImage)
