@@ -106,12 +106,21 @@ struct FavIconImage: View {
     self.icon = icon
   }
 
-  var body: some View {
-    KFImage.url(URL(string: url)).placeholder({
-      Image(systemName: icon).foregroundStyle(.secondary)
-    }).resizable()
-      .padding(4)
+  var fallback: some View {
+    return Image(systemName: icon).foregroundStyle(.secondary)
       .frame(width: size.width, height: size.height, alignment: .center)
+  }
+
+  var body: some View {
+    if url.starts(with: "http:") || url.starts(with: "https:") {
+      KFImage.url(URL(string: url)).placeholder({
+        fallback
+      }).resizable()
+        .padding(4)
+        .frame(width: size.width, height: size.height, alignment: .center)
+    } else {
+      fallback
+    }
   }
 }
 
