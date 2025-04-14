@@ -3,7 +3,6 @@ import SwiftUI
 
 enum Cheater {
   class Window: MainWindow {
-
     override var hasCheatsheet: Bool { return false }
 
     required init(controller: Controller) {
@@ -17,7 +16,7 @@ enum Cheater {
       let width = contentView?.frame.width ?? Cheatsheet.CheatsheetView.preferredWidth
       let height = contentView?.frame.height ?? 0
       let x = size.width / 2 - width / 2
-      let y = size.height / 2 - height / 2
+      let y = size.height / 2 - height / 2 + (size.height / 8)
       self.setFrame(CGRect(x: x, y: y, width: width, height: height), display: true)
 
       makeKeyAndOrderFront(nil)
