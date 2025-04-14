@@ -23,6 +23,7 @@ enum Cheatsheet {
     let action: Action
     let indent: Int
     @Default(.showDetailsInCheatsheet) var showDetails
+    @Default(.showAppIconsInCheatsheet) var showIcons
 
     var body: some SwiftUI.View {
       HStack {
@@ -32,7 +33,9 @@ enum Cheatsheet {
           }
           KeyBadge(key: action.key ?? "●")
 
-          actionIcon(item: ActionOrGroup.action(action), iconSize: iconSize)
+          if showIcons {
+            actionIcon(item: ActionOrGroup.action(action), iconSize: iconSize)
+          }
 
           Text(action.displayName)
             .lineLimit(1)
@@ -52,6 +55,8 @@ enum Cheatsheet {
   struct GroupRow: SwiftUI.View {
     @Default(.expandGroupsInCheatsheet) var expand
     @Default(.showDetailsInCheatsheet) var showDetails
+    @Default(.showAppIconsInCheatsheet) var showIcons
+
     let group: Group
     let indent: Int
 
@@ -63,7 +68,9 @@ enum Cheatsheet {
           }
           KeyBadge(key: group.key ?? "")
 
-          actionIcon(item: ActionOrGroup.group(group), iconSize: iconSize)
+          if showIcons {
+            actionIcon(item: ActionOrGroup.group(group), iconSize: iconSize)
+          }
 
           Image(systemName: "chevron.right")
             .foregroundStyle(.secondary)

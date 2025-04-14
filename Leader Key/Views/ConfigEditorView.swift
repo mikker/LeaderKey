@@ -133,6 +133,71 @@ struct ActionOrGroupRow: View {
   }
 }
 
+struct IconPickerMenu: View {
+  @Binding var item: ActionOrGroup
+  @State private var iconPickerPresented = false
+  
+  var body: some View {
+    Menu {
+      Button("App Icon") {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.applicationBundle, .application]
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.directoryURL = URL(fileURLWithPath: "/Applications")
+        if panel.runModal() == .OK {
+          switch item {
+          case .action(var action):
+            action.iconPath = panel.url?.path
+            item = .action(action)
+          case .group(var group):
+            group.iconPath = panel.url?.path
+            item = .group(group)
+          }
+        }
+      }
+      Button("Symbol") {
+        iconPickerPresented = true
+      }
+      Divider()
+      Button("✕ Clear") {
+        switch item {
+        case .action(var action):
+          action.iconPath = nil
+          item = .action(action)
+        case .group(var group):
+          group.iconPath = nil
+          item = .group(group)
+        }
+      }
+    } label: {
+      actionIcon(item: item, iconSize: NSSize(width: 24, height: 24))
+    }
+    .buttonStyle(PlainButtonStyle())
+    .sheet(isPresented: $iconPickerPresented) {
+      switch item {
+      case .action(var action):
+        SymbolPicker(symbol: Binding(
+          get: { action.iconPath },
+          set: { newPath in
+            action.iconPath = newPath
+            item = .action(action)
+          }
+        ))
+      case .group(var group):
+        SymbolPicker(symbol: Binding(
+          get: { group.iconPath },
+          set: { newPath in
+            group.iconPath = newPath
+            item = .group(group)
+          }
+        ))
+      }
+    }
+  }
+}
+
 struct ActionRow: View {
   @Binding var action: Action
   var path: [Int]
@@ -140,8 +205,6 @@ struct ActionRow: View {
   let onDuplicate: () -> Void
   @FocusState private var isKeyFocused: Bool
   @EnvironmentObject var userConfig: UserConfig
-  @State private var iconPickerPresented = false
-  @Default(.showAppIconsInCheatsheet) var showAppIcons
 
   var body: some View {
     HStack(spacing: generalPadding) {
@@ -162,35 +225,14 @@ struct ActionRow: View {
       .frame(width: 110)
       .labelsHidden()
 
-      Menu {
-        if showAppIcons {
-          Button("App Icon") {
-            let panel = NSOpenPanel()
-            panel.allowedContentTypes = [.applicationBundle, .application]
-            panel.canChooseFiles = true
-            panel.canChooseDirectories = true
-            panel.allowsMultipleSelection = false
-            panel.directoryURL = URL(fileURLWithPath: "/Applications")
-            if panel.runModal() == .OK {
-              action.iconPath = panel.url?.path
-            }
+      IconPickerMenu(item: Binding(
+        get: { .action(action) },
+        set: { newItem in
+          if case .action(let newAction) = newItem {
+            action = newAction
           }
         }
-        Button("Symbol") {
-          iconPickerPresented = true
-        }
-        Divider()
-        Button("✕ Clear") {
-          action.iconPath = nil
-        }
-      } label: {
-        let iconSize = NSSize(width: 24, height: 24)
-        actionIcon(item: ActionOrGroup.action(action), iconSize: iconSize)
-      }
-      .buttonStyle(PlainButtonStyle())
-      .sheet(isPresented: $iconPickerPresented) {
-        SymbolPicker(symbol: $action.iconPath)
-      }
+      ))
 
       switch action.type {
       case .application:
@@ -268,7 +310,6 @@ struct GroupRow: View {
   let onDelete: () -> Void
   let onDuplicate: () -> Void
   @EnvironmentObject var userConfig: UserConfig
-  @State private var iconPickerPresented = false
 
   private var isExpanded: Bool {
     expandedGroups.contains(path)
@@ -295,33 +336,14 @@ struct GroupRow: View {
           onKeyChanged: { userConfig.finishEditingKey() }
         )
 
-        Menu {
-          Button("App Icon") {
-            let panel = NSOpenPanel()
-            panel.allowedContentTypes = [.applicationBundle, .application]
-            panel.canChooseFiles = true
-            panel.canChooseDirectories = true
-            panel.allowsMultipleSelection = false
-            panel.directoryURL = URL(fileURLWithPath: "/Applications")
-            if panel.runModal() == .OK {
-              group.iconPath = panel.url?.path
+        IconPickerMenu(item: Binding(
+          get: { .group(group) },
+          set: { newItem in
+            if case .group(let newGroup) = newItem {
+              group = newGroup
             }
           }
-          Button("Symbol") {
-            iconPickerPresented = true
-          }
-          Divider()
-          Button("✕ Clear") {
-            group.iconPath = nil
-          }
-        } label: {
-          let iconSize = NSSize(width: 24, height: 24)
-          actionIcon(item: ActionOrGroup.group(group), iconSize: iconSize)
-        }
-        .buttonStyle(PlainButtonStyle())
-        .sheet(isPresented: $iconPickerPresented) {
-          SymbolPicker(symbol: $group.iconPath)
-        }
+        ))
 
         Button(
           role: .none,

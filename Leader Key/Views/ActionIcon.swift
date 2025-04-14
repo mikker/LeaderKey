@@ -14,10 +14,7 @@ func actionIcon(item: ActionOrGroup, iconSize: NSSize) -> some View {
 
   if iconPath != nil && !iconPath!.isEmpty {
     if iconPath!.hasSuffix(".app") {
-      // App Icon
-      if Defaults[.showAppIconsInCheatsheet] {
-        return AnyView(AppIconImage(appPath: iconPath!, size: iconSize))
-      }
+      return AnyView(AppIconImage(appPath: iconPath!, size: iconSize))
     } else {
       // SF Symbol
       return AnyView(
@@ -39,7 +36,7 @@ func actionIcon(item: ActionOrGroup, iconSize: NSSize) -> some View {
     }
   }
 
-  if type == .application && Defaults[.showAppIconsInCheatsheet] {
+  if type == .application {
     var view: AnyView? {
       switch item {
       case .action(let action):

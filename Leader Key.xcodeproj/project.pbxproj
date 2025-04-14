@@ -171,7 +171,6 @@
 		427C17E92BD311B400955B98 /* Leader Key */ = {
 			isa = PBXGroup;
 			children = (
-				115AA5BE2DA521C200C17E18 /* ActionIcon.swift */,
 				42454DDA2D71CB39004E1374 /* ConfigValidator.swift */,
 				42B21FBB2D67566100F4A2C7 /* Alerts.swift */,
 				427C181F2BD31C3D00955B98 /* AppDelegate.swift */,
@@ -237,6 +236,7 @@
 				42A0CE812D2D226800879029 /* ConfigEditorView.swift */,
 				427C18372BD3262100955B98 /* VisualEffectBackground.swift */,
 				42F4CDCC2D45B13600D0DD76 /* KeyButton.swift */,
+				115AA5BE2DA521C200C17E18 /* ActionIcon.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";

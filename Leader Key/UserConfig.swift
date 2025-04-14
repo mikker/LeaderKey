@@ -237,6 +237,7 @@ protocol Item {
   var type: Type { get }
   var label: String? { get }
   var displayName: String { get }
+  var iconPath: String? { get set }
 }
 
 struct Action: Item, Codable, Equatable {
