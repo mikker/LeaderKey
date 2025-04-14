@@ -172,7 +172,7 @@ struct IconPickerMenu: View {
         }
       }
     } label: {
-      actionIcon(actionOrGroup: item, iconSize: NSSize(width: 24, height: 24))
+      actionIcon(item: item, iconSize: NSSize(width: 24, height: 24))
     }
     .buttonStyle(PlainButtonStyle())
     .sheet(isPresented: $iconPickerPresented) {
@@ -425,6 +425,12 @@ struct GroupRow: View {
       ),
       .action(
         Action(key: "a", type: .command, value: "ls")
+      ),
+      .action(
+        Action(key: "c", type: .url, value: "raycast://confetti")
+      ),
+      .action(
+        Action(key: "g", type: .url, value: "https://google.com")
       ),
 
       // Level 1 group with actions

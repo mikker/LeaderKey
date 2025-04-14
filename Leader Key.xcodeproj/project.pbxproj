@@ -49,11 +49,7 @@
 		42F4CDD12D48C52400D0DD76 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42F4CDD02D48C51F00D0DD76 /* Extensions.swift */; };
 		42FDC31A2D51687B004F5C5C /* AdvancedPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42FDC3192D51687B004F5C5C /* AdvancedPane.swift */; };
 		605385A32D523CAD00BEDB4B /* Pulsate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 605385A22D523CAD00BEDB4B /* Pulsate.swift */; };
-<<<<<<< HEAD
 		606C56EF2DAB875A00198B9F /* Cheater.swift in Sources */ = {isa = PBXBuildFile; fileRef = 606C56EE2DAB875A00198B9F /* Cheater.swift */; };
-=======
-		FBCA04D92D9F02F700271163 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = FBCA04D82D9F02F700271163 /* Kingfisher */; };
->>>>>>> 493e0d3 (fix: add Kingfisher caching for AsyncImage)
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -280,11 +276,8 @@
 				427C18222BD31DF100955B98 /* Settings */,
 				4279AFEC2C6A175500952A83 /* LaunchAtLogin */,
 				42E70A562C823FF200FCF902 /* Sparkle */,
-<<<<<<< HEAD
 				115AA5C12DA546D500C17E18 /* SymbolPicker */,
-=======
 				FBCA04D82D9F02F700271163 /* Kingfisher */,
->>>>>>> 493e0d3 (fix: add Kingfisher caching for AsyncImage)
 			);
 			productName = "Leader Key";
 			productReference = 427C17E72BD311B400955B98 /* Leader Key.app */;
@@ -343,11 +336,8 @@
 				4279AFE92C6A070300952A83 /* XCRemoteSwiftPackageReference "Sparkle" */,
 				4279AFEB2C6A175500952A83 /* XCRemoteSwiftPackageReference "LaunchAtLogin-Modern" */,
 				4236321C2D6799B900878D92 /* XCRemoteSwiftPackageReference "SwiftFormatPlugins" */,
-<<<<<<< HEAD
 				115AA5C02DA5463700C17E18 /* XCRemoteSwiftPackageReference "SymbolPicker" */,
-=======
 				FB00D5262D824E2C00A37486 /* XCRemoteSwiftPackageReference "Kingfisher" */,
->>>>>>> 493e0d3 (fix: add Kingfisher caching for AsyncImage)
 			);
 			productRefGroup = 427C17E82BD311B400955B98 /* Products */;
 			projectDirPath = "";

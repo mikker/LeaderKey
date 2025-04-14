@@ -35,7 +35,7 @@ enum Cheatsheet {
           KeyBadge(key: action.key ?? "●")
 
           if showIcons {
-            actionIcon(actionOrGroup: ActionOrGroup.action(action), iconSize: iconSize)
+            actionIcon(item: ActionOrGroup.action(action), iconSize: iconSize)
           }
 
           Text(action.displayName)
@@ -70,7 +70,7 @@ enum Cheatsheet {
           KeyBadge(key: group.key ?? "")
 
           if showIcons {
-            actionIcon(actionOrGroup: ActionOrGroup.group(group), iconSize: iconSize)
+            actionIcon(item: ActionOrGroup.group(group), iconSize: iconSize)
           }
 
           Image(systemName: "chevron.right")
@@ -193,3 +193,5 @@ struct CheatsheetView_Previews: PreviewProvider {
   static var previews: some View {
     Cheatsheet.CheatsheetView()
       .environmentObject(UserState(userConfig: UserConfig()))
+  }
+}
