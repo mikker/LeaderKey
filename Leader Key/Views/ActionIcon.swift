@@ -47,7 +47,7 @@ func actionIcon(item: ActionOrGroup, iconSize: NSSize) -> some View {
     }
     return view!
   }
-  
+
   if type == .url {
     var view: AnyView? {
       switch item {
