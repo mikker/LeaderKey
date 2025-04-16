@@ -111,6 +111,9 @@ class Controller {
     switch event.keyCode {
     case KeyHelpers.backspace.rawValue:
       clear()
+      delay(1) {
+        self.positionCheatsheetWindow()
+      }
     case KeyHelpers.escape.rawValue:
       window.resignKey()
     default:
