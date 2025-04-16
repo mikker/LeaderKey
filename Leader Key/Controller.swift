@@ -222,6 +222,9 @@ class Controller {
   }
 
   private func showCheatsheet() {
+    if !window.hasCheatsheet {
+      return
+    }
     positionCheatsheetWindow()
     cheatsheetWindow?.orderFront(nil)
   }
