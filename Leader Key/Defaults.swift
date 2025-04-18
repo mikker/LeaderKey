@@ -33,6 +33,8 @@ extension Defaults.Keys {
     "showFaviconsInCheatsheet", default: true, suite: defaultsSuite)
   static let reactivateBehavior = Key<ReactivateBehavior>(
     "reactivateBehavior", default: .hide, suite: defaultsSuite)
+  static let screen = Key<Screen>(
+    "screen", default: .primary, suite: defaultsSuite)
 }
 
 enum AutoOpenCheatsheetSetting: String, Defaults.Serializable {
@@ -61,4 +63,10 @@ enum ReactivateBehavior: String, Defaults.Serializable {
   case hide
   case reset
   case nothing
+}
+
+enum Screen: String, Defaults.Serializable {
+  case primary
+  case mouse
+  case activeWindow
 }

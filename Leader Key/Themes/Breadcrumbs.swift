@@ -15,9 +15,7 @@ enum Breadcrumbs {
       contentView = NSHostingView(rootView: view)
     }
 
-    override func show(after: (() -> Void)? = nil) {
-      let screen = NSScreen.main == nil ? NSSize() : NSScreen.main!.frame.size
-
+    override func show(on screen: NSScreen, after: (() -> Void)? = nil) {
       if controller.userState.navigationPath.isEmpty == true {
         self.setFrame(
           CGRect(
@@ -38,10 +36,13 @@ enum Breadcrumbs {
         self.contentAspectRatio = NSSize(width: 0, height: Breadcrumbs.dimension)
         self.contentMinSize = NSSize(width: 80, height: Breadcrumbs.dimension)
         self.contentMaxSize = NSSize(
-          width: screen.width - (Breadcrumbs.margin * 2),
+          width: screen.frame.width - (Breadcrumbs.margin * 2),
           height: Breadcrumbs.dimension
         )
       }
+      let newOriginX = screen.frame.origin.x + Breadcrumbs.margin
+      let newOriginY = screen.frame.origin.y + Breadcrumbs.margin
+      self.setFrameOrigin(NSPoint(x: newOriginX, y: newOriginY))
 
       makeKeyAndOrderFront(nil)
 

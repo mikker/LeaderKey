@@ -8,14 +8,16 @@ enum MysteryBox {
       super.init(
         controller: controller,
         contentRect: NSRect(x: 0, y: 0, width: MysteryBox.size, height: MysteryBox.size))
-      center()
 
       let view = MainView().environmentObject(self.controller.userState)
       contentView = NSHostingView(rootView: view)
     }
 
-    override func show(after: (() -> Void)? = nil) {
-      center()
+    override func show(on screen: NSScreen, after: (() -> Void)? = nil) {
+      let center = screen.center()
+      let newOriginX = center.x - MysteryBox.size / 2
+      let newOriginY = center.y + MysteryBox.size / 8
+      self.setFrameOrigin(NSPoint(x: newOriginX, y: newOriginY))
 
       makeKeyAndOrderFront(nil)
 

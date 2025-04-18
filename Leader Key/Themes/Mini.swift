@@ -6,22 +6,16 @@ enum Mini {
 
   class Window: MainWindow {
     required init(controller: Controller) {
-      super.init(
-        controller: controller,
-        contentRect: NSRect(x: 0, y: 0, width: 0, height: 0))
-
+      let rect = NSRect(x: 0, y: 0, width: Mini.size, height: Mini.size)
+      super.init(controller: controller, contentRect: rect)
       let view = MainView().environmentObject(self.controller.userState)
       contentView = NSHostingView(rootView: view)
     }
 
-    override func show(after: (() -> Void)? = nil) {
-      let screen = NSScreen.main == nil ? NSSize() : NSScreen.main!.frame.size
-
-      self.setFrame(
-        CGRect(
-          x: screen.width - Mini.size - Mini.margin,
-          y: Mini.margin, width: Mini.size, height: Mini.size),
-        display: true)
+    override func show(on screen: NSScreen, after: (() -> Void)? = nil) {
+      let newOriginX = screen.frame.minX + screen.frame.width - Mini.size - Mini.margin
+      let newOriginY = screen.frame.minY + Mini.margin
+      self.setFrameOrigin(NSPoint(x: newOriginX, y: newOriginY))
 
       makeKeyAndOrderFront(nil)
 

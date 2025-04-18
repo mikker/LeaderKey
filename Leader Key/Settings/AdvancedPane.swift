@@ -15,6 +15,7 @@ struct AdvancedPane: View {
   @Default(.cheatsheetDelayMS) var cheatsheetDelayMS
   @Default(.reactivateBehavior) var reactivateBehavior
   @Default(.showAppIconsInCheatsheet) var showAppIconsInCheatsheet
+  @Default(.screen) var screen
 
   var body: some View {
     Settings.Container(contentWidth: contentWidth) {
@@ -132,6 +133,16 @@ struct AdvancedPane: View {
           .labelsHidden()
           .frame(width: 220)
         }
+      }
+
+      Settings.Section(title: "Show Leader Key on", bottomDivider: true) {
+        Picker("", selection: $screen) {
+          Text("Screen containing mouse").tag(Screen.mouse)
+          Text("Primary screen").tag(Screen.primary)
+          Text("Screen with active window").tag(Screen.activeWindow)
+        }
+        .labelsHidden()
+        .frame(width: 220)
       }
       Settings.Section(title: "Other") {
         Defaults.Toggle("Show Leader Key in menubar", key: .showMenuBarIcon)

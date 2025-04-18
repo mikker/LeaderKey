@@ -57,7 +57,8 @@ class Controller {
   func show() {
     Events.send(.willActivate)
 
-    window.show {
+    let screen = Defaults[.screen].getNSScreen() ?? NSScreen()
+    window.show(on: screen) {
       Events.send(.didActivate)
     }
 
@@ -341,5 +342,18 @@ class DontActivateConfiguration {
 
   init() {
     configuration.activates = false
+  }
+}
+
+extension Screen {
+  func getNSScreen() -> NSScreen? {
+    switch self {
+    case .primary:
+      return NSScreen.screens.first
+    case .mouse:
+      return NSScreen.screens.first { $0.frame.contains(NSEvent.mouseLocation) }
+    case .activeWindow:
+      return NSScreen.main
+    }
   }
 }

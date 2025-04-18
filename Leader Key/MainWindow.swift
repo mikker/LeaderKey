@@ -55,7 +55,7 @@ class MainWindow: PanelWindow, NSWindowDelegate {
     controller.keyDown(with: event)
   }
 
-  func show(after: (() -> Void)?) {
+  func show(on screen: NSScreen, after: (() -> Void)?) {
     makeKeyAndOrderFront(nil)
     after?()
   }
