@@ -176,11 +176,11 @@
 		427C17E92BD311B400955B98 /* Leader Key */ = {
 			isa = PBXGroup;
 			children = (
-				42454DDA2D71CB39004E1374 /* ConfigValidator.swift */,
 				42B21FBB2D67566100F4A2C7 /* Alerts.swift */,
 				427C181F2BD31C3D00955B98 /* AppDelegate.swift */,
 				42F4CDCE2D46E2B300D0DD76 /* Cheatsheet.swift */,
 				426E625A2D2E6A98009FD2F2 /* CommandRunner.swift */,
+				42454DDA2D71CB39004E1374 /* ConfigValidator.swift */,
 				427C181B2BD314B500955B98 /* Constants.swift */,
 				427C18272BD31E2E00955B98 /* Controller.swift */,
 				427C184C2BD65C5C00955B98 /* Defaults.swift */,
@@ -188,6 +188,7 @@
 				42F4CDD02D48C51F00D0DD76 /* Extensions.swift */,
 				423632122D676F5200878D92 /* FileMonitor.swift */,
 				42F4CDC82D458FF700D0DD76 /* MainMenu.swift */,
+				427C18252BD31E2E00955B98 /* MainWindow.swift */,
 				427C18532BD6E59300955B98 /* NSWindow+Animations.swift */,
 				427C182C2BD31F9500955B98 /* Settings.swift */,
 				427C18262BD31E2E00955B98 /* StatusItem.swift */,
@@ -195,7 +196,6 @@
 				427C183A2BD329F900955B98 /* UserConfig.swift */,
 				427C182E2BD3206200955B98 /* UserState.swift */,
 				427C184F2BD6652500955B98 /* Util.swift */,
-				427C18252BD31E2E00955B98 /* MainWindow.swift */,
 				427C17EE2BD311B500955B98 /* Assets.xcassets */,
 				423632242D68CC5D00878D92 /* Settings */,
 				427C18362BD3243C00955B98 /* Support */,

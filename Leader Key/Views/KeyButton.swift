@@ -1,13 +1,15 @@
 import AppKit
 import SwiftUI
 
+typealias KeyChangedFn = ((_ before: String?, _ value: String?) -> Void)
+
 struct KeyButton: View {
   @Binding var text: String
   let placeholder: String
   @State private var isListening = false
   @State private var oldValue = ""
   var validationError: ValidationErrorType? = nil
-  var onKeyChanged: (() -> Void)? = nil
+  var onKeyChanged: KeyChangedFn? = nil
 
   var body: some View {
     Button(action: {
@@ -57,7 +59,7 @@ struct KeyListenerView: NSViewRepresentable {
   @Binding var isListening: Bool
   @Binding var text: String
   @Binding var oldValue: String
-  var onKeyChanged: (() -> Void)?
+  var onKeyChanged: KeyChangedFn?
 
   func makeNSView(context: Context) -> NSView {
     let view = KeyListenerNSView()
@@ -87,7 +89,7 @@ struct KeyListenerView: NSViewRepresentable {
     var isListening: Binding<Bool>?
     var text: Binding<String>?
     var oldValue: Binding<String>?
-    var onKeyChanged: (() -> Void)?
+    var onKeyChanged: KeyChangedFn?
 
     override var acceptsFirstResponder: Bool { true }
 
@@ -126,7 +128,7 @@ struct KeyListenerView: NSViewRepresentable {
 
       DispatchQueue.main.async {
         isListening.wrappedValue = false
-        self.onKeyChanged?()
+        self.onKeyChanged?(self.oldValue?.wrappedValue, self.text?.wrappedValue)
       }
     }
 
@@ -134,7 +136,7 @@ struct KeyListenerView: NSViewRepresentable {
       if let isListening = isListening, isListening.wrappedValue {
         DispatchQueue.main.async {
           isListening.wrappedValue = false
-          self.onKeyChanged?()
+          self.onKeyChanged?(self.oldValue?.wrappedValue, self.text?.wrappedValue)
         }
       }
       return super.resignFirstResponder()
@@ -151,26 +153,22 @@ struct KeyListenerView: NSViewRepresentable {
       VStack(spacing: 20) {
         KeyButton(
           text: $text,
-          placeholder: "Key",
-          onKeyChanged: { print("Key changed") }
+          placeholder: "Key"
         )
         KeyButton(
           text: $text,
           placeholder: "Key",
-          validationError: .duplicateKey,
-          onKeyChanged: { print("Key changed") }
+          validationError: .duplicateKey
         )
         KeyButton(
           text: $text,
           placeholder: "Key",
-          validationError: .emptyKey,
-          onKeyChanged: { print("Key changed") }
+          validationError: .emptyKey
         )
         KeyButton(
           text: $text,
           placeholder: "Key",
-          validationError: .nonSingleCharacterKey,
-          onKeyChanged: { print("Key changed") }
+          validationError: .nonSingleCharacterKey
         )
         Text("Current value: '\(text)'")
       }

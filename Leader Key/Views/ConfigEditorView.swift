@@ -216,7 +216,7 @@ struct ActionRow: View {
           get: { action.key ?? "" },
           set: { action.key = $0 }
         ), placeholder: "Key", validationError: validationErrorForKey,
-        onKeyChanged: { userConfig.finishEditingKey() }
+        onKeyChanged: { _, _ in userConfig.finishEditingKey() }
       )
 
       Picker("Type", selection: $action.type) {
@@ -337,7 +337,13 @@ struct GroupRow: View {
           ),
           placeholder: "Group Key",
           validationError: validationErrorForKey,
-          onKeyChanged: { userConfig.finishEditingKey() }
+          onKeyChanged: { maybePrev, value in
+            if maybePrev != value, let prev = maybePrev {
+              Defaults[.groupShortcuts].remove(prev)
+              KeyboardShortcuts.reset([KeyboardShortcuts.Name("group-\(prev)")])
+            }
+            userConfig.finishEditingKey()
+          }
         )
 
         IconPickerMenu(
@@ -364,7 +370,7 @@ struct GroupRow: View {
             .padding(.horizontal, -3)
         }.buttonStyle(.bordered)
 
-        if let key = group.key {
+        if path.count == 1 && group.key != "", let key = group.key {
           KeyboardShortcuts.Recorder(for: KeyboardShortcuts.Name("group-\(key)")) { shortcut in
             if shortcut != nil {
               Defaults[.groupShortcuts].insert(key)
