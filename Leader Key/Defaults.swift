@@ -35,6 +35,10 @@ extension Defaults.Keys {
     "reactivateBehavior", default: .hide, suite: defaultsSuite)
   static let screen = Key<Screen>(
     "screen", default: .primary, suite: defaultsSuite)
+
+  static let groupShortcuts = Key<Set<String>>(
+    "groupShortcuts",
+    default: Set(), suite: defaultsSuite)
 }
 
 enum AutoOpenCheatsheetSetting: String, Defaults.Serializable {

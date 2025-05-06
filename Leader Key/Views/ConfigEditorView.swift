@@ -1,4 +1,5 @@
 import Defaults
+import KeyboardShortcuts
 import SwiftUI
 import SymbolPicker
 
@@ -360,8 +361,20 @@ struct GroupRow: View {
         ) {
           Image(systemName: "chevron.right")
             .rotationEffect(.degrees(isExpanded ? 90 : 0))
-            .padding(.leading, generalPadding / 3)
-        }.buttonStyle(.plain)
+            .padding(.horizontal, -3)
+        }.buttonStyle(.bordered)
+
+        if let key = group.key {
+          KeyboardShortcuts.Recorder(for: KeyboardShortcuts.Name("group-\(key)")) { shortcut in
+            if shortcut != nil {
+              Defaults[.groupShortcuts].insert(key)
+            } else {
+              Defaults[.groupShortcuts].remove(key)
+            }
+
+            (NSApplication.shared.delegate as! AppDelegate).registerGlobalShortcuts()
+          }
+        }
 
         Spacer(minLength: 0)
 
@@ -478,6 +491,6 @@ struct GroupRow: View {
   let userConfig = UserConfig()
 
   return ConfigEditorView(group: .constant(group), expandedGroups: .constant(Set<[Int]>()))
-    .frame(width: 600, height: 500)
+    .frame(width: 720, height: 500)
     .environmentObject(userConfig)
 }

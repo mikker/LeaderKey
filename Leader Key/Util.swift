@@ -1,5 +1,5 @@
-import Foundation
 import AppKit
+import Foundation
 
 func delay(_ milliseconds: Int, callback: @escaping () -> Void) {
   DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(milliseconds), execute: callback)
@@ -12,4 +12,3 @@ extension NSScreen {
     return NSPoint(x: x, y: y)
   }
 }
-

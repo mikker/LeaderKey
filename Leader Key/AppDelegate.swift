@@ -98,21 +98,41 @@ class AppDelegate: NSObject, NSApplicationDelegate,
       }
     }
 
+    registerGlobalShortcuts()
+  }
+
+  func activate() {
+    if self.controller.window.isKeyWindow {
+      switch Defaults[.reactivateBehavior] {
+      case .hide:
+        self.hide()
+      case .reset:
+        self.controller.userState.clear()
+      case .nothing:
+        return
+      }
+    } else if self.controller.window.isVisible {
+      // should never happen as the window will self-hide when not key
+      self.controller.window.makeKeyAndOrderFront(nil)
+    } else {
+      self.show()
+    }
+  }
+
+  func registerGlobalShortcuts() {
+    KeyboardShortcuts.removeAllHandlers()
+
     KeyboardShortcuts.onKeyDown(for: .activate) {
-      if self.controller.window.isKeyWindow {
-        switch Defaults[.reactivateBehavior] {
-        case .hide:
-          self.hide()
-        case .reset:
-          self.controller.userState.clear()
-        case .nothing:
-          return
+      self.activate()
+    }
+
+    for groupKey in Defaults[.groupShortcuts] {
+      print("Registering shortcut for \(groupKey)")
+      KeyboardShortcuts.onKeyDown(for: KeyboardShortcuts.Name("group-\(groupKey)")) {
+        if !self.controller.window.isVisible {
+          self.activate()
         }
-      } else if self.controller.window.isVisible {
-        // should never happen as the window will self-hide when not key
-        self.controller.window.makeKeyAndOrderFront(nil)
-      } else {
-        self.show()
+        self.processKeys([groupKey])
       }
     }
   }
