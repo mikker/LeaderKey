@@ -40,8 +40,8 @@ enum Breadcrumbs {
           height: Breadcrumbs.dimension
         )
       }
-      let newOriginX = screen.frame.origin.x + Breadcrumbs.margin
-      let newOriginY = screen.frame.origin.y + Breadcrumbs.margin
+      let newOriginX = screen.visibleFrame.origin.x + Breadcrumbs.margin
+      let newOriginY = screen.visibleFrame.origin.y + Breadcrumbs.margin
       self.setFrameOrigin(NSPoint(x: newOriginX, y: newOriginY))
 
       makeKeyAndOrderFront(nil)
@@ -63,7 +63,7 @@ enum Breadcrumbs {
 
     override func cheatsheetOrigin(cheatsheetSize: NSSize) -> NSPoint {
       return NSPoint(
-        x: Breadcrumbs.margin,
+        x: frame.minX,
         y: frame.maxY + Breadcrumbs.margin)
     }
   }

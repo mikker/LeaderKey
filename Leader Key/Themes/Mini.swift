@@ -13,8 +13,8 @@ enum Mini {
     }
 
     override func show(on screen: NSScreen, after: (() -> Void)? = nil) {
-      let newOriginX = screen.frame.minX + screen.frame.width - Mini.size - Mini.margin
-      let newOriginY = screen.frame.minY + Mini.margin
+      let newOriginX = screen.visibleFrame.maxX - Mini.size - Mini.margin
+      let newOriginY = screen.visibleFrame.minY + Mini.margin
       self.setFrameOrigin(NSPoint(x: newOriginX, y: newOriginY))
 
       makeKeyAndOrderFront(nil)
@@ -35,11 +35,9 @@ enum Mini {
     }
 
     override func cheatsheetOrigin(cheatsheetSize: NSSize) -> NSPoint {
-      let screen = NSScreen.main == nil ? NSSize() : NSScreen.main!.frame.size
-
       return NSPoint(
-        x: screen.width - cheatsheetSize.width - Mini.margin,
-        y: Mini.margin + frame.height + Mini.margin)
+        x: frame.maxX - cheatsheetSize.width,
+        y: frame.maxY + Mini.margin)
     }
   }
 
