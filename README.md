@@ -59,6 +59,15 @@ See [@mikker's config](https://github.com/mikker/LeaderKey.app/wiki/@mikker's-co
 
 Activate Leader Key, then <kbd>cmd + ,</kbd>.
 
+#### Command action is failing with "Command not found"
+
+You need to make sure your shell environment is correctly set up for non-interactive mode, and exports the `PATH` variable.
+
+**For zsh** make sure you have your `PATH` variable exported in `~/.zshenv`
+
+**For bash** make sure you have your `PATH` variable exported in `~/.bash_profile`
+
+
 ## License
 
 MIT
