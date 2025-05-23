@@ -1,3 +1,7 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 # Leader Key Development Guide
 
 ## Build & Test Commands
@@ -6,6 +10,33 @@
 - Run single test: `xcodebuild -scheme "Leader Key" -testPlan "TestPlan" -only-testing:Leader KeyTests/UserConfigTests/testInitializesWithDefaults test`
 - Bump version: `bin/bump`
 - Create release: `bin/release`
+
+## Architecture Overview
+
+Leader Key is a macOS application that provides customizable keyboard shortcuts. The core architecture consists of:
+
+**Key Components:**
+- `AppDelegate`: Application lifecycle, global shortcuts registration, update management
+- `Controller`: Central event handling, manages key sequences and window display
+- `UserConfig`: JSON configuration management with validation
+- `UserState`: Tracks navigation through key sequences
+- `MainWindow`: Base class for theme windows
+
+**Theme System:**
+- Themes inherit from `MainWindow` and implement `draw()` method
+- Available themes: MysteryBox, Mini, Breadcrumbs, ForTheHorde, Cheater
+- Each theme provides different visual representations of shortcuts
+
+**Configuration Flow:**
+- Config stored at `~/Library/Application Support/Leader Key/config.json`
+- `FileMonitor` watches for changes and triggers reload
+- `ConfigValidator` ensures no key conflicts
+- Actions support: applications, URLs, commands, folders
+
+**Testing Architecture:**
+- Uses XCTest with custom `TestAlertManager` for UI testing
+- Tests use isolated UserDefaults and temporary directories
+- Focus on configuration validation and state management
 
 ## Code Style Guidelines
 - **Imports**: Group Foundation/AppKit imports first, then third-party libraries (Combine, Defaults)
