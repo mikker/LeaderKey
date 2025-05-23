@@ -8,7 +8,7 @@
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>CFBundleURLName</key>
-			<string>com.mikker.leaderkey</string>
+			<string>com.brnbw.LeaderKey</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>leaderkey</string>
