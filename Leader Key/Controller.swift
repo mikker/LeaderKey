@@ -55,6 +55,11 @@ class Controller {
   }
 
   func show() {
+    // Capture clipboard contents before showing
+    let pasteboard = NSPasteboard.general
+    let clipboardString = pasteboard.string(forType: .string)
+    userState.updateClipboard(clipboardString)
+
     Events.send(.willActivate)
 
     let screen = Defaults[.screen].getNSScreen() ?? NSScreen()
@@ -277,20 +282,33 @@ class Controller {
   }
 
   private func runAction(_ action: Action) {
-    switch action.type {
+    // Always capture clipboard right before running the action
+    let pasteboard = NSPasteboard.general
+    let clipboardString = pasteboard.string(forType: .string) ?? ""
+    userState.updateClipboard(clipboardString)
+
+    var processedAction = action
+    // Only substitute {clip} for url/command types
+    if action.type == .url || action.type == .command {
+      var clipboard = userState.clipboard ?? ""
+      // Escape single quotes for safe shell insertion: 'foo' -> '\''
+      clipboard = clipboard.replacingOccurrences(of: "'", with: "'\"'\"'")
+      processedAction.value = action.value.replacingOccurrences(of: "{clip}", with: clipboard)
+    }
+    switch processedAction.type {
     case .application:
       NSWorkspace.shared.openApplication(
-        at: URL(fileURLWithPath: action.value),
+        at: URL(fileURLWithPath: processedAction.value),
         configuration: NSWorkspace.OpenConfiguration())
     case .url:
-      openURL(action)
+      openURL(processedAction)
     case .command:
-      CommandRunner.run(action.value)
+      CommandRunner.run(processedAction.value)
     case .folder:
-      let path: String = (action.value as NSString).expandingTildeInPath
+      let path: String = (processedAction.value as NSString).expandingTildeInPath
       NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: path)
     default:
-      print("\(action.type) unknown")
+      print("\(processedAction.type) unknown")
     }
 
     if window.isVisible {

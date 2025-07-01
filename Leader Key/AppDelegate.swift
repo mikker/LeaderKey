@@ -98,7 +98,7 @@ class AppDelegate: NSObject, NSApplicationDelegate,
       }
     }
 
-    registerGlobalShortcuts()
+    self.registerGlobalShortcuts()
   }
 
   func activate() {
