@@ -199,7 +199,7 @@ class AppDelegate: NSObject, NSApplicationDelegate,
       ])
   }
 
-  func standardUserDriverWillFinishUpdateSession() { }
+  func standardUserDriverWillFinishUpdateSession() {}
 
   // MARK: - UNUserNotificationCenter Delegate
 

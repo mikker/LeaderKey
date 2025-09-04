@@ -49,7 +49,8 @@ class StatusItem {
     menu.addItem(NSMenuItem.separator())
 
     // Settings
-    let preferencesItem = NSMenuItem(title: "Settings…", action: #selector(showPreferences), keyEquivalent: ",")
+    let preferencesItem = NSMenuItem(
+      title: "Settings…", action: #selector(showPreferences), keyEquivalent: ",")
     preferencesItem.target = self
     menu.addItem(preferencesItem)
 
