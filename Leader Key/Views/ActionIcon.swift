@@ -2,7 +2,7 @@ import Defaults
 import Kingfisher
 import SwiftUI
 
-func actionIcon(item: ActionOrGroup, iconSize: NSSize) -> some View {
+func actionIcon(item: ActionOrGroup, iconSize: NSSize, loadFavicons: Bool = true) -> some View {
   // Extract common properties
   let (iconPath, type, value): (String?, Type?, String?) =
     switch item {
@@ -31,7 +31,15 @@ func actionIcon(item: ActionOrGroup, iconSize: NSSize) -> some View {
     case .application:
       return AnyView(AppIconImage(appPath: value ?? "", size: iconSize))
     case .url:
-      return AnyView(FavIconImage(url: value ?? "", icon: "link"))
+      if loadFavicons {
+        return AnyView(FavIconImage(url: value ?? "", icon: "link"))
+      } else {
+        return AnyView(
+          Image(systemName: "link")
+            .foregroundStyle(.secondary)
+            .frame(width: iconSize.width, height: iconSize.height, alignment: .center)
+        )
+      }
     case .command:
       return AnyView(
         Image(systemName: "terminal")

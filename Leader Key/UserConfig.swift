@@ -7,6 +7,8 @@ let emptyRoot = Group(key: "🚫", label: "Config error", actions: [])
 class UserConfig: ObservableObject {
   @Published var root = emptyRoot
   @Published var validationErrors: [ValidationError] = []
+  // O(1) lookup for row validation; keys are path strings like "1/0/3"
+  @Published var validationErrorsByPath: [String: ValidationErrorType] = [:]
 
   let fileName = "config.json"
   private let alertHandler: AlertHandler
@@ -36,7 +38,7 @@ class UserConfig: ObservableObject {
   }
 
   func saveConfig() {
-    validationErrors = ConfigValidator.validate(group: root)
+    setValidationErrors(ConfigValidator.validate(group: root))
 
     if !validationErrors.isEmpty {
       let errorCount = validationErrors.count
@@ -159,7 +161,7 @@ class UserConfig: ObservableObject {
       let decoder = JSONDecoder()
       root = try decoder.decode(Group.self, from: jsonData)
 
-      validationErrors = ConfigValidator.validate(group: root)
+      setValidationErrors(ConfigValidator.validate(group: root))
 
       if !validationErrors.isEmpty && !suppressAlerts && !suppressValidationAlerts {
         let errorCount = validationErrors.count
@@ -177,7 +179,7 @@ class UserConfig: ObservableObject {
   // MARK: - Validation
 
   func validateWithoutAlerts() {
-    validationErrors = ConfigValidator.validate(group: root)
+    setValidationErrors(ConfigValidator.validate(group: root))
   }
 
   func finishEditingKey() {
@@ -193,6 +195,24 @@ class UserConfig: ObservableObject {
       root = emptyRoot
       validationErrors = []
     }
+  }
+}
+
+// MARK: - Validation helpers
+extension UserConfig {
+  private func pathKey(_ path: [Int]) -> String { path.map(String.init).joined(separator: "/") }
+
+  func setValidationErrors(_ errors: [ValidationError]) {
+    validationErrors = errors
+    var map: [String: ValidationErrorType] = [:]
+    for e in errors {
+      map[pathKey(e.path)] = e.type
+    }
+    validationErrorsByPath = map
+  }
+
+  func validationError(at path: [Int]) -> ValidationErrorType? {
+    validationErrorsByPath[pathKey(path)]
   }
 }
 
@@ -241,6 +261,9 @@ protocol Item {
 }
 
 struct Action: Item, Codable, Equatable {
+  // UI-only stable identity. Not persisted to JSON.
+  var uiid: UUID = UUID()
+
   var key: String?
   var type: Type
   var label: String?
@@ -268,9 +291,44 @@ struct Action: Item, Codable, Equatable {
       return value
     }
   }
+  private enum CodingKeys: String, CodingKey { case key, type, label, value, iconPath }
+
+  init(
+    uiid: UUID = UUID(), key: String?, type: Type, label: String? = nil, value: String,
+    iconPath: String? = nil
+  ) {
+    self.uiid = uiid
+    self.key = key
+    self.type = type
+    self.label = label
+    self.value = value
+    self.iconPath = iconPath
+  }
+
+  init(from decoder: Decoder) throws {
+    let c = try decoder.container(keyedBy: CodingKeys.self)
+    self.uiid = UUID()
+    self.key = try c.decodeIfPresent(String.self, forKey: .key)
+    self.type = try c.decode(Type.self, forKey: .type)
+    self.label = try c.decodeIfPresent(String.self, forKey: .label)
+    self.value = try c.decode(String.self, forKey: .value)
+    self.iconPath = try c.decodeIfPresent(String.self, forKey: .iconPath)
+  }
+
+  func encode(to encoder: Encoder) throws {
+    var c = encoder.container(keyedBy: CodingKeys.self)
+    try c.encodeIfPresent(key, forKey: .key)
+    try c.encode(type, forKey: .type)
+    try c.encode(value, forKey: .value)
+    if let l = label, !l.isEmpty { try c.encode(l, forKey: .label) }
+    try c.encodeIfPresent(iconPath, forKey: .iconPath)
+  }
 }
 
 struct Group: Item, Codable, Equatable {
+  // UI-only stable identity. Not persisted to JSON.
+  var uiid: UUID = UUID()
+
   var key: String?
   var type: Type = .group
   var label: String?
@@ -287,6 +345,38 @@ struct Group: Item, Codable, Equatable {
     return lhs.key == rhs.key && lhs.type == rhs.type && lhs.label == rhs.label
       && lhs.actions == rhs.actions
   }
+  private enum CodingKeys: String, CodingKey { case key, type, label, iconPath, actions }
+
+  init(
+    uiid: UUID = UUID(), key: String?, type: Type = .group, label: String? = nil,
+    iconPath: String? = nil, actions: [ActionOrGroup]
+  ) {
+    self.uiid = uiid
+    self.key = key
+    self.type = type
+    self.label = label
+    self.iconPath = iconPath
+    self.actions = actions
+  }
+
+  init(from decoder: Decoder) throws {
+    let c = try decoder.container(keyedBy: CodingKeys.self)
+    self.uiid = UUID()
+    self.key = try c.decodeIfPresent(String.self, forKey: .key)
+    self.type = .group
+    self.label = try c.decodeIfPresent(String.self, forKey: .label)
+    self.iconPath = try c.decodeIfPresent(String.self, forKey: .iconPath)
+    self.actions = try c.decode([ActionOrGroup].self, forKey: .actions)
+  }
+
+  func encode(to encoder: Encoder) throws {
+    var c = encoder.container(keyedBy: CodingKeys.self)
+    try c.encodeIfPresent(key, forKey: .key)
+    try c.encode(Type.group, forKey: .type)
+    try c.encode(actions, forKey: .actions)
+    if let l = label, !l.isEmpty { try c.encode(l, forKey: .label) }
+    try c.encodeIfPresent(iconPath, forKey: .iconPath)
+  }
 }
 
 enum ActionOrGroup: Codable, Equatable {
@@ -302,6 +392,13 @@ enum ActionOrGroup: Codable, Equatable {
 
   private enum CodingKeys: String, CodingKey {
     case key, type, value, actions, label, iconPath
+  }
+
+  var uiid: UUID {
+    switch self {
+    case .action(let a): return a.uiid
+    case .group(let g): return g.uiid
+    }
   }
 
   init(from decoder: Decoder) throws {

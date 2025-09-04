@@ -1,0 +1,1293 @@
+import AppKit
+import ObjectiveC
+import SwiftUI
+import SymbolPicker
+import UniformTypeIdentifiers
+
+// An ultra-smooth, virtualized AppKit editor using NSOutlineView.
+// Keeps file-format JSON unchanged by converting the tree to/from
+// our existing Action/Group structs.
+
+struct ConfigOutlineEditorView: NSViewRepresentable {
+  @Binding var root: Group
+  var onChange: ((Group) -> Void)? = nil
+
+  func makeNSView(context: Context) -> NSScrollView {
+    let controller = OutlineController()
+    controller.onChange = { updatedRoot in
+      onChange?(updatedRoot)
+      root = updatedRoot
+    }
+    context.coordinator.controller = controller
+
+    let scroll = NSScrollView()
+    scroll.hasVerticalScroller = true
+    scroll.hasHorizontalScroller = false
+    scroll.drawsBackground = true
+    scroll.backgroundColor = .windowBackgroundColor
+    controller.outline.backgroundColor = .windowBackgroundColor
+    scroll.documentView = controller.outline
+    controller.render(root: root)
+    return scroll
+  }
+
+  func updateNSView(_ nsView: NSScrollView, context: Context) {
+    context.coordinator.controller?.render(root: root)
+  }
+
+  func makeCoordinator() -> Coordinator { Coordinator() }
+  class Coordinator { fileprivate var controller: OutlineController? }
+}
+
+// MARK: - Controller
+
+private class OutlineController: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegate {
+  let outline = NSOutlineView()
+  private let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("main"))
+  private let actionID = NSUserInterfaceItemIdentifier("ActionCell")
+  private let groupID = NSUserInterfaceItemIdentifier("GroupCell")
+  private var rootNode: EditorNode = EditorNode.group(Group(key: nil, actions: []))
+  var onChange: ((Group) -> Void)?
+  private var observers: [NSObjectProtocol] = []
+  private var didApplyInitialExpansion = false
+  private let expandedDefaultsKey = "ConfigOutlineEditor.ExpandedIndexPaths"
+  private let dragType = NSPasteboard.PasteboardType("com.leaderkey.node")
+  private var lastRenderedRoot: Group?
+
+  override init() {
+    super.init()
+    outline.rowHeight = 36
+    outline.headerView = nil
+    outline.usesAlternatingRowBackgroundColors = false
+    outline.style = .sourceList
+    outline.allowsColumnReordering = false
+    outline.allowsMultipleSelection = false
+    outline.intercellSpacing = NSSize(width: 0, height: 4)  // add spacing between rows
+    outline.addTableColumn(column)
+    outline.outlineTableColumn = column
+    outline.delegate = self
+    outline.dataSource = self
+    outline.registerForDraggedTypes([dragType])
+    outline.setDraggingSourceOperationMask(.move, forLocal: true)
+
+    // Expand/Collapse all via notifications from SwiftUI container
+    let nc = NotificationCenter.default
+    observers.append(
+      nc.addObserver(forName: .lkExpandAll, object: nil, queue: .main) { [weak self] _ in
+        guard let self else { return }
+        self.expandAll()
+        self.saveCurrentExpandedState()
+      })
+    observers.append(
+      nc.addObserver(forName: .lkCollapseAll, object: nil, queue: .main) { [weak self] _ in
+        guard let self else { return }
+        self.collapseAll()
+        self.saveCurrentExpandedState()
+      })
+    observers.append(
+      nc.addObserver(forName: .lkSortAZ, object: nil, queue: .main) { [weak self] _ in
+        self?.sortAll()
+      })
+  }
+
+  deinit {
+    for o in observers {
+      NotificationCenter.default.removeObserver(o)
+    }
+  }
+
+  func render(root: Group) {
+    if let last = lastRenderedRoot, last == root { return }
+    // Capture current expansions by IDs for stability across reorder/sort
+    let expandedIDs = collectExpandedIDs()
+    // Also load persisted paths (for fresh launches)
+    let savedPaths = loadExpandedState() ?? Set<String>()
+
+    rootNode = EditorNode.from(group: root)
+    outline.reloadData()
+
+    if !savedPaths.isEmpty {
+      restoreExpandedState(savedPaths)
+    } else if !expandedIDs.isEmpty {
+      restoreExpandedByIDs(expandedIDs)
+    } else if !didApplyInitialExpansion {
+      outline.expandItem(nil, expandChildren: true)
+    }
+    didApplyInitialExpansion = true
+    lastRenderedRoot = root
+  }
+
+  // MARK: DataSource
+  func outlineView(_ outlineView: NSOutlineView, numberOfChildrenOfItem item: Any?) -> Int {
+    let node = (item as? EditorNode) ?? rootNode
+    return node.children.count
+  }
+
+  func outlineView(_ outlineView: NSOutlineView, isItemExpandable item: Any) -> Bool {
+    guard let node = item as? EditorNode else { return false }
+    return node.isGroup
+  }
+
+  func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: Any?) -> Any {
+    let node = (item as? EditorNode) ?? rootNode
+    return node.children[index]
+  }
+
+  // MARK: Delegate
+  func outlineView(_ outlineView: NSOutlineView, viewFor tableColumn: NSTableColumn?, item: Any)
+    -> NSView?
+  {
+    guard let node = item as? EditorNode else { return nil }
+
+    if node.isGroup {
+      let cell =
+        outlineView.makeView(withIdentifier: groupID, owner: self) as? GroupCellView
+        ?? GroupCellView(identifier: groupID)
+      cell.configure(
+        node: node,
+        onChange: { [weak self] payload in
+          guard let self = self else { return }
+          node.apply(payload)
+          self.onChange?(self.rootNode.toGroup())
+        },
+        onDelete: { [weak self] in
+          guard let self = self else { return }
+          node.deleteFromParent()
+          outlineView.reloadData()
+          self.onChange?(self.rootNode.toGroup())
+        },
+        onDuplicate: { [weak self] in
+          guard let self = self else { return }
+          node.duplicateInParent()
+          outlineView.reloadData()
+          self.onChange?(self.rootNode.toGroup())
+        },
+        onAddAction: { [weak self] in
+          guard let self else { return }
+          node.children.append(
+            EditorNode.action(Action(key: "", type: .application, value: ""), parent: node))
+          outlineView.reloadData()
+          outlineView.expandItem(node)
+          self.saveCurrentExpandedState()
+          self.onChange?(self.rootNode.toGroup())
+        },
+        onAddGroup: { [weak self] in
+          guard let self else { return }
+          node.children.append(EditorNode.group(Group(key: "", actions: []), parent: node))
+          outlineView.reloadData()
+          outlineView.expandItem(node)
+          self.saveCurrentExpandedState()
+          self.onChange?(self.rootNode.toGroup())
+        })
+      return cell
+    } else {
+      let cell =
+        outlineView.makeView(withIdentifier: actionID, owner: self) as? ActionCellView
+        ?? ActionCellView(identifier: actionID)
+      cell.configure(
+        node: node,
+        onChange: { [weak self] payload in
+          guard let self = self else { return }
+          node.apply(payload)
+          self.onChange?(self.rootNode.toGroup())
+        },
+        onDelete: { [weak self] in
+          guard let self = self else { return }
+          node.deleteFromParent()
+          outlineView.reloadData()
+          self.onChange?(self.rootNode.toGroup())
+        },
+        onDuplicate: { [weak self] in
+          guard let self = self else { return }
+          node.duplicateInParent()
+          outlineView.reloadData()
+          self.onChange?(self.rootNode.toGroup())
+        })
+      return cell
+    }
+  }
+
+  func outlineView(_ outlineView: NSOutlineView, shouldEdit tableColumn: NSTableColumn?, item: Any)
+    -> Bool
+  {
+    // Allow text fields inside cells to begin editing
+    return true
+  }
+
+  // MARK: Expand/Collapse helpers
+  private func expandAll() {
+    outline.expandItem(nil, expandChildren: true)
+  }
+
+  private func collapseAll() {
+    outline.collapseItem(nil, collapseChildren: true)
+  }
+
+  // MARK: Persisted expansion state
+  private func indexPath(for node: EditorNode) -> [Int]? {
+    var path: [Int] = []
+    var current: EditorNode? = node
+    while let n = current, let p = n.parent {
+      guard let idx = p.children.firstIndex(where: { $0 === n }) else { return nil }
+      path.insert(idx, at: 0)
+      current = p
+    }
+    // If current has no parent, n is root; paths are from root's children
+    return path
+  }
+
+  private func node(at path: [Int]) -> EditorNode? {
+    var node: EditorNode = rootNode
+    var cursor = path[...]
+    while let first = cursor.first {
+      guard first >= 0 && first < node.children.count else { return nil }
+      node = node.children[first]
+      cursor = cursor.dropFirst()
+    }
+    return node
+  }
+
+  private func encode(path: [Int]) -> String { path.map(String.init).joined(separator: ".") }
+  private func decode(path: String) -> [Int] { path.split(separator: ".").compactMap { Int($0) } }
+
+  private func collectExpandedPaths() -> Set<String> {
+    var set: Set<String> = []
+    func walk(node: EditorNode, path: [Int]) {
+      if node.isGroup && outline.isItemExpanded(node) {
+        set.insert(encode(path: path))
+      }
+      for (i, child) in node.children.enumerated() {
+        walk(node: child, path: path + [i])
+      }
+    }
+    for (i, child) in rootNode.children.enumerated() { walk(node: child, path: [i]) }
+    return set
+  }
+
+  private func collectExpandedIDs() -> Set<UUID> {
+    var set: Set<UUID> = []
+    func walk(node: EditorNode) {
+      if node.isGroup && outline.isItemExpanded(node) { set.insert(node.id) }
+      for child in node.children { walk(node: child) }
+    }
+    walk(node: rootNode)
+    return set
+  }
+
+  private func saveCurrentExpandedState() {
+    let set = collectExpandedPaths()
+    UserDefaults.standard.set(Array(set), forKey: expandedDefaultsKey)
+  }
+
+  private func loadExpandedState() -> Set<String>? {
+    if let arr = UserDefaults.standard.array(forKey: expandedDefaultsKey) as? [String] {
+      return Set(arr)
+    }
+    return nil
+  }
+
+  private func restoreExpandedState(_ saved: Set<String>) {
+    // After reload, items are collapsed; just expand saved nodes.
+    for key in saved.sorted() {  // deterministic order
+      let path = decode(path: key)
+      if let n = node(at: path) { outline.expandItem(n, expandChildren: false) }
+    }
+  }
+
+  private func restoreExpandedByIDs(_ ids: Set<UUID>) {
+    func walk(node: EditorNode) {
+      if ids.contains(node.id) { outline.expandItem(node, expandChildren: false) }
+      for child in node.children { walk(node: child) }
+    }
+    walk(node: rootNode)
+  }
+
+  // MARK: NSOutlineViewDelegate expansion tracking
+  func outlineView(_ outlineView: NSOutlineView, shouldExpandItem item: Any) -> Bool {
+    defer { saveCurrentExpandedState() }
+    return true
+  }
+
+  func outlineView(_ outlineView: NSOutlineView, shouldCollapseItem item: Any) -> Bool {
+    defer { saveCurrentExpandedState() }
+    return true
+  }
+
+  // MARK: Drag & Drop reordering
+  func outlineView(_ outlineView: NSOutlineView, pasteboardWriterForItem item: Any)
+    -> NSPasteboardWriting?
+  {
+    guard let node = item as? EditorNode else { return nil }
+    let pb = NSPasteboardItem()
+    pb.setString(node.id.uuidString, forType: dragType)
+    return pb
+  }
+
+  func outlineView(
+    _ outlineView: NSOutlineView, validateDrop info: NSDraggingInfo, proposedItem item: Any?,
+    proposedChildIndex index: Int
+  ) -> NSDragOperation {
+    // Be permissive; we will normalize the target in acceptDrop
+    return .move
+  }
+
+  func outlineView(
+    _ outlineView: NSOutlineView, acceptDrop info: NSDraggingInfo, item: Any?, childIndex: Int
+  ) -> Bool {
+    guard let str = info.draggingPasteboard.string(forType: dragType),
+      let dragged = findNode(by: str)
+    else { return false }
+
+    // Normalize drop target: drop into groups; otherwise drop next to the leaf within its parent
+    var targetParent: EditorNode
+    var insertIndex = childIndex
+    if let target = item as? EditorNode {
+      if target.isGroup {
+        targetParent = target
+        if insertIndex == NSOutlineViewDropOnItemIndex { insertIndex = targetParent.children.count }
+      } else {
+        targetParent = target.parent ?? rootNode
+        if insertIndex == NSOutlineViewDropOnItemIndex {
+          // Dropped "on" a leaf; place after it
+          insertIndex =
+            (targetParent.children.firstIndex(where: { $0 === target })
+              ?? targetParent.children.count) + 1
+        }
+      }
+    } else {
+      targetParent = rootNode
+      if insertIndex == NSOutlineViewDropOnItemIndex { insertIndex = targetParent.children.count }
+    }
+
+    // Snapshot expansion state
+    let snapshotIDs = collectExpandedIDs()
+
+    // Remove from old parent
+    guard let oldParent = dragged.parent,
+      let oldIndex = oldParent.children.firstIndex(where: { $0 === dragged })
+    else { return false }
+
+    // Prevent moving a node into its own descendant
+    var ancestor: EditorNode? = targetParent
+    while let a = ancestor {
+      if a === dragged { return false }
+      ancestor = a.parent
+    }
+    oldParent.children.remove(at: oldIndex)
+
+    // Adjust index if moving within same parent and removing an earlier index
+    if oldParent === targetParent && oldIndex < insertIndex { insertIndex -= 1 }
+
+    // Insert at target
+    dragged.parent = targetParent
+    insertIndex = max(0, min(targetParent.children.count, insertIndex))
+    targetParent.children.insert(dragged, at: insertIndex)
+
+    outline.reloadData()
+    restoreExpandedByIDs(snapshotIDs)
+    saveCurrentExpandedState()
+    onChange?(rootNode.toGroup())
+    return true
+  }
+
+  private func findNode(by idString: String) -> EditorNode? {
+    func walk(_ node: EditorNode) -> EditorNode? {
+      if node.id.uuidString == idString { return node }
+      for child in node.children { if let f = walk(child) { return f } }
+      return nil
+    }
+    return walk(rootNode)
+  }
+
+  // MARK: Sort A→Z
+  private func sortAll() {
+    let expansionIDs = collectExpandedIDs()
+
+    func sortRec(_ node: EditorNode) {
+      for child in node.children { sortRec(child) }
+      node.children.sort(by: { a, b in
+        let ka = keyString(for: a)
+        let kb = keyString(for: b)
+        if ka.isEmpty != kb.isEmpty { return !ka.isEmpty }  // non-empty first
+        return ka.localizedCaseInsensitiveCompare(kb) == .orderedAscending
+      })
+    }
+    sortRec(rootNode)
+    outline.reloadData()
+    restoreExpandedByIDs(expansionIDs)
+    saveCurrentExpandedState()
+    onChange?(rootNode.toGroup())
+  }
+
+  private func keyString(for node: EditorNode) -> String {
+    switch node.kind {
+    case .action(let a): return a.key ?? ""
+    case .group(let g): return g.key ?? ""
+    }
+  }
+}
+
+// MARK: - Row Views
+
+private enum EditorPayload {
+  case action(Action)
+  case group(Group)
+}
+
+private class ActionCellView: NSTableCellView, NSWindowDelegate {
+  private enum Layout {
+    static let keyWidth: CGFloat = 28
+    static let typeWidth: CGFloat = 110
+    static let chooserWidth: CGFloat = 70
+    static let valueWidth: CGFloat = 360
+    static let labelWidth: CGFloat = 140
+    static let iconButtonWidth: CGFloat = 28
+    static let iconSize: CGFloat = 24
+  }
+  private var keyButton = NSButton()
+  private var typePopup = NSPopUpButton()
+  private var iconButton = NSButton()
+  private var valueStack = NSStackView()
+  private var labelButton = NSButton()
+  private var moreBtn = NSButton()
+
+  private var onChange: ((EditorPayload) -> Void)?
+  private var onDelete: (() -> Void)?
+  private var onDuplicate: (() -> Void)?
+  private var node: EditorNode?
+  private var symbolWindow: NSWindow?
+  private weak var symbolParent: NSWindow?
+
+  convenience init(identifier: NSUserInterfaceItemIdentifier) {
+    self.init(frame: .zero)
+    self.identifier = identifier
+    setup()
+  }
+
+  private func setup() {
+    let container = NSStackView()
+    container.orientation = .horizontal
+    container.spacing = 8
+    container.translatesAutoresizingMaskIntoConstraints = false
+
+    keyButton.bezelStyle = .rounded
+    keyButton.controlSize = .regular
+    keyButton.widthAnchor.constraint(equalToConstant: Layout.keyWidth).isActive = true
+    typePopup.addItems(withTitles: ["Application", "URL", "Command", "Folder"])
+    typePopup.controlSize = .regular
+    typePopup.widthAnchor.constraint(equalToConstant: Layout.typeWidth).isActive = true
+    valueStack.orientation = .horizontal
+    valueStack.spacing = 6
+    valueStack.setContentHuggingPriority(.defaultLow, for: .horizontal)
+    valueStack.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+    labelButton.bezelStyle = .rounded
+    labelButton.controlSize = .regular
+    labelButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+    labelButton.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+    do {  // Prefer label column width, but allow shrinking without conflicts
+      let c = labelButton.widthAnchor.constraint(lessThanOrEqualToConstant: Layout.labelWidth)
+      c.priority = .defaultHigh
+      c.isActive = true
+    }
+    moreBtn.bezelStyle = .rounded
+    moreBtn.controlSize = .regular
+    moreBtn.image = NSImage(systemSymbolName: "ellipsis.circle", accessibilityDescription: nil)
+    iconButton.bezelStyle = .rounded
+    iconButton.controlSize = .regular
+    iconButton.imagePosition = .imageOnly
+    iconButton.imageScaling = .scaleProportionallyDown
+    iconButton.widthAnchor.constraint(equalToConstant: Layout.iconButtonWidth).isActive = true
+
+    let spacer = NSView()
+    spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
+    spacer.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+    for view in [keyButton, typePopup, iconButton, valueStack, spacer, labelButton, moreBtn] {
+      container.addArrangedSubview(view)
+    }
+    addSubview(container)
+    NSLayoutConstraint.activate([
+      // Leave a small drag gutter so drags can start even when row is full of controls
+      container.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
+      container.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -4),
+      container.topAnchor.constraint(equalTo: topAnchor, constant: 2),
+      container.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -2),
+    ])
+
+    // Actions
+    keyButton.targetClosure { [weak self] in self?.beginKeyCapture() }
+    typePopup.targetClosure { [weak self] in self?.propagate() }
+    iconButton.targetClosure { [weak self] in self?.showIconMenu(anchor: self?.iconButton) }
+    moreBtn.targetClosure { [weak self] in self?.showMoreMenu(anchor: self?.moreBtn) }
+  }
+
+  func configure(
+    node: EditorNode, onChange: @escaping (EditorPayload) -> Void, onDelete: @escaping () -> Void,
+    onDuplicate: @escaping () -> Void
+  ) {
+    self.node = node
+    self.onChange = onChange
+    self.onDelete = onDelete
+    self.onDuplicate = onDuplicate
+    guard case .action(let action) = node.kind else { return }
+
+    updateButtons(for: action)
+    typePopup.selectItem(at: Self.index(for: action.type))
+    rebuildValue(for: action)
+    updateIcon(for: action)
+  }
+
+  private func showMoreMenu(anchor: NSView?) {
+    guard let anchor else { return }
+    let menu = NSMenu()
+    menu.addItem(withTitle: "Duplicate", action: #selector(handleDuplicate), keyEquivalent: "")
+    menu.addItem(withTitle: "Delete", action: #selector(handleDelete), keyEquivalent: "")
+    for item in menu.items { item.target = self }
+    let point = NSPoint(x: 0, y: anchor.bounds.height)
+    menu.popUp(positioning: nil, at: point, in: anchor)
+  }
+
+  @objc private func handleDuplicate() { onDuplicate?() }
+  @objc private func handleDelete() { onDelete?() }
+
+  private func updateButtons(for action: Action) {
+    keyButton.title = (action.key?.isEmpty ?? true) ? "Key" : (action.key ?? "Key")
+    let isPlaceholder = (action.label?.isEmpty ?? true)
+    setButtonTitle(
+      labelButton, text: isPlaceholder ? "Label" : (action.label ?? "Label"),
+      placeholder: isPlaceholder)
+  }
+
+  private func rebuildValue(for action: Action) {
+    while let v = valueStack.arrangedSubviews.first { v.removeFromSuperview() }
+    switch action.type {
+    case .application:
+      let choose = Self.chooseButton(
+        title: "Choose…", chooseDir: false, allowedTypes: [.application, .applicationBundle],
+        width: Layout.chooserWidth
+      ) { [weak self] url in
+        guard var a = self?.currentAction() else { return }
+        a.value = url.path
+        self?.onChange?(.action(a))
+      }
+      let label = NSTextField(labelWithString: action.value)
+      label.lineBreakMode = .byTruncatingMiddle
+      label.controlSize = .regular
+      label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+      do {  // Target width without forcing conflicts
+        let c = label.widthAnchor.constraint(lessThanOrEqualToConstant: Layout.valueWidth)
+        c.priority = .defaultHigh
+        c.isActive = true
+      }
+      for v in [choose, label] { valueStack.addArrangedSubview(v) }
+    case .folder:
+      let choose = Self.chooseButton(
+        title: "Choose…", chooseDir: true, allowedTypes: nil, width: Layout.chooserWidth
+      ) { [weak self] url in
+        guard var a = self?.currentAction() else { return }
+        a.value = url.path
+        self?.onChange?(.action(a))
+      }
+      let label = NSTextField(labelWithString: action.value)
+      label.lineBreakMode = .byTruncatingMiddle
+      label.controlSize = .regular
+      label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+      do {
+        let c = label.widthAnchor.constraint(lessThanOrEqualToConstant: Layout.valueWidth)
+        c.priority = .defaultHigh
+        c.isActive = true
+      }
+      for v in [choose, label] { valueStack.addArrangedSubview(v) }
+    default:
+      let edit = NSButton(title: "Edit…", target: nil, action: nil)
+      edit.controlSize = .regular
+      edit.bezelStyle = .rounded
+      edit.widthAnchor.constraint(equalToConstant: Layout.chooserWidth).isActive = true
+      let preview = NSTextField(labelWithString: action.value)
+      preview.lineBreakMode = .byTruncatingMiddle
+      preview.controlSize = .regular
+      preview.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+      do {
+        let c = preview.widthAnchor.constraint(lessThanOrEqualToConstant: Layout.valueWidth)
+        c.priority = .defaultHigh
+        c.isActive = true
+      }
+      edit.targetClosure { [weak self] in
+        self?.promptText(title: "Value", initial: action.value) { text in
+          guard var a = self?.currentAction() else { return }
+          a.value = text
+          self?.onChange?(.action(a))
+          self?.rebuildValue(for: a)
+        }
+      }
+      for v in [edit, preview] { valueStack.addArrangedSubview(v) }
+    }
+  }
+
+  private func propagate() {
+    guard let action = currentAction() else { return }
+    onChange?(.action(action))
+    rebuildValue(for: action)  // ensure value UI matches type after change
+  }
+
+  private func currentAction() -> Action? {
+    guard case .action(var a) = node?.kind else { return nil }
+    let keyTitle = keyButton.title
+    a.key = (keyTitle == "Key" || keyTitle.isEmpty) ? nil : keyTitle
+    a.type = Self.type(for: typePopup.indexOfSelectedItem)
+    let labelTitle = labelButton.title
+    a.label = (labelTitle == "Label" || labelTitle.isEmpty) ? nil : labelTitle
+    return a
+  }
+
+  private static func chooseButton(
+    title: String, chooseDir: Bool, allowedTypes: [UTType]?, width: CGFloat,
+    picked: @escaping (URL) -> Void
+  ) -> NSButton {
+    let b = NSButton(title: title, target: nil, action: nil)
+    b.controlSize = .regular
+    b.bezelStyle = .rounded
+    b.widthAnchor.constraint(equalToConstant: width).isActive = true
+    b.targetClosure {
+      let panel = NSOpenPanel()
+      panel.allowsMultipleSelection = false
+      panel.canChooseDirectories = chooseDir
+      panel.canChooseFiles = !chooseDir
+      if let types = allowedTypes { panel.allowedContentTypes = types }
+      panel.directoryURL =
+        chooseDir
+        ? FileManager.default.homeDirectoryForCurrentUser : URL(fileURLWithPath: "/Applications")
+      if panel.runModal() == .OK, let url = panel.url { picked(url) }
+    }
+    return b
+  }
+
+  private static func index(for type: Type) -> Int {
+    switch type {
+    case .application: return 0
+    case .url: return 1
+    case .command: return 2
+    case .folder: return 3
+    default: return 0
+    }
+  }
+  private static func type(for idx: Int) -> Type {
+    [Type.application, .url, .command, .folder][max(0, min(3, idx))]
+  }
+
+  private func promptText(title: String, initial: String, onOK: @escaping (String) -> Void) {
+    let alert = NSAlert()
+    alert.messageText = title
+    alert.addButton(withTitle: "OK")
+    alert.addButton(withTitle: "Cancel")
+    let field = NSTextField(string: initial)
+    field.frame = NSRect(x: 0, y: 0, width: 260, height: 22)
+    alert.accessoryView = field
+    let response = alert.runModal()
+    if response == .alertFirstButtonReturn { onOK(field.stringValue) }
+  }
+
+  // MARK: Key capture logic (replicates SwiftUI KeyButton UX)
+  private var keyMonitor: Any?
+  private func beginKeyCapture() {
+    guard keyMonitor == nil else { return }
+    keyButton.title = "Listening…"
+    keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+      guard let self = self else { return event }
+      if event.keyCode == 53 {  // Escape cancels
+        self.endKeyCapture(set: nil)
+        return nil
+      }
+      let chars = event.charactersIgnoringModifiers ?? event.characters ?? ""
+      if let ch = chars.first {
+        self.endKeyCapture(set: String(ch))
+        return nil
+      }
+      return event
+    }
+  }
+
+  private func endKeyCapture(set char: String?) {
+    if let monitor = keyMonitor {
+      NSEvent.removeMonitor(monitor)
+      keyMonitor = nil
+    }
+    guard var a = currentAction() else {
+      keyButton.title = "Key"
+      return
+    }
+    a.key = char
+    onChange?(.action(a))
+    updateButtons(for: a)
+  }
+
+  // MARK: Icon helpers (action)
+  private func showIconMenu(anchor: NSView?) {
+    guard let anchor else { return }
+    let menu = NSMenu()
+    menu.addItem(withTitle: "App Icon…", action: #selector(handlePickAppIcon), keyEquivalent: "")
+    menu.addItem(withTitle: "Symbol…", action: #selector(handlePickSymbol), keyEquivalent: "")
+    menu.addItem(NSMenuItem.separator())
+    menu.addItem(withTitle: "Clear", action: #selector(handleClearIcon), keyEquivalent: "")
+    for item in menu.items { item.target = self }
+    let point = NSPoint(x: 0, y: anchor.bounds.height)
+    menu.popUp(positioning: nil, at: point, in: anchor)
+  }
+
+  @objc private func handlePickAppIcon() {
+    guard var a = currentAction() else { return }
+    let panel = NSOpenPanel()
+    panel.allowedContentTypes = [.applicationBundle, .application]
+    panel.canChooseFiles = true
+    panel.canChooseDirectories = true
+    panel.allowsMultipleSelection = false
+    panel.directoryURL = URL(fileURLWithPath: "/Applications")
+    if panel.runModal() == .OK {
+      DispatchQueue.main.async {
+        a.iconPath = panel.url?.path
+        self.onChange?(.action(a))
+        self.updateIcon(for: a)
+      }
+    }
+  }
+
+  @objc private func handlePickSymbol() {
+    guard let anchor = iconButton as NSView? else { return }
+    presentSymbolPickerSheet(
+      anchor: anchor,
+      initial: currentAction()?.iconPath,
+      owner: self,
+      getWindow: { self.symbolWindow },
+      setWindow: { self.symbolWindow = $0 },
+      getParent: { self.symbolParent },
+      setParent: { self.symbolParent = $0 },
+      onPicked: { [weak self] picked in
+        guard let self, var a = self.currentAction() else { return }
+        a.iconPath = picked?.isEmpty == true ? nil : picked
+        self.onChange?(.action(a))
+        self.updateIcon(for: a)
+      }
+    )
+  }
+
+  @objc private func handleClearIcon() {
+    guard var a = currentAction() else { return }
+    DispatchQueue.main.async {
+      a.iconPath = nil
+      self.onChange?(.action(a))
+      self.updateIcon(for: a)
+    }
+  }
+
+  private func updateIcon(for action: Action) {
+    iconButton.image = Self.iconImage(for: action)
+  }
+
+  private static func iconImage(for action: Action) -> NSImage? {
+    if let iconPath = action.iconPath, !iconPath.isEmpty {
+      if iconPath.hasSuffix(".app") { return NSWorkspace.shared.icon(forFile: iconPath) }
+      if let img = NSImage(systemSymbolName: iconPath, accessibilityDescription: nil) { return img }
+    }
+    switch action.type {
+    case .application:
+      return NSWorkspace.shared.icon(forFile: action.value)
+    case .url:
+      return NSImage(systemSymbolName: "link", accessibilityDescription: nil)
+    case .command:
+      return NSImage(systemSymbolName: "terminal", accessibilityDescription: nil)
+    case .folder:
+      return NSImage(systemSymbolName: "folder", accessibilityDescription: nil)
+    default:
+      return NSImage(systemSymbolName: "questionmark", accessibilityDescription: nil)
+    }
+  }
+
+  private func setButtonTitle(_ button: NSButton, text: String, placeholder: Bool) {
+    let attr = NSMutableAttributedString(string: text)
+    let color: NSColor = placeholder ? .secondaryLabelColor : .labelColor
+    attr.addAttribute(
+      .foregroundColor, value: color, range: NSRange(location: 0, length: attr.length))
+    button.attributedTitle = attr
+    button.title = text
+  }
+
+  // symbol picker presenting delegated to shared helper
+}
+
+private class GroupCellView: NSTableCellView, NSWindowDelegate {
+  private enum Layout {
+    static let keyWidth: CGFloat = 28
+    static let labelWidth: CGFloat = 140
+    static let iconButtonWidth: CGFloat = 28
+  }
+  private var keyButton = NSButton()
+  private var iconButton = NSButton()
+  private var labelButton = NSButton()
+  private var addActionBtn = NSButton()
+  private var addGroupBtn = NSButton()
+  private var moreBtn = NSButton()
+
+  private var node: EditorNode?
+  private var onChange: ((EditorPayload) -> Void)?
+  private var onDelete: (() -> Void)?
+  private var onDuplicate: (() -> Void)?
+  private var onAddAction: (() -> Void)?
+  private var onAddGroup: (() -> Void)?
+  private var symbolWindow: NSWindow?
+  private weak var symbolParent: NSWindow?
+
+  convenience init(identifier: NSUserInterfaceItemIdentifier) {
+    self.init(frame: .zero)
+    self.identifier = identifier
+    setup()
+  }
+
+  private func setup() {
+    let container = NSStackView()
+    container.orientation = .horizontal
+    container.spacing = 8
+    container.translatesAutoresizingMaskIntoConstraints = false
+    keyButton.bezelStyle = .rounded
+    keyButton.controlSize = .regular
+    keyButton.widthAnchor.constraint(equalToConstant: Layout.keyWidth).isActive = true
+    iconButton.bezelStyle = .rounded
+    iconButton.controlSize = .regular
+    iconButton.imagePosition = .imageOnly
+    iconButton.imageScaling = .scaleProportionallyDown
+    iconButton.widthAnchor.constraint(equalToConstant: Layout.iconButtonWidth).isActive = true
+    labelButton.bezelStyle = .rounded
+    labelButton.controlSize = .regular
+    labelButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+    labelButton.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+    do {
+      let c = labelButton.widthAnchor.constraint(lessThanOrEqualToConstant: Layout.labelWidth)
+      c.priority = .defaultHigh
+      c.isActive = true
+    }
+    addActionBtn.title = "+ Action"
+    addActionBtn.bezelStyle = .rounded
+    addActionBtn.controlSize = .regular
+    addGroupBtn.title = "+ Group"
+    addGroupBtn.bezelStyle = .rounded
+    addGroupBtn.controlSize = .regular
+    moreBtn.bezelStyle = .rounded
+    moreBtn.controlSize = .regular
+    moreBtn.image = NSImage(systemSymbolName: "ellipsis.circle", accessibilityDescription: nil)
+
+    let spacer2 = NSView()
+    spacer2.setContentHuggingPriority(.defaultLow, for: .horizontal)
+    spacer2.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+    for v in [keyButton, iconButton, spacer2, labelButton, addActionBtn, addGroupBtn, moreBtn] {
+      container.addArrangedSubview(v)
+    }
+    addSubview(container)
+    NSLayoutConstraint.activate([
+      container.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
+      container.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -4),
+      container.topAnchor.constraint(equalTo: topAnchor, constant: 2),
+      container.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -2),
+    ])
+
+    keyButton.targetClosure { [weak self] in self?.beginKeyCapture() }
+    iconButton.targetClosure { [weak self] in self?.showIconMenu(anchor: self?.iconButton) }
+    labelButton.targetClosure { [weak self] in
+      self?.prompt(title: "Label", initial: self?.currentGroup()?.label ?? "") { text in
+        guard var g = self?.currentGroup() else { return }
+        g.label = text.isEmpty ? nil : text
+        self?.onChange?(.group(g))
+        self?.updateButtons(for: g)
+      }
+    }
+    addActionBtn.targetClosure { [weak self] in self?.onAddAction?() }
+    addGroupBtn.targetClosure { [weak self] in self?.onAddGroup?() }
+    moreBtn.targetClosure { [weak self] in self?.showMoreMenu(anchor: self?.moreBtn) }
+  }
+
+  func configure(
+    node: EditorNode, onChange: @escaping (EditorPayload) -> Void, onDelete: @escaping () -> Void,
+    onDuplicate: @escaping () -> Void, onAddAction: @escaping () -> Void,
+    onAddGroup: @escaping () -> Void
+  ) {
+    self.node = node
+    self.onChange = onChange
+    self.onDelete = onDelete
+    self.onDuplicate = onDuplicate
+    self.onAddAction = onAddAction
+    self.onAddGroup = onAddGroup
+    guard case .group(let group) = node.kind else { return }
+    updateButtons(for: group)
+    updateIcon(for: group)
+  }
+
+  private func updateButtons(for group: Group) {
+    keyButton.title = (group.key?.isEmpty ?? true) ? "Group Key" : (group.key ?? "Group Key")
+    let isPlaceholder = (group.label?.isEmpty ?? true)
+    setButtonTitle(
+      labelButton, text: isPlaceholder ? "Label" : (group.label ?? "Label"),
+      placeholder: isPlaceholder)
+  }
+
+  private func currentGroup() -> Group? {
+    if case .group(let g) = node?.kind { return g } else { return nil }
+  }
+
+  private func prompt(title: String, initial: String?, onOK: @escaping (String) -> Void) {
+    let alert = NSAlert()
+    alert.messageText = title
+    alert.addButton(withTitle: "OK")
+    alert.addButton(withTitle: "Cancel")
+    let field = NSTextField(string: initial ?? "")
+    field.frame = NSRect(x: 0, y: 0, width: 260, height: 22)
+    alert.accessoryView = field
+    if alert.runModal() == .alertFirstButtonReturn { onOK(field.stringValue) }
+  }
+
+  // MARK: Key capture (group)
+  private var keyMonitor: Any?
+  private func beginKeyCapture() {
+    guard keyMonitor == nil else { return }
+    keyButton.title = "Listening…"
+    keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+      guard let self = self else { return event }
+      if event.keyCode == 53 {
+        self.endKeyCapture(set: nil)
+        return nil
+      }
+      let chars = event.charactersIgnoringModifiers ?? event.characters ?? ""
+      if let ch = chars.first {
+        self.endKeyCapture(set: String(ch))
+        return nil
+      }
+      return event
+    }
+  }
+
+  private func endKeyCapture(set char: String?) {
+    if let monitor = keyMonitor {
+      NSEvent.removeMonitor(monitor)
+      keyMonitor = nil
+    }
+    guard var g = currentGroup() else {
+      keyButton.title = "Group Key"
+      return
+    }
+    g.key = char
+    onChange?(.group(g))
+    updateButtons(for: g)
+  }
+
+  // MARK: Icon helpers (group)
+  private func showIconMenu(anchor: NSView?) {
+    guard let anchor else { return }
+    let menu = NSMenu()
+    menu.addItem(withTitle: "App Icon…", action: #selector(handlePickAppIcon), keyEquivalent: "")
+    menu.addItem(withTitle: "Symbol…", action: #selector(handlePickSymbol), keyEquivalent: "")
+    menu.addItem(NSMenuItem.separator())
+    menu.addItem(withTitle: "Clear", action: #selector(handleClearIcon), keyEquivalent: "")
+    for item in menu.items { item.target = self }
+    let point = NSPoint(x: 0, y: anchor.bounds.height)
+    menu.popUp(positioning: nil, at: point, in: anchor)
+  }
+
+  @objc private func handlePickAppIcon() {
+    guard var g = currentGroup() else { return }
+    let panel = NSOpenPanel()
+    panel.allowedContentTypes = [.applicationBundle, .application]
+    panel.canChooseFiles = true
+    panel.canChooseDirectories = true
+    panel.allowsMultipleSelection = false
+    panel.directoryURL = URL(fileURLWithPath: "/Applications")
+    if panel.runModal() == .OK {
+      DispatchQueue.main.async {
+        g.iconPath = panel.url?.path
+        self.onChange?(.group(g))
+        self.updateIcon(for: g)
+      }
+    }
+  }
+
+  @objc private func handlePickSymbol() {
+    guard let anchor = iconButton as NSView? else { return }
+    presentSymbolPickerSheet(
+      anchor: anchor,
+      initial: currentGroup()?.iconPath,
+      owner: self,
+      getWindow: { self.symbolWindow },
+      setWindow: { self.symbolWindow = $0 },
+      getParent: { self.symbolParent },
+      setParent: { self.symbolParent = $0 },
+      onPicked: { [weak self] picked in
+        guard let self, var g = self.currentGroup() else { return }
+        g.iconPath = picked?.isEmpty == true ? nil : picked
+        self.onChange?(.group(g))
+        self.updateIcon(for: g)
+      }
+    )
+  }
+
+  @objc private func handleClearIcon() {
+    guard var g = currentGroup() else { return }
+    DispatchQueue.main.async {
+      g.iconPath = nil
+      self.onChange?(.group(g))
+      self.updateIcon(for: g)
+    }
+  }
+
+  private func updateIcon(for group: Group) {
+    iconButton.image = Self.iconImage(for: group)
+  }
+
+  private static func iconImage(for group: Group) -> NSImage? {
+    if let iconPath = group.iconPath, !iconPath.isEmpty {
+      if iconPath.hasSuffix(".app") { return NSWorkspace.shared.icon(forFile: iconPath) }
+      if let img = NSImage(systemSymbolName: iconPath, accessibilityDescription: nil) { return img }
+    }
+    return NSImage(systemSymbolName: "folder", accessibilityDescription: nil)
+  }
+
+  private func setButtonTitle(_ button: NSButton, text: String, placeholder: Bool) {
+    let attr = NSMutableAttributedString(string: text)
+    let color: NSColor = placeholder ? .secondaryLabelColor : .labelColor
+    attr.addAttribute(
+      .foregroundColor, value: color, range: NSRange(location: 0, length: attr.length))
+    button.attributedTitle = attr
+    button.title = text
+  }
+
+  // symbol picker presenting delegated to shared helper
+
+  private func showMoreMenu(anchor: NSView?) {
+    guard let anchor else { return }
+    let menu = NSMenu()
+    menu.addItem(withTitle: "Duplicate", action: #selector(handleDuplicate), keyEquivalent: "")
+    menu.addItem(withTitle: "Delete", action: #selector(handleDelete), keyEquivalent: "")
+    for item in menu.items { item.target = self }
+    let point = NSPoint(x: 0, y: anchor.bounds.height)
+    menu.popUp(positioning: nil, at: point, in: anchor)
+  }
+
+  @objc private func handleDuplicate() { onDuplicate?() }
+  @objc private func handleDelete() { onDelete?() }
+}
+
+// MARK: - Editor Node
+
+private class EditorNode: NSObject {
+  enum Kind {
+    case action(Action)
+    case group(Group)
+  }
+  var id = UUID()
+  var kind: Kind
+  weak var parent: EditorNode?
+  var children: [EditorNode] = []
+
+  var isGroup: Bool { if case .group = kind { return true } else { return false } }
+
+  init(kind: Kind, parent: EditorNode? = nil) {
+    self.kind = kind
+    self.parent = parent
+    super.init()
+  }
+
+  static func action(_ a: Action, parent: EditorNode?) -> EditorNode {
+    EditorNode(kind: .action(a), parent: parent)
+  }
+  static func group(_ g: Group, parent: EditorNode? = nil) -> EditorNode {
+    EditorNode(kind: .group(g), parent: parent)
+  }
+
+  static func from(group: Group, parent: EditorNode? = nil) -> EditorNode {
+    let node = EditorNode.group(group, parent: parent)
+    node.children = group.actions.map { child in
+      switch child {
+      case .action(let a):
+        return EditorNode.action(a, parent: node)
+      case .group(let g):
+        return from(group: g, parent: node)
+      }
+    }
+    return node
+  }
+
+  func toGroup() -> Group {
+    switch kind {
+    case .group(var g):
+      g.actions = children.map { $0.toActionOrGroup() }
+      return g
+    case .action:
+      // Root always a group
+      return Group(key: nil, actions: children.map { $0.toActionOrGroup() })
+    }
+  }
+
+  func toActionOrGroup() -> ActionOrGroup {
+    switch kind {
+    case .action(let a): return .action(a)
+    case .group(var g):
+      g.actions = children.map { $0.toActionOrGroup() }
+      return .group(g)
+    }
+  }
+
+  func apply(_ payload: EditorPayload) {
+    switch (kind, payload) {
+    case (.action, .action(let a)): kind = .action(a)
+    case (.group, .group(let g)): kind = .group(g)
+    default: break
+    }
+  }
+
+  func deleteFromParent() {
+    guard let p = parent else { return }
+    if let idx = p.children.firstIndex(where: { $0 === self }) { p.children.remove(at: idx) }
+  }
+
+  func duplicateInParent() {
+    guard let p = parent else { return }
+    let copy = deepCopy(newParent: p)
+    if let idx = p.children.firstIndex(where: { $0 === self }) { p.children.insert(copy, at: idx) }
+  }
+
+  private func deepCopy(newParent: EditorNode?) -> EditorNode {
+    let copy = EditorNode(kind: kind, parent: newParent)
+    copy.children = children.map { $0.deepCopy(newParent: copy) }
+    return copy
+  }
+}
+
+// MARK: - Target/Action helpers
+
+private class ClosureTarget: NSObject {
+  let handler: () -> Void
+  init(_ handler: @escaping () -> Void) { self.handler = handler }
+  @objc func go() { handler() }
+}
+
+extension NSControl {
+  fileprivate func targetClosure(_ action: @escaping () -> Void) {
+    let t = ClosureTarget(action)
+    self.target = t
+    self.action = #selector(ClosureTarget.go)
+    objc_setAssociatedObject(
+      self, Unmanaged.passUnretained(self).toOpaque(), t, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+  }
+}
+
+// Popover lifecycle cleanup
+// No longer using popovers for symbol picking; presented as sheets/windows instead
+// Small SwiftUI bridge around the package view so we can observe changes
+private struct SymbolPickerBridge: View {
+  @State var symbol: String?
+  var onChange: (String?) -> Void
+  var onClose: () -> Void
+
+  init(initial: String?, onChange: @escaping (String?) -> Void, onClose: @escaping () -> Void) {
+    _symbol = State(initialValue: initial)
+    self.onChange = onChange
+    self.onClose = onClose
+  }
+
+  var body: some View {
+    VStack(spacing: 12) {
+      SymbolPicker(
+        symbol: Binding(
+          get: { symbol },
+          set: { newVal in
+            symbol = newVal
+            onChange(newVal)
+          }
+        ))
+      HStack {
+        Spacer()
+        Button("Close") { onClose() }
+          .keyboardShortcut(.cancelAction)
+      }
+    }
+    .padding()
+  }
+}
+
+// Shared presenter for the symbol picker sheet used by both cell types
+private func presentSymbolPickerSheet(
+  anchor: NSView,
+  initial: String?,
+  owner: NSWindowDelegate,
+  getWindow: @escaping () -> NSWindow?,
+  setWindow: @escaping (NSWindow?) -> Void,
+  getParent: @escaping () -> NSWindow?,
+  setParent: @escaping (NSWindow?) -> Void,
+  onPicked: @escaping (String?) -> Void
+) {
+  if let parent = getParent(), let win = getWindow() { parent.endSheet(win) }
+  setWindow(nil)
+  setParent(nil)
+
+  let host = NSHostingController(
+    rootView: SymbolPickerBridge(
+      initial: initial,
+      onChange: { value in
+        onPicked(value)
+        if let win = getWindow() {
+          if let parent = getParent() ?? anchor.window ?? NSApp.keyWindow {
+            parent.endSheet(win, returnCode: .OK)
+          } else {
+            win.close()
+          }
+          setWindow(nil)
+          setParent(nil)
+        }
+      },
+      onClose: {
+        guard let win = getWindow() else { return }
+        if let parent = getParent() ?? anchor.window ?? NSApp.keyWindow {
+          parent.endSheet(win, returnCode: .cancel)
+        } else {
+          win.close()
+        }
+        setWindow(nil)
+        setParent(nil)
+      }
+    ))
+  let win = NSWindow(contentViewController: host)
+  win.title = "Choose Symbol"
+  win.styleMask.insert(.titled)
+  win.styleMask.insert(.closable)
+  win.setContentSize(NSSize(width: 560, height: 640))
+  win.delegate = owner
+  setWindow(win)
+  let parent = anchor.window ?? NSApp.keyWindow
+  setParent(parent)
+  if let parent {
+    parent.beginSheet(win) { _ in
+      setWindow(nil)
+      setParent(nil)
+    }
+  } else {
+    win.center()
+    win.makeKeyAndOrderFront(nil)
+  }
+}
+extension Notification.Name {
+  static let lkExpandAll = Notification.Name("LKExpandAll")
+  static let lkCollapseAll = Notification.Name("LKCollapseAll")
+  static let lkSortAZ = Notification.Name("LKSortAZ")
+}
+
+// MARK: - NSWindowDelegate for symbol sheets
+extension ActionCellView {
+  func windowShouldClose(_ sender: NSWindow) -> Bool {
+    (sender.sheetParent ?? symbolParent)?.endSheet(sender)
+    symbolWindow = nil
+    symbolParent = nil
+    return true
+  }
+}
+extension GroupCellView {
+  func windowShouldClose(_ sender: NSWindow) -> Bool {
+    (sender.sheetParent ?? symbolParent)?.endSheet(sender)
+    symbolWindow = nil
+    symbolParent = nil
+    return true
+  }
+}
