@@ -12,7 +12,7 @@ class MainMenu: NSMenu {
         action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: ""),
       .separator(),
       NSMenuItem(
-        title: "Preferences...", action: #selector(AppDelegate.settingsMenuItemActionHandler(_:)),
+        title: "Settings…", action: #selector(AppDelegate.settingsMenuItemActionHandler(_:)),
         keyEquivalent: ","),
       .separator(),
       NSMenuItem(

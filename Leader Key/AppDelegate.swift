@@ -21,6 +21,7 @@ class AppDelegate: NSObject, NSApplicationDelegate,
 
   var state: UserState!
   @IBOutlet var updaterController: SPUStandardUpdaterController!
+  private var settingsObserversInstalled = false
 
   lazy var settingsWindowController = SettingsWindowController(
     panes: [
@@ -47,14 +48,6 @@ class AppDelegate: NSObject, NSApplicationDelegate,
     guard !isRunningTests() else { return }
 
     UNUserNotificationCenter.current().delegate = self
-    UNUserNotificationCenter.current().requestAuthorization(options: [
-      .alert, .badge, .sound,
-    ]) {
-      granted, error in
-      if let error = error {
-        print("Error requesting notification permission: \(error)")
-      }
-    }
 
     NSApp.mainMenu = MainMenu()
 
@@ -76,8 +69,10 @@ class AppDelegate: NSObject, NSApplicationDelegate,
     }
 
     statusItem.handlePreferences = {
-      self.settingsWindowController.show()
-      NSApp.activate(ignoringOtherApps: true)
+      self.showSettings()
+    }
+    statusItem.handleAbout = {
+      NSApp.orderFrontStandardAboutPanel(nil)
     }
     statusItem.handleReloadConfig = {
       self.config.reloadConfig()
@@ -98,6 +93,15 @@ class AppDelegate: NSObject, NSApplicationDelegate,
         }
       }
     }
+
+    // Initialize status item according to current preference
+    if Defaults[.showMenuBarIcon] {
+      statusItem.enable()
+    } else {
+      statusItem.disable()
+    }
+
+    // Activation policy is managed solely by the Settings window
 
     registerGlobalShortcuts()
   }
@@ -144,8 +148,7 @@ class AppDelegate: NSObject, NSApplicationDelegate,
 
   @IBAction
   func settingsMenuItemActionHandler(_: NSMenuItem) {
-    settingsWindowController.show()
-    NSApp.activate(ignoringOtherApps: true)
+    showSettings()
   }
 
   func show() {
@@ -166,19 +169,22 @@ class AppDelegate: NSObject, NSApplicationDelegate,
     _ handleShowingUpdate: Bool, forUpdate update: SUAppcastItem,
     state: SPUUserUpdateState
   ) {
-    NSApp.setActivationPolicy(.regular)
+    // Do not change activation policy here; Settings drives visibility
 
     if !state.userInitiated {
       NSApp.dockTile.badgeLabel = "1"
 
-      let content = UNMutableNotificationContent()
-      content.title = "Leader Key Update Available"
-      content.body = "Version \(update.displayVersionString) is now available"
+      requestNotificationsAuthorizationIfNeeded { granted in
+        guard granted else { return }
+        let content = UNMutableNotificationContent()
+        content.title = "Leader Key Update Available"
+        content.body = "Version \(update.displayVersionString) is now available"
 
-      let request = UNNotificationRequest(
-        identifier: updateLocationIdentifier, content: content,
-        trigger: nil)
-      UNUserNotificationCenter.current().add(request)
+        let request = UNNotificationRequest(
+          identifier: updateLocationIdentifier, content: content,
+          trigger: nil)
+        UNUserNotificationCenter.current().add(request)
+      }
     }
   }
 
@@ -193,9 +199,7 @@ class AppDelegate: NSObject, NSApplicationDelegate,
       ])
   }
 
-  func standardUserDriverWillFinishUpdateSession() {
-    NSApp.setActivationPolicy(.accessory)
-  }
+  func standardUserDriverWillFinishUpdateSession() { }
 
   // MARK: - UNUserNotificationCenter Delegate
 
@@ -230,6 +234,15 @@ class AppDelegate: NSObject, NSApplicationDelegate,
   private func handleURL(_ url: URL) {
     guard url.scheme == "leaderkey" else { return }
 
+    if url.host == "settings" {
+      showSettings()
+      return
+    }
+    if url.host == "about" {
+      NSApp.orderFrontStandardAboutPanel(nil)
+      return
+    }
+
     show()
 
     if url.host == "navigate",
@@ -256,6 +269,62 @@ class AppDelegate: NSObject, NSApplicationDelegate,
           self?.controller.handleKey(key)
         }
         delayMs += 100
+      }
+    }
+  }
+
+  // MARK: - Activation Policy: Only Settings Visibility Controls It
+
+  private func showSettings() {
+    settingsWindowController.show()
+    attachSettingsObserversIfNeeded()
+    updateActivationForSettingsWindow()
+  }
+
+  private func attachSettingsObserversIfNeeded() {
+    guard !settingsObserversInstalled, let win = settingsWindowController.window else { return }
+    settingsObserversInstalled = true
+
+    NotificationCenter.default.addObserver(
+      forName: NSWindow.willCloseNotification, object: win, queue: .main
+    ) { [weak self] _ in
+      DispatchQueue.main.async { self?.updateActivationForSettingsWindow() }
+    }
+
+    NotificationCenter.default.addObserver(
+      forName: NSWindow.didChangeOcclusionStateNotification, object: win, queue: .main
+    ) { [weak self] _ in
+      DispatchQueue.main.async { self?.updateActivationForSettingsWindow() }
+    }
+  }
+
+  private func updateActivationForSettingsWindow() {
+    guard let win = settingsWindowController.window else { return }
+    if win.isVisible && win.occlusionState.contains(.visible) {
+      NSApp.setActivationPolicy(.regular)
+      NSApp.activate(ignoringOtherApps: true)
+    } else {
+      NSApp.setActivationPolicy(.accessory)
+    }
+  }
+
+  private func requestNotificationsAuthorizationIfNeeded(
+    completion: @escaping (Bool) -> Void
+  ) {
+    UNUserNotificationCenter.current().getNotificationSettings { settings in
+      switch settings.authorizationStatus {
+      case .notDetermined:
+        UNUserNotificationCenter.current().requestAuthorization(options: [
+          .alert, .badge, .sound,
+        ]) { granted, _ in
+          DispatchQueue.main.async { completion(granted) }
+        }
+      case .authorized, .provisional, .ephemeral:
+        DispatchQueue.main.async { completion(true) }
+      case .denied:
+        DispatchQueue.main.async { completion(false) }
+      @unknown default:
+        DispatchQueue.main.async { completion(false) }
       }
     }
   }

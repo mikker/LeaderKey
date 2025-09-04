@@ -18,6 +18,7 @@ class StatusItem {
   private var cancellables = Set<AnyCancellable>()
 
   var handlePreferences: (() -> Void)?
+  var handleAbout: (() -> Void)?
   var handleReloadConfig: (() -> Void)?
   var handleRevealConfig: (() -> Void)?
   var handleCheckForUpdates: (() -> Void)?
@@ -37,10 +38,18 @@ class StatusItem {
 
     let menu = NSMenu()
 
-    let preferencesItem = NSMenuItem(
-      title: "Preferences…", action: #selector(showPreferences),
-      keyEquivalent: ","
+    // About
+    let aboutItem = NSMenuItem(
+      title: "About Leader Key", action: #selector(showAbout),
+      keyEquivalent: ""
     )
+    aboutItem.target = self
+    menu.addItem(aboutItem)
+
+    menu.addItem(NSMenuItem.separator())
+
+    // Settings
+    let preferencesItem = NSMenuItem(title: "Settings…", action: #selector(showPreferences), keyEquivalent: ",")
     preferencesItem.target = self
     menu.addItem(preferencesItem)
 
@@ -105,6 +114,10 @@ class StatusItem {
 
   @objc func showPreferences() {
     handlePreferences?()
+  }
+
+  @objc func showAbout() {
+    handleAbout?()
   }
 
   @objc func reloadConfig() {
