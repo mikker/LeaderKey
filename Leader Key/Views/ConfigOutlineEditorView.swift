@@ -517,6 +517,15 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
     keyButton.targetClosure { [weak self] in self?.beginKeyCapture() }
     typePopup.targetClosure { [weak self] in self?.propagate() }
     iconButton.targetClosure { [weak self] in self?.showIconMenu(anchor: self?.iconButton) }
+    labelButton.targetClosure { [weak self] in
+      guard let self else { return }
+      self.promptText(title: "Label", initial: self.currentAction()?.label ?? "") { text in
+        guard var a = self.currentAction() else { return }
+        a.label = text.isEmpty ? nil : text
+        self.onChange?(.action(a))
+        self.updateButtons(for: a)
+      }
+    }
     moreBtn.targetClosure { [weak self] in self?.showMoreMenu(anchor: self?.moreBtn) }
   }
 
@@ -682,6 +691,9 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
     let field = NSTextField(string: initial)
     field.frame = NSRect(x: 0, y: 0, width: 260, height: 22)
     alert.accessoryView = field
+    // Focus and select all when the dialog opens
+    alert.window.initialFirstResponder = field
+    field.selectText(nil)
     let response = alert.runModal()
     if response == .alertFirstButtonReturn { onOK(field.stringValue) }
   }
@@ -806,8 +818,9 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
     let color: NSColor = placeholder ? .secondaryLabelColor : .labelColor
     attr.addAttribute(
       .foregroundColor, value: color, range: NSRange(location: 0, length: attr.length))
-    button.attributedTitle = attr
+    // Set plain title first so .title stays in sync for reads, then apply color
     button.title = text
+    button.attributedTitle = attr
   }
 
   // symbol picker presenting delegated to shared helper
@@ -938,6 +951,9 @@ private class GroupCellView: NSTableCellView, NSWindowDelegate {
     let field = NSTextField(string: initial ?? "")
     field.frame = NSRect(x: 0, y: 0, width: 260, height: 22)
     alert.accessoryView = field
+    // Focus and select all when the dialog opens
+    alert.window.initialFirstResponder = field
+    field.selectText(nil)
     if alert.runModal() == .alertFirstButtonReturn { onOK(field.stringValue) }
   }
 
@@ -1050,8 +1066,9 @@ private class GroupCellView: NSTableCellView, NSWindowDelegate {
     let color: NSColor = placeholder ? .secondaryLabelColor : .labelColor
     attr.addAttribute(
       .foregroundColor, value: color, range: NSRange(location: 0, length: attr.length))
-    button.attributedTitle = attr
+    // Keep .title updated for logic that reads it; apply visual dim via attributedTitle
     button.title = text
+    button.attributedTitle = attr
   }
 
   // symbol picker presenting delegated to shared helper

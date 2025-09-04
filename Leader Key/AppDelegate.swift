@@ -11,7 +11,8 @@ let updateLocationIdentifier = "UpdateCheck"
 @NSApplicationMain
 class AppDelegate: NSObject, NSApplicationDelegate,
   SPUStandardUserDriverDelegate,
-  UNUserNotificationCenterDelegate
+  UNUserNotificationCenterDelegate,
+  NSWindowDelegate
 {
   var controller: Controller!
 
@@ -21,7 +22,6 @@ class AppDelegate: NSObject, NSApplicationDelegate,
 
   var state: UserState!
   @IBOutlet var updaterController: SPUStandardUpdaterController!
-  private var settingsObserversInstalled = false
 
   lazy var settingsWindowController = SettingsWindowController(
     panes: [
@@ -276,36 +276,19 @@ class AppDelegate: NSObject, NSApplicationDelegate,
   // MARK: - Activation Policy: Only Settings Visibility Controls It
 
   private func showSettings() {
+    // Behave like a normal app while Settings is open
+    NSApp.setActivationPolicy(.regular)
     settingsWindowController.show()
-    attachSettingsObserversIfNeeded()
-    updateActivationForSettingsWindow()
+    NSApp.activate(ignoringOtherApps: true)
+    settingsWindowController.window?.delegate = self
   }
 
-  private func attachSettingsObserversIfNeeded() {
-    guard !settingsObserversInstalled, let win = settingsWindowController.window else { return }
-    settingsObserversInstalled = true
-
-    NotificationCenter.default.addObserver(
-      forName: NSWindow.willCloseNotification, object: win, queue: .main
-    ) { [weak self] _ in
-      DispatchQueue.main.async { self?.updateActivationForSettingsWindow() }
-    }
-
-    NotificationCenter.default.addObserver(
-      forName: NSWindow.didChangeOcclusionStateNotification, object: win, queue: .main
-    ) { [weak self] _ in
-      DispatchQueue.main.async { self?.updateActivationForSettingsWindow() }
-    }
-  }
-
-  private func updateActivationForSettingsWindow() {
-    guard let win = settingsWindowController.window else { return }
-    if win.isVisible && win.occlusionState.contains(.visible) {
-      NSApp.setActivationPolicy(.regular)
-      NSApp.activate(ignoringOtherApps: true)
-    } else {
-      NSApp.setActivationPolicy(.accessory)
-    }
+  // Revert to accessory when Settings window closes
+  func windowWillClose(_ notification: Notification) {
+    guard let win = notification.object as? NSWindow,
+      win == settingsWindowController.window
+    else { return }
+    NSApp.setActivationPolicy(.accessory)
   }
 
   private func requestNotificationsAuthorizationIfNeeded(
