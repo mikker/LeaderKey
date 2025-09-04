@@ -1,39 +1,59 @@
-# Repository Guidelines
+# AGENTS.md
 
-## Project Structure & Modules
-- Source: `Leader Key/` — macOS app in Swift (e.g., `Views/`, `Settings/`, `Support/`, `Assets.xcassets`).
-- Tests: `Leader KeyTests/` — XCTest suites (e.g., `UserConfigTests.swift`, `ConfigValidatorTests.swift`).
-- Project: `Leader Key.xcodeproj` — Xcode project and scheme `Leader Key`.
-- Scripts: `bin/` — release utilities (`bump`, `release`, Sparkle helpers).
-- Updates: `Updates/` — archive/appcast artifacts used by Sparkle.
+This file provides guidance to coding agents when working with code in this repository.
 
-## Build, Test, and Dev Commands
-- Open in Xcode: `open "Leader Key.xcodeproj"`
-- Build (CLI): `xcodebuild -project "Leader Key.xcodeproj" -scheme "Leader Key" -configuration Debug -destination "platform=macOS" build`
-- Test (CLI):
-  `xcodebuild test -project "Leader Key.xcodeproj" -scheme "Leader Key" -destination "platform=macOS" -testPlan "TestPlan" -skipPackagePluginValidation -skipMacroValidation CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO`
-- Lint: `brew install swift-format && swift-format lint --recursive .`
-- Format: `swift-format format -i -r .`
-- Bump build number: `bin/bump`
-- Release flow: Archive in Xcode, ensure `Updates/Leader Key.app` exists, then run `bin/release` (zips, updates appcast, uploads).
+# Leader Key Development Guide
 
-## Coding Style & Naming
-- Language: Swift 5; use 2-space indentation and early-return patterns.
-- Names: Types `UpperCamelCase`; methods/properties `lowerCamelCase`; files match primary type.
-- Tools: `swift-format` for lint/format; avoid trailing whitespace and keep focused diffs.
+## Build & Test Commands
 
-## Testing Guidelines
-- Framework: XCTest with Test Plan `TestPlan`.
-- Conventions: Test files end with `Tests.swift`; functions start with `test…` and remain deterministic.
-- Scope: Prioritize validation, config I/O, and user defaults (see `UserConfigTests.swift`). Prefer `NSTemporaryDirectory()` for file ops.
-- Run: From Xcode or the `xcodebuild test` command above.
+- Build and run: `xcodebuild -scheme "Leader Key" -configuration Debug build`
+- Run all tests: `xcodebuild -scheme "Leader Key" -testPlan "TestPlan" test`
+- Run single test: `xcodebuild -scheme "Leader Key" -testPlan "TestPlan" -only-testing:Leader KeyTests/UserConfigTests/testInitializesWithDefaults test`
+- Bump version: `bin/bump`
+- Create release: `bin/release`
 
-## Commit & Pull Request Guidelines
-- Commits: Short, present tense, scoped (e.g., “Add arrow key support”). Tag releases as `vX.Y.Z`.
-- PRs: Clear description, linked issues, repro/verification steps; include screenshots/GIFs for UI changes.
-- Quality gate: Run `swift-format lint` and all tests locally; CI must pass.
-- Artifacts: Don’t commit built apps/zips. `Updates/` content is managed during release.
+## Architecture Overview
 
-## Security & Configuration Tips
-- Shell actions run in non-interactive shells; ensure `PATH` is exported (e.g., in `~/.zshenv`).
-- Config lives at `~/Library/Application Support/Leader Key/config.json` by default.
+Leader Key is a macOS application that provides customizable keyboard shortcuts. The core architecture consists of:
+
+**Key Components:**
+
+- `AppDelegate`: Application lifecycle, global shortcuts registration, update management
+- `Controller`: Central event handling, manages key sequences and window display
+- `UserConfig`: JSON configuration management with validation
+- `UserState`: Tracks navigation through key sequences
+- `MainWindow`: Base class for theme windows
+
+**Theme System:**
+
+- Themes inherit from `MainWindow` and implement `draw()` method
+- Available themes: MysteryBox, Mini, Breadcrumbs, ForTheHorde, Cheater
+- Each theme provides different visual representations of shortcuts
+
+**Configuration Flow:**
+
+- Config stored at `~/Library/Application Support/Leader Key/config.json`
+- `FileMonitor` watches for changes and triggers reload
+- `ConfigValidator` ensures no key conflicts
+- Actions support: applications, URLs, commands, folders
+
+**Testing Architecture:**
+
+- Uses XCTest with custom `TestAlertManager` for UI testing
+- Tests use isolated UserDefaults and temporary directories
+- Focus on configuration validation and state management
+
+## Code Style Guidelines
+
+- **Imports**: Group Foundation/AppKit imports first, then third-party libraries (Combine, Defaults)
+- **Naming**: Use descriptive camelCase for variables/functions, PascalCase for types
+- **Types**: Use explicit type annotations for public properties and parameters
+- **Error Handling**: Use appropriate error handling with do/catch blocks and alerts
+- **Extensions**: Create extensions for additional functionality on existing types
+- **State Management**: Use @Published and ObservableObject for reactive UI updates
+- **Testing**: Create separate test cases with descriptive names, use XCTAssert\* methods
+- **Access Control**: Use appropriate access modifiers (private, fileprivate, internal)
+- **Documentation**: Use comments for complex logic or non-obvious implementations
+
+Follow Swift idioms and default formatting (4-space indentation, spaces around operators).
+
