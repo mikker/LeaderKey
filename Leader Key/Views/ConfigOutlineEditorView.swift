@@ -1,4 +1,6 @@
 import AppKit
+import Defaults
+import KeyboardShortcuts
 import ObjectiveC
 import SwiftUI
 import SymbolPicker
@@ -831,10 +833,12 @@ private class GroupCellView: NSTableCellView, NSWindowDelegate {
     static let keyWidth: CGFloat = 28
     static let labelWidth: CGFloat = 140
     static let iconButtonWidth: CGFloat = 28
+    static let globalShortcutWidth: CGFloat = 180
   }
   private var keyButton = NSButton()
   private var iconButton = NSButton()
   private var labelButton = NSButton()
+  private var globalShortcutView: NSView?
   private var addActionBtn = NSButton()
   private var addGroupBtn = NSButton()
   private var moreBtn = NSButton()
@@ -876,6 +880,7 @@ private class GroupCellView: NSTableCellView, NSWindowDelegate {
       c.priority = .defaultHigh
       c.isActive = true
     }
+
     addActionBtn.title = "+ Action"
     addActionBtn.bezelStyle = .rounded
     addActionBtn.controlSize = .regular
@@ -889,7 +894,19 @@ private class GroupCellView: NSTableCellView, NSWindowDelegate {
     let spacer2 = NSView()
     spacer2.setContentHuggingPriority(.defaultLow, for: .horizontal)
     spacer2.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-    for v in [keyButton, iconButton, spacer2, labelButton, addActionBtn, addGroupBtn, moreBtn] {
+    for v in [keyButton, iconButton] {
+      container.addArrangedSubview(v)
+    }
+
+    // Add placeholder for global shortcut view
+    let globalShortcutContainer = NSView()
+    globalShortcutContainer.widthAnchor.constraint(
+      equalToConstant: Layout.globalShortcutWidth
+    ).isActive = true
+    container.addArrangedSubview(globalShortcutContainer)
+    globalShortcutView = globalShortcutContainer
+
+    for v in [spacer2, addActionBtn, addGroupBtn, labelButton, moreBtn] {
       container.addArrangedSubview(v)
     }
     addSubview(container)
@@ -937,6 +954,40 @@ private class GroupCellView: NSTableCellView, NSWindowDelegate {
     setButtonTitle(
       labelButton, text: isPlaceholder ? "Label" : (group.label ?? "Label"),
       placeholder: isPlaceholder)
+    updateGlobalShortcutView(for: group)
+  }
+
+  private func updateGlobalShortcutView(for group: Group) {
+    guard let container = globalShortcutView else { return }
+
+    // Clear existing content
+    container.subviews.removeAll()
+
+    let isFirstLevel = node?.parent?.parent == nil  // First level groups are children of root
+    let hasValidKey = group.key != nil && !group.key!.isEmpty
+
+    if isFirstLevel && hasValidKey, let key = group.key {
+      let recorder = KeyboardShortcuts.RecorderCocoa(for: KeyboardShortcuts.Name("group-\(key)")) { _ in
+        // Update the groupShortcuts set when shortcut changes
+        let shortcutName = KeyboardShortcuts.Name("group-\(key)")
+        if KeyboardShortcuts.getShortcut(for: shortcutName) != nil {
+          Defaults[.groupShortcuts].insert(key)
+        } else {
+          Defaults[.groupShortcuts].remove(key)
+        }
+
+        // Re-register global shortcuts
+        (NSApplication.shared.delegate as! AppDelegate).registerGlobalShortcuts()
+      }
+      recorder.translatesAutoresizingMaskIntoConstraints = false
+      container.addSubview(recorder)
+      NSLayoutConstraint.activate([
+        recorder.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+        recorder.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+        recorder.topAnchor.constraint(equalTo: container.topAnchor),
+        recorder.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+      ])
+    }
   }
 
   private func currentGroup() -> Group? {
@@ -986,9 +1037,22 @@ private class GroupCellView: NSTableCellView, NSWindowDelegate {
       keyButton.title = "Group Key"
       return
     }
+
+    // If key changed and there was a global shortcut, remove it
+    if let oldKey = g.key, !oldKey.isEmpty, char != oldKey {
+      var shortcuts = Defaults[.groupShortcuts]
+      shortcuts.remove(oldKey)
+      Defaults[.groupShortcuts] = shortcuts
+      KeyboardShortcuts.reset([KeyboardShortcuts.Name("group-\(oldKey)")])
+    }
+
     g.key = char
     onChange?(.group(g))
     updateButtons(for: g)
+
+    // Re-register global shortcuts after key change
+    let appDelegate = NSApp.delegate as? AppDelegate
+    appDelegate?.registerGlobalShortcuts()
   }
 
   // MARK: Icon helpers (group)
@@ -1290,6 +1354,7 @@ extension Notification.Name {
   static let lkCollapseAll = Notification.Name("LKCollapseAll")
   static let lkSortAZ = Notification.Name("LKSortAZ")
 }
+
 
 // MARK: - NSWindowDelegate for symbol sheets
 extension ActionCellView {
