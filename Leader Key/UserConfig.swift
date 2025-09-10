@@ -1,7 +1,7 @@
 import Cocoa
 import Combine
-import Defaults
 import CryptoKit
+import Defaults
 
 let emptyRoot = Group(key: "🚫", label: "Config error", actions: [])
 
@@ -56,17 +56,18 @@ class UserConfig: ObservableObject {
         let result = alertHandler.showAlert(
           style: .warning,
           message: "Configuration file changed on disk",
-          informativeText: "The configuration file has been modified outside of the app. Choose 'Read from File' to load the external changes, or 'Overwrite' to save your current changes.",
+          informativeText:
+            "The configuration file has been modified outside of the app. Choose 'Read from File' to load the external changes, or 'Overwrite' to save your current changes.",
           buttons: ["Overwrite", "Cancel", "Read from File"]
         )
-        
+
         switch result {
-        case .alertThirdButtonReturn: // Read from File (rightmost, default)
+        case .alertThirdButtonReturn:  // Read from File (rightmost, default)
           reloadFromFile()
           return
-        case .alertFirstButtonReturn: // Overwrite
-          break // Continue with save
-        default: // Cancel
+        case .alertFirstButtonReturn:  // Overwrite
+          break  // Continue with save
+        default:  // Cancel
           return
         }
       }
@@ -89,9 +90,9 @@ class UserConfig: ObservableObject {
         .prettyPrinted, .withoutEscapingSlashes, .sortedKeys,
       ]
       let jsonData = try encoder.encode(root)
-      
+
       try writeFile(data: jsonData)
-      
+
       // Update checksum after successful write using data directly
       lastReadChecksum = calculateChecksum(jsonData)
     } catch {
@@ -102,19 +103,19 @@ class UserConfig: ObservableObject {
   private func saveConfigAsync() {
     // Cancel any pending save
     saveWorkItem?.cancel()
-    
+
     // Create a new debounced save work item
     let currentRoot = root
     let workItem = DispatchWorkItem { [weak self] in
       guard let self = self else { return }
-      
+
       // Perform file I/O on background queue
       let encoder = JSONEncoder()
       encoder.outputFormatting = [.prettyPrinted, .withoutEscapingSlashes, .sortedKeys]
-      
+
       do {
         let jsonData = try encoder.encode(currentRoot)
-        
+
         // Check conflicts on background queue first, then switch to main for UI
         if let lastChecksum = self.lastReadChecksum, self.exists {
           let currentChecksum = self.getCurrentFileChecksum()
@@ -123,27 +124,28 @@ class UserConfig: ObservableObject {
               let result = self.alertHandler.showAlert(
                 style: .warning,
                 message: "Configuration file changed on disk",
-                informativeText: "The configuration file has been modified outside of the app. Choose 'Read from File' to load the external changes, or 'Overwrite' to save your current changes.",
+                informativeText:
+                  "The configuration file has been modified outside of the app. Choose 'Read from File' to load the external changes, or 'Overwrite' to save your current changes.",
                 buttons: ["Overwrite", "Cancel", "Read from File"]
               )
-              
+
               switch result {
-              case .alertThirdButtonReturn: // Read from File
+              case .alertThirdButtonReturn:  // Read from File
                 self.reloadFromFile()
                 return
-              case .alertFirstButtonReturn: // Overwrite
-                break // Continue with save
-              default: // Cancel
+              case .alertFirstButtonReturn:  // Overwrite
+                break  // Continue with save
+              default:  // Cancel
                 return
               }
-              
+
               // Continue with save after conflict resolution
               self.performSaveWithData(jsonData, currentRoot: currentRoot)
             }
             return
           }
         }
-        
+
         DispatchQueue.main.async {
           self.performSaveWithData(jsonData, currentRoot: currentRoot)
         }
@@ -153,33 +155,34 @@ class UserConfig: ObservableObject {
         }
       }
     }
-    
+
     saveWorkItem = workItem
-    
+
     // Execute with 300ms debounce
     configIOQueue.asyncAfter(deadline: .now() + .milliseconds(300), execute: workItem)
   }
-  
+
   private func performSaveWithData(_ jsonData: Data, currentRoot: Group) {
     // Validation on main queue
     let validationErrors = ConfigValidator.validate(group: currentRoot)
     setValidationErrors(validationErrors)
-    
+
     if !validationErrors.isEmpty {
       let errorCount = validationErrors.count
       alertHandler.showAlert(
         style: .warning,
-        message: "Found \(errorCount) validation issue\(errorCount > 1 ? "s" : "") in your configuration. The configuration will still be saved, but some keys may not work as expected."
+        message:
+          "Found \(errorCount) validation issue\(errorCount > 1 ? "s" : "") in your configuration. The configuration will still be saved, but some keys may not work as expected."
       )
     }
-    
+
     // Back to background for file write
     configIOQueue.async { [weak self] in
       guard let self = self else { return }
-      
+
       do {
         try self.writeFile(data: jsonData)
-        
+
         DispatchQueue.main.async {
           // Update checksum on main queue using data directly
           self.lastReadChecksum = self.calculateChecksum(jsonData)
@@ -264,17 +267,17 @@ class UserConfig: ObservableObject {
   private func readFile() throws -> String {
     try String(contentsOfFile: path, encoding: .utf8)
   }
-  
+
   private func calculateChecksum(_ content: String) -> String {
     let data = Data(content.utf8)
     return calculateChecksum(data)
   }
-  
+
   private func calculateChecksum(_ data: Data) -> String {
     let digest = SHA256.hash(data: data)
     return digest.compactMap { String(format: "%02x", $0) }.joined()
   }
-  
+
   private func getCurrentFileChecksum() -> String? {
     guard exists else { return nil }
     do {
@@ -284,15 +287,15 @@ class UserConfig: ObservableObject {
       return nil
     }
   }
-  
+
   // Background queue version
   private func getCurrentFileChecksumAsync(completion: @escaping (String?) -> Void) {
     configIOQueue.async { [weak self] in
-      guard let self = self else { 
+      guard let self = self else {
         DispatchQueue.main.async { completion(nil) }
-        return 
+        return
       }
-      
+
       let checksum = self.getCurrentFileChecksum()
       DispatchQueue.main.async { completion(checksum) }
     }
@@ -302,7 +305,7 @@ class UserConfig: ObservableObject {
 
   private func loadConfig(suppressAlerts: Bool = false) {
     isLoading = true
-    
+
     guard exists else {
       root = emptyRoot
       validationErrors = []
@@ -312,7 +315,7 @@ class UserConfig: ObservableObject {
 
     configIOQueue.async { [weak self] in
       guard let self = self else { return }
-      
+
       do {
         let configString = try self.readFile()
 
@@ -330,7 +333,7 @@ class UserConfig: ObservableObject {
         let decodedRoot = try decoder.decode(Group.self, from: jsonData)
         let checksum = self.calculateChecksum(configString)
         let validationErrors = ConfigValidator.validate(group: decodedRoot)
-        
+
         DispatchQueue.main.async {
           self.root = decodedRoot
           self.lastReadChecksum = checksum

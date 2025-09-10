@@ -54,8 +54,6 @@ class AppDelegate: NSObject, NSApplicationDelegate,
     state = UserState(userConfig: config)
     controller = Controller(userState: state, userConfig: config)
 
-
-
     statusItem.handlePreferences = {
       self.showSettings()
     }
