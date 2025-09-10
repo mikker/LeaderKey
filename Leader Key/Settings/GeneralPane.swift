@@ -46,12 +46,8 @@ struct GeneralPane: View {
               Divider()
                 .frame(height: 20)
 
-              Button("Save to file") {
-                config.saveConfig()
-              }
-
-              Button("Reload from file") {
-                config.reloadConfig()
+              Button("Read from file") {
+                config.reloadFromFile()
               }
             }
 

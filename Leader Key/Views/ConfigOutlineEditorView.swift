@@ -458,7 +458,7 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
     static let typeWidth: CGFloat = 110
     static let chooserWidth: CGFloat = 70
     static let valueWidth: CGFloat = 360
-    static let labelWidth: CGFloat = 140
+    static let labelWidth: CGFloat = 160
     static let iconButtonWidth: CGFloat = 28
     static let iconSize: CGFloat = 24
   }
@@ -473,6 +473,7 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
   private var onDelete: (() -> Void)?
   private var onDuplicate: (() -> Void)?
   private var node: EditorNode?
+  private var currentValidationError: ValidationErrorType?
   private var symbolWindow: NSWindow?
   private weak var symbolParent: NSWindow?
 
@@ -554,6 +555,7 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
     onDuplicate: @escaping () -> Void
   ) {
     self.node = node
+    self.currentValidationError = validationError
     self.onChange = onChange
     self.onDelete = onDelete
     self.onDuplicate = onDuplicate
@@ -590,6 +592,9 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
   }
 
   private func updateValidationStyle(_ error: ValidationErrorType?) {
+    // Don't override blue background when listening for keys
+    guard keyMonitor == nil else { return }
+    
     if error != nil {
       // Add subtle red border to indicate validation error
       keyButton.layer?.borderColor = NSColor.systemRed.cgColor
@@ -738,7 +743,12 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
   private var keyMonitor: Any?
   private func beginKeyCapture() {
     guard keyMonitor == nil else { return }
-    keyButton.title = "Listening…"
+    keyButton.title = ""
+    
+    // Change button to highlighted blue style
+    keyButton.contentTintColor = NSColor.white
+    keyButton.bezelColor = NSColor.systemBlue
+    
     keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
       guard let self = self else { return event }
       if event.keyCode == 53 {  // Escape cancels
@@ -765,6 +775,11 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
       NSEvent.removeMonitor(monitor)
       keyMonitor = nil
     }
+    
+    // Reset button style
+    keyButton.contentTintColor = nil
+    keyButton.bezelColor = nil
+    
     guard var a = currentAction() else {
       keyButton.title = "Key"
       return
@@ -772,6 +787,9 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
     a.key = char
     onChange?(.action(a))
     updateButtons(for: a)
+    
+    // Restore validation styling if there was an error
+    updateValidationStyle(currentValidationError)
   }
 
   // MARK: Icon helpers (action)
@@ -871,9 +889,9 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
 private class GroupCellView: NSTableCellView, NSWindowDelegate {
   private enum Layout {
     static let keyWidth: CGFloat = 28
-    static let labelWidth: CGFloat = 140
+    static let labelWidth: CGFloat = 160
     static let iconButtonWidth: CGFloat = 28
-    static let globalShortcutWidth: CGFloat = 180
+    static let globalShortcutWidth: CGFloat = 120
   }
   private var keyButton = NSButton()
   private var iconButton = NSButton()
@@ -887,6 +905,7 @@ private class GroupCellView: NSTableCellView, NSWindowDelegate {
   private var onChange: ((EditorPayload) -> Void)?
   private var onDelete: (() -> Void)?
   private var onDuplicate: (() -> Void)?
+  private var currentValidationError: ValidationErrorType?
   private var onAddAction: (() -> Void)?
   private var onAddGroup: (() -> Void)?
   private var symbolWindow: NSWindow?
@@ -918,9 +937,11 @@ private class GroupCellView: NSTableCellView, NSWindowDelegate {
     addActionBtn.title = "+ Action"
     addActionBtn.bezelStyle = .rounded
     addActionBtn.controlSize = .regular
+    addActionBtn.widthAnchor.constraint(greaterThanOrEqualToConstant: 80).isActive = true
     addGroupBtn.title = "+ Group"
     addGroupBtn.bezelStyle = .rounded
     addGroupBtn.controlSize = .regular
+    addGroupBtn.widthAnchor.constraint(greaterThanOrEqualToConstant: 80).isActive = true
     moreBtn.bezelStyle = .rounded
     moreBtn.controlSize = .regular
     moreBtn.image = NSImage(systemSymbolName: "ellipsis.circle", accessibilityDescription: nil)
@@ -981,6 +1002,7 @@ private class GroupCellView: NSTableCellView, NSWindowDelegate {
     onAddGroup: @escaping () -> Void
   ) {
     self.node = node
+    self.currentValidationError = validationError
     self.onChange = onChange
     self.onDelete = onDelete
     self.onDuplicate = onDuplicate
@@ -1004,6 +1026,9 @@ private class GroupCellView: NSTableCellView, NSWindowDelegate {
   }
 
   private func updateValidationStyle(_ error: ValidationErrorType?) {
+    // Don't override blue background when listening for keys
+    guard keyMonitor == nil else { return }
+    
     if error != nil {
       // Add subtle red border to indicate validation error
       keyButton.layer?.borderColor = NSColor.systemRed.cgColor
@@ -1072,7 +1097,12 @@ private class GroupCellView: NSTableCellView, NSWindowDelegate {
   private var keyMonitor: Any?
   private func beginKeyCapture() {
     guard keyMonitor == nil else { return }
-    keyButton.title = "Listening…"
+    keyButton.title = ""
+    
+    // Change button to highlighted blue style
+    keyButton.contentTintColor = NSColor.white
+    keyButton.bezelColor = NSColor.systemBlue
+    
     keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
       guard let self = self else { return event }
       if event.keyCode == 53 {
@@ -1099,6 +1129,11 @@ private class GroupCellView: NSTableCellView, NSWindowDelegate {
       NSEvent.removeMonitor(monitor)
       keyMonitor = nil
     }
+    
+    // Reset button style
+    keyButton.contentTintColor = nil
+    keyButton.bezelColor = nil
+    
     guard var g = currentGroup() else {
       keyButton.title = "Group Key"
       return
@@ -1115,6 +1150,9 @@ private class GroupCellView: NSTableCellView, NSWindowDelegate {
     g.key = char
     onChange?(.group(g))
     updateButtons(for: g)
+    
+    // Restore validation styling if there was an error
+    updateValidationStyle(currentValidationError)
 
     // Re-register global shortcuts after key change
     let appDelegate = NSApp.delegate as? AppDelegate

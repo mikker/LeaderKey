@@ -46,7 +46,9 @@ enum Mini {
 
     var body: some View {
       ZStack {
-        let text = Text(userState.currentGroup?.key ?? userState.display ?? "●")
+        let keyText = userState.currentGroup?.key ?? userState.display ?? "●"
+        let glyphText = KeyMaps.glyph(for: keyText) ?? keyText
+        let text = Text(glyphText)
           .fontDesign(.rounded)
           .fontWeight(.bold)
 

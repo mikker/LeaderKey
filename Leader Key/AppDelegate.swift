@@ -18,7 +18,6 @@ class AppDelegate: NSObject, NSApplicationDelegate,
 
   let statusItem = StatusItem()
   let config = UserConfig()
-  var fileMonitor: FileMonitor!
 
   var state: UserState!
   @IBOutlet var updaterController: SPUStandardUpdaterController!
@@ -55,18 +54,7 @@ class AppDelegate: NSObject, NSApplicationDelegate,
     state = UserState(userConfig: config)
     controller = Controller(userState: state, userConfig: config)
 
-    Task {
-      for await _ in Defaults.updates(.configDir) {
-        self.fileMonitor?.stopMonitoring()
 
-        self.fileMonitor = FileMonitor(
-          fileURL: config.url,
-          callback: {
-            self.config.reloadConfig()
-          })
-        self.fileMonitor.startMonitoring()
-      }
-    }
 
     statusItem.handlePreferences = {
       self.showSettings()
@@ -75,7 +63,7 @@ class AppDelegate: NSObject, NSApplicationDelegate,
       NSApp.orderFrontStandardAboutPanel(nil)
     }
     statusItem.handleReloadConfig = {
-      self.config.reloadConfig()
+      self.config.reloadFromFile()
     }
     statusItem.handleRevealConfig = {
       NSWorkspace.shared.activateFileViewerSelecting([self.config.url])
@@ -143,7 +131,7 @@ class AppDelegate: NSObject, NSApplicationDelegate,
   }
 
   func applicationWillTerminate(_ notification: Notification) {
-    config.saveConfig()
+    // Config saves automatically on changes
   }
 
   @IBAction

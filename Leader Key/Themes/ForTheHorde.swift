@@ -98,7 +98,9 @@ enum ForTheHorde {
           .rotationEffect(.degrees(fgRotation))
 
         // Text in the middle
-        let text = Text(userState.currentGroup?.key ?? userState.display ?? "●")
+        let keyText = userState.currentGroup?.key ?? userState.display ?? "●"
+        let glyphText = KeyMaps.glyph(for: keyText) ?? keyText
+        let text = Text(glyphText)
           .fontDesign(.rounded)
           .fontWeight(.semibold)
           .font(.system(size: 28, weight: .semibold, design: .rounded))

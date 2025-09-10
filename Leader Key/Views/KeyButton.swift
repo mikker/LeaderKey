@@ -16,7 +16,7 @@ struct KeyButton: View {
       oldValue = text
       isListening = true
     }) {
-      Text(text.isEmpty ? placeholder : text)
+      Text(text.isEmpty ? placeholder : (KeyMaps.glyph(for: text) ?? text))
         .frame(width: 32, height: 24)
         .background(
           RoundedRectangle(cornerRadius: 5)
@@ -36,7 +36,7 @@ struct KeyButton: View {
 
   private var backgroundColor: Color {
     if isListening {
-      return Color.blue.opacity(0.2)
+      return Color.blue.opacity(0.3)
     } else if validationError != nil {
       return Color.red.opacity(0.1)
     } else {
@@ -46,7 +46,7 @@ struct KeyButton: View {
 
   private var borderColor: Color {
     if isListening {
-      return Color.blue
+      return Color.clear
     } else if validationError != nil {
       return Color.red
     } else {

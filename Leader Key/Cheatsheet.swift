@@ -9,7 +9,7 @@ enum Cheatsheet {
     let key: String
 
     var body: some SwiftUI.View {
-      Text(key)
+      Text(KeyMaps.glyph(for: key) ?? key)
         .font(.system(.body, design: .rounded))
         .multilineTextAlignment(.center)
         .fontWeight(.bold)
