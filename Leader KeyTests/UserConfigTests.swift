@@ -119,13 +119,13 @@ final class UserConfigTests: XCTestCase {
 
   func testValidationIssuesDoNotTriggerAlerts() throws {
     let json = """
-    {
-      "actions": [
-        { "key": "a", "type": "application", "value": "/Applications/Safari.app" },
-        { "key": "a", "type": "url", "value": "https://example.com" }
-      ]
-    }
-    """
+      {
+        "actions": [
+          { "key": "a", "type": "application", "value": "/Applications/Safari.app" },
+          { "key": "a", "type": "url", "value": "https://example.com" }
+        ]
+      }
+      """
 
     try json.write(to: subject.url, atomically: true, encoding: .utf8)
 

@@ -111,12 +111,13 @@ struct GeneralPane_Previews: PreviewProvider {
   }
 }
 
+/// Compact banner that surfaces validation issues directly in the settings UI.
 private struct ValidationWarningView: View {
-  let displayedErrors: [ValidationError]
+  private let errors: [ValidationError]
   private let maxVisibleErrors = 3
 
   init(errors: [ValidationError]) {
-    displayedErrors = errors
+    self.errors = errors
   }
 
   var body: some View {
@@ -126,13 +127,13 @@ private struct ValidationWarningView: View {
         .fontWeight(.semibold)
 
       VStack(alignment: .leading, spacing: 2) {
-        ForEach(Array(displayedErrors.prefix(maxVisibleErrors))) { error in
+        ForEach(Array(errors.prefix(maxVisibleErrors))) { error in
           Text("• \(error.message)")
             .font(.caption)
         }
 
-        if displayedErrors.count > maxVisibleErrors {
-          Text("• …and \(displayedErrors.count - maxVisibleErrors) more issues")
+        if errors.count > maxVisibleErrors {
+          Text("• …and \(errors.count - maxVisibleErrors) more issues")
             .font(.caption)
         }
 
@@ -155,16 +156,9 @@ private struct ValidationWarningView: View {
   }
 
   private var warningTitle: String {
-    if displayedErrors.count == 1 {
-      return [
-        "Configuration has 1 issue.",
-        "Some shortcuts may not work until it is fixed.",
-      ].joined(separator: " ")
-    } else {
-      return [
-        "Configuration has \(displayedErrors.count) issues.",
-        "Some shortcuts may not work until they are fixed.",
-      ].joined(separator: " ")
-    }
+    let count = errors.count
+    let issueText = count == 1 ? "1 issue" : "\(count) issues"
+    let pronoun = count == 1 ? "it" : "they"
+    return "Configuration has \(issueText). Some shortcuts may not work until \(pronoun) are fixed."
   }
 }

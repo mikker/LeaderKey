@@ -71,6 +71,7 @@ private class OutlineController: NSObject, NSOutlineViewDataSource, NSOutlineVie
   private let dragType = NSPasteboard.PasteboardType("com.leaderkey.node")
   private var lastRenderedRoot: Group?
   private var validationCancellable: AnyCancellable?
+  /// Flags the next render call to skip a full reload because we already mutated `rootNode` locally.
   private var skipNextRender = false
 
   override init() {
@@ -262,6 +263,7 @@ private class OutlineController: NSObject, NSOutlineViewDataSource, NSOutlineVie
     outline.collapseItem(nil, collapseChildren: true)
   }
 
+  /// Mirrors the latest validation state into the visible outline row views.
   private func applyValidationErrors() {
     guard let userConfig else { return }
 
@@ -286,6 +288,7 @@ private class OutlineController: NSObject, NSOutlineViewDataSource, NSOutlineVie
   }
 
   private func propagateRootChange() {
+    // The SwiftUI binding will call back into `render` immediately; skip that pass so the outline keeps its current expansion state.
     skipNextRender = true
     onChange?(rootNode.toGroup())
   }
