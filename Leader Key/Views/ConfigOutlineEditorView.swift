@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import Defaults
 import KeyboardShortcuts
 import ObjectiveC
@@ -53,12 +54,24 @@ private class OutlineController: NSObject, NSOutlineViewDataSource, NSOutlineVie
   private let groupID = NSUserInterfaceItemIdentifier("GroupCell")
   private var rootNode: EditorNode = EditorNode.group(Group(key: nil, actions: []))
   var onChange: ((Group) -> Void)?
-  var userConfig: UserConfig?
+  var userConfig: UserConfig? {
+    didSet {
+      guard userConfig !== oldValue else { return }
+      validationCancellable = userConfig?
+        .$validationErrors
+        .receive(on: RunLoop.main)
+        .sink { [weak self] _ in
+          self?.applyValidationErrors()
+        }
+    }
+  }
   private var observers: [NSObjectProtocol] = []
   private var didApplyInitialExpansion = false
   private let expandedDefaultsKey = "ConfigOutlineEditor.ExpandedIndexPaths"
   private let dragType = NSPasteboard.PasteboardType("com.leaderkey.node")
   private var lastRenderedRoot: Group?
+  private var validationCancellable: AnyCancellable?
+  private var skipNextRender = false
 
   override init() {
     super.init()
@@ -103,6 +116,13 @@ private class OutlineController: NSObject, NSOutlineViewDataSource, NSOutlineVie
   }
 
   func render(root: Group) {
+    if skipNextRender {
+      lastRenderedRoot = root
+      skipNextRender = false
+      applyValidationErrors()
+      return
+    }
+
     if let last = lastRenderedRoot, last == root { return }
     // Capture current expansions by IDs for stability across reorder/sort
     let expandedIDs = collectExpandedIDs()
@@ -128,6 +148,7 @@ private class OutlineController: NSObject, NSOutlineViewDataSource, NSOutlineVie
     // Restore scroll position after reload
     DispatchQueue.main.async {
       self.outline.enclosingScrollView?.documentView?.scroll(scrollPosition)
+      self.applyValidationErrors()
     }
   }
 
@@ -164,19 +185,19 @@ private class OutlineController: NSObject, NSOutlineViewDataSource, NSOutlineVie
         onChange: { [weak self] payload in
           guard let self = self else { return }
           node.apply(payload)
-          self.onChange?(self.rootNode.toGroup())
+          self.propagateRootChange()
         },
         onDelete: { [weak self] in
           guard let self = self else { return }
           node.deleteFromParent()
           outlineView.reloadData()
-          self.onChange?(self.rootNode.toGroup())
+          self.propagateRootChange()
         },
         onDuplicate: { [weak self] in
           guard let self = self else { return }
           node.duplicateInParent()
           outlineView.reloadData()
-          self.onChange?(self.rootNode.toGroup())
+          self.propagateRootChange()
         },
         onAddAction: { [weak self] in
           guard let self else { return }
@@ -185,7 +206,7 @@ private class OutlineController: NSObject, NSOutlineViewDataSource, NSOutlineVie
           outlineView.reloadData()
           outlineView.expandItem(node)
           self.saveCurrentExpandedState()
-          self.onChange?(self.rootNode.toGroup())
+          self.propagateRootChange()
         },
         onAddGroup: { [weak self] in
           guard let self else { return }
@@ -193,7 +214,7 @@ private class OutlineController: NSObject, NSOutlineViewDataSource, NSOutlineVie
           outlineView.reloadData()
           outlineView.expandItem(node)
           self.saveCurrentExpandedState()
-          self.onChange?(self.rootNode.toGroup())
+          self.propagateRootChange()
         })
       return cell
     } else {
@@ -207,19 +228,19 @@ private class OutlineController: NSObject, NSOutlineViewDataSource, NSOutlineVie
         onChange: { [weak self] payload in
           guard let self = self else { return }
           node.apply(payload)
-          self.onChange?(self.rootNode.toGroup())
+          self.propagateRootChange()
         },
         onDelete: { [weak self] in
           guard let self = self else { return }
           node.deleteFromParent()
           outlineView.reloadData()
-          self.onChange?(self.rootNode.toGroup())
+          self.propagateRootChange()
         },
         onDuplicate: { [weak self] in
           guard let self = self else { return }
           node.duplicateInParent()
           outlineView.reloadData()
-          self.onChange?(self.rootNode.toGroup())
+          self.propagateRootChange()
         })
       return cell
     }
@@ -239,6 +260,34 @@ private class OutlineController: NSObject, NSOutlineViewDataSource, NSOutlineVie
 
   private func collapseAll() {
     outline.collapseItem(nil, collapseChildren: true)
+  }
+
+  private func applyValidationErrors() {
+    guard let userConfig else { return }
+
+    let rows = outline.numberOfRows
+    guard rows > 0 else { return }
+
+    for row in 0..<rows {
+      guard let node = outline.item(atRow: row) as? EditorNode else { continue }
+      let path = indexPath(for: node) ?? []
+      let validation = userConfig.validationError(at: path)
+
+      guard let view = outline.view(atColumn: 0, row: row, makeIfNecessary: false) else {
+        continue
+      }
+
+      if let actionCell = view as? ActionCellView {
+        actionCell.applyValidation(validation)
+      } else if let groupCell = view as? GroupCellView {
+        groupCell.applyValidation(validation)
+      }
+    }
+  }
+
+  private func propagateRootChange() {
+    skipNextRender = true
+    onChange?(rootNode.toGroup())
   }
 
   // MARK: Persisted expansion state
@@ -404,7 +453,7 @@ private class OutlineController: NSObject, NSOutlineViewDataSource, NSOutlineVie
     outline.reloadData()
     restoreExpandedByIDs(snapshotIDs)
     saveCurrentExpandedState()
-    onChange?(rootNode.toGroup())
+    propagateRootChange()
     return true
   }
 
@@ -434,7 +483,7 @@ private class OutlineController: NSObject, NSOutlineViewDataSource, NSOutlineVie
     outline.reloadData()
     restoreExpandedByIDs(expansionIDs)
     saveCurrentExpandedState()
-    onChange?(rootNode.toGroup())
+    propagateRootChange()
   }
 
   private func keyString(for node: EditorNode) -> String {
@@ -484,6 +533,10 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
   }
 
   private func setup() {
+    wantsLayer = true
+
+    wantsLayer = true
+
     let container = NSStackView()
     container.orientation = .horizontal
     container.spacing = 8
@@ -568,6 +621,11 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
     updateValidationStyle(validationError)
   }
 
+  func applyValidation(_ error: ValidationErrorType?) {
+    currentValidationError = error
+    updateValidationStyle(error)
+  }
+
   private func showMoreMenu(anchor: NSView?) {
     guard let anchor else { return }
     let menu = NSMenu()
@@ -592,6 +650,8 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
   }
 
   private func updateValidationStyle(_ error: ValidationErrorType?) {
+    updateRowBackground(error)
+
     // Don't override blue background when listening for keys
     guard keyMonitor == nil else { return }
 
@@ -605,6 +665,16 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
       keyButton.layer?.borderColor = NSColor.clear.cgColor
       keyButton.layer?.borderWidth = 0.0
     }
+  }
+
+  private func updateRowBackground(_ error: ValidationErrorType?) {
+    let color: NSColor?
+    if error != nil {
+      color = NSColor.systemRed.withAlphaComponent(0.08)
+    } else {
+      color = nil
+    }
+    layer?.backgroundColor = color?.cgColor
   }
 
   private func rebuildValue(for action: Action) {
@@ -1014,6 +1084,11 @@ private class GroupCellView: NSTableCellView, NSWindowDelegate {
     updateValidationStyle(validationError)
   }
 
+  func applyValidation(_ error: ValidationErrorType?) {
+    currentValidationError = error
+    updateValidationStyle(error)
+  }
+
   private func updateButtons(for group: Group) {
     keyButton.title =
       (group.key?.isEmpty ?? true)
@@ -1026,6 +1101,8 @@ private class GroupCellView: NSTableCellView, NSWindowDelegate {
   }
 
   private func updateValidationStyle(_ error: ValidationErrorType?) {
+    updateRowBackground(error)
+
     // Don't override blue background when listening for keys
     guard keyMonitor == nil else { return }
 
@@ -1039,6 +1116,16 @@ private class GroupCellView: NSTableCellView, NSWindowDelegate {
       keyButton.layer?.borderColor = NSColor.clear.cgColor
       keyButton.layer?.borderWidth = 0.0
     }
+  }
+
+  private func updateRowBackground(_ error: ValidationErrorType?) {
+    let color: NSColor?
+    if error != nil {
+      color = NSColor.systemRed.withAlphaComponent(0.08)
+    } else {
+      color = nil
+    }
+    layer?.backgroundColor = color?.cgColor
   }
 
   private func updateGlobalShortcutView(for group: Group) {

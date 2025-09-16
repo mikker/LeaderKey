@@ -10,6 +10,13 @@ class TestAlertManager: AlertHandler {
     shownAlerts.append((style: style, message: message))
   }
 
+  func showAlert(
+    style: NSAlert.Style, message: String, informativeText: String, buttons: [String]
+  ) -> NSApplication.ModalResponse {
+    shownAlerts.append((style: style, message: message))
+    return .alertFirstButtonReturn
+  }
+
   func reset() {
     shownAlerts = []
   }
@@ -52,6 +59,7 @@ final class UserConfigTests: XCTestCase {
 
   func testInitializesWithDefaults() throws {
     subject.ensureAndLoad()
+    waitForConfigLoad()
 
     XCTAssertNotEqual(subject.root, emptyRoot)
     XCTAssertTrue(subject.exists)
@@ -67,6 +75,7 @@ final class UserConfigTests: XCTestCase {
     Defaults[.configDir] = defaultDir
 
     subject.ensureAndLoad()
+    waitForConfigLoad()
 
     XCTAssertTrue(FileManager.default.fileExists(atPath: defaultDir))
     XCTAssertTrue(subject.exists)
@@ -79,6 +88,7 @@ final class UserConfigTests: XCTestCase {
     Defaults[.configDir] = nonExistentDir
 
     subject.ensureAndLoad()
+    waitForConfigLoad()
 
     XCTAssertEqual(Defaults[.configDir], UserConfig.defaultDirectory())
     XCTAssertEqual(testAlertManager.shownAlerts.count, 1)
@@ -96,6 +106,7 @@ final class UserConfigTests: XCTestCase {
     try invalidJSON.write(to: subject.url, atomically: true, encoding: .utf8)
 
     subject.ensureAndLoad()
+    waitForConfigLoad()
 
     XCTAssertEqual(subject.root, emptyRoot)
     XCTAssertGreaterThan(testAlertManager.shownAlerts.count, 0)
@@ -104,5 +115,38 @@ final class UserConfigTests: XCTestCase {
       testAlertManager.shownAlerts.contains { alert in
         alert.style == .warning
       })
+  }
+
+  func testValidationIssuesDoNotTriggerAlerts() throws {
+    let json = """
+    {
+      "actions": [
+        { "key": "a", "type": "application", "value": "/Applications/Safari.app" },
+        { "key": "a", "type": "url", "value": "https://example.com" }
+      ]
+    }
+    """
+
+    try json.write(to: subject.url, atomically: true, encoding: .utf8)
+
+    subject.ensureAndLoad()
+    waitForConfigLoad()
+
+    XCTAssertFalse(subject.validationErrors.isEmpty)
+    XCTAssertEqual(testAlertManager.shownAlerts.count, 0)
+
+    testAlertManager.reset()
+    subject.saveConfig()
+
+    XCTAssertFalse(subject.validationErrors.isEmpty)
+    XCTAssertEqual(testAlertManager.shownAlerts.count, 0)
+  }
+
+  private func waitForConfigLoad() {
+    let expectation = expectation(description: "config load flush")
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+      expectation.fulfill()
+    }
+    self.wait(for: [expectation], timeout: 1.0)
   }
 }

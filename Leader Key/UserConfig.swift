@@ -20,7 +20,6 @@ class UserConfig: ObservableObject {
   let fileName = "config.json"
   private let alertHandler: AlertHandler
   private let fileManager: FileManager
-  private var suppressValidationAlerts = false
   private var lastReadChecksum: String?
   private var isLoading = false
   private let configIOQueue = DispatchQueue(label: "ConfigIO", qos: .userInitiated)
@@ -74,15 +73,6 @@ class UserConfig: ObservableObject {
     }
 
     setValidationErrors(ConfigValidator.validate(group: root))
-
-    if !validationErrors.isEmpty {
-      let errorCount = validationErrors.count
-      alertHandler.showAlert(
-        style: .warning,
-        message:
-          "Found \(errorCount) validation issue\(errorCount > 1 ? "s" : "") in your configuration. The configuration will still be saved, but some keys may not work as expected."
-      )
-    }
 
     do {
       let encoder = JSONEncoder()
@@ -166,15 +156,6 @@ class UserConfig: ObservableObject {
     // Validation on main queue
     let validationErrors = ConfigValidator.validate(group: currentRoot)
     setValidationErrors(validationErrors)
-
-    if !validationErrors.isEmpty {
-      let errorCount = validationErrors.count
-      alertHandler.showAlert(
-        style: .warning,
-        message:
-          "Found \(errorCount) validation issue\(errorCount > 1 ? "s" : "") in your configuration. The configuration will still be saved, but some keys may not work as expected."
-      )
-    }
 
     // Back to background for file write
     configIOQueue.async { [weak self] in
@@ -340,14 +321,6 @@ class UserConfig: ObservableObject {
           self.setValidationErrors(validationErrors)
           self.isLoading = false
 
-          if !validationErrors.isEmpty && !suppressAlerts && !self.suppressValidationAlerts {
-            let errorCount = validationErrors.count
-            self.alertHandler.showAlert(
-              style: .warning,
-              message:
-                "Found \(errorCount) validation issue\(errorCount > 1 ? "s" : "") in your configuration. Some keys may not work as expected."
-            )
-          }
         }
       } catch {
         DispatchQueue.main.async {

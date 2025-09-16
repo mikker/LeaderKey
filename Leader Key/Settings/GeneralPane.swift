@@ -26,6 +26,11 @@ struct GeneralPane: View {
                 .opacity(0.1)
             )
 
+          if !config.validationErrors.isEmpty {
+            ValidationWarningView(errors: config.validationErrors)
+              .transition(.opacity)
+          }
+
           HStack {
             // Left-aligned buttons
             HStack(spacing: 8) {
@@ -103,5 +108,63 @@ struct GeneralPane_Previews: PreviewProvider {
   static var previews: some View {
     return GeneralPane()
       .environmentObject(UserConfig())
+  }
+}
+
+private struct ValidationWarningView: View {
+  let displayedErrors: [ValidationError]
+  private let maxVisibleErrors = 3
+
+  init(errors: [ValidationError]) {
+    displayedErrors = errors
+  }
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 6) {
+      Text(warningTitle)
+        .font(.callout)
+        .fontWeight(.semibold)
+
+      VStack(alignment: .leading, spacing: 2) {
+        ForEach(Array(displayedErrors.prefix(maxVisibleErrors))) { error in
+          Text("• \(error.message)")
+            .font(.caption)
+        }
+
+        if displayedErrors.count > maxVisibleErrors {
+          Text("• …and \(displayedErrors.count - maxVisibleErrors) more issues")
+            .font(.caption)
+        }
+
+        Text(
+          "Configuration saves continue, but shortcuts tied to these keys may misbehave until fixed."
+        )
+        .font(.caption)
+        .padding(.top, 4)
+      }
+    }
+    .padding(10)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(Color(nsColor: .textBackgroundColor))
+    .overlay(
+      RoundedRectangle(cornerRadius: 8)
+        .stroke(Color.red.opacity(0.6), lineWidth: 1)
+    )
+    .cornerRadius(8)
+    .foregroundColor(.red)
+  }
+
+  private var warningTitle: String {
+    if displayedErrors.count == 1 {
+      return [
+        "Configuration has 1 issue.",
+        "Some shortcuts may not work until it is fixed.",
+      ].joined(separator: " ")
+    } else {
+      return [
+        "Configuration has \(displayedErrors.count) issues.",
+        "Some shortcuts may not work until they are fixed.",
+      ].joined(separator: " ")
+    }
   }
 }
