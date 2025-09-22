@@ -20,7 +20,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - run: sudo xcode-select -switch /Applications/Xcode_16.1.app
       - run: |
           xcodebuild test \
             -project "Leader Key.xcodeproj" \
