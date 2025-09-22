@@ -7,7 +7,6 @@
 
 import Foundation
 import SwiftUI
-import SwiftUICore
 
 public struct Pulsate: ViewModifier {
   @State var scale: Bool = true

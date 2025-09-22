@@ -146,8 +146,16 @@ struct AdvancedPane: View {
       }
       Settings.Section(title: "Other") {
         Defaults.Toggle("Show Leader Key in menubar", key: .showMenuBarIcon)
-        Defaults.Toggle(
-          "Force English keyboard layout", key: .forceEnglishKeyboardLayout)
+        VStack(alignment: .leading, spacing: 4) {
+          Defaults.Toggle(
+            "Force English keyboard layout", key: .forceEnglishKeyboardLayout)
+          Text(
+            "When enabled, letter keys are interpreted in US-English (QWERTY) regardless of your current keyboard layout."
+          )
+          .font(.caption)
+          .foregroundColor(.secondary)
+          .fixedSize(horizontal: false, vertical: true)
+        }
       }
     }
   }

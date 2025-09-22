@@ -38,6 +38,7 @@
 		427C184D2BD65C5C00955B98 /* Defaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = 427C184C2BD65C5C00955B98 /* Defaults.swift */; };
 		427C18502BD6652500955B98 /* Util.swift in Sources */ = {isa = PBXBuildFile; fileRef = 427C184F2BD6652500955B98 /* Util.swift */; };
 		427C18542BD6E59300955B98 /* NSWindow+Animations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 427C18532BD6E59300955B98 /* NSWindow+Animations.swift */; };
+		4284834C2E813212009D7EEF /* KeyboardLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4284834B2E813212009D7EEF /* KeyboardLayoutTests.swift */; };
 		42B21FBC2D67566100F4A2C7 /* Alerts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42B21FBB2D67566100F4A2C7 /* Alerts.swift */; };
 		42CCB5A32DAD257700356FC0 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = FBCA04D82D9F02F700271163 /* Kingfisher */; };
 		42DFCD722D5B7D48002EA111 /* Events.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42DFCD712D5B7D46002EA111 /* Events.swift */; };
@@ -94,6 +95,7 @@
 		427C184C2BD65C5C00955B98 /* Defaults.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Defaults.swift; sourceTree = "<group>"; };
 		427C184F2BD6652500955B98 /* Util.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Util.swift; sourceTree = "<group>"; };
 		427C18532BD6E59300955B98 /* NSWindow+Animations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSWindow+Animations.swift"; sourceTree = "<group>"; };
+		4284834B2E813212009D7EEF /* KeyboardLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardLayoutTests.swift; sourceTree = "<group>"; };
 		42B21FBB2D67566100F4A2C7 /* Alerts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Alerts.swift; sourceTree = "<group>"; };
 		42DFCD712D5B7D46002EA111 /* Events.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Events.swift; sourceTree = "<group>"; };
 		42F4CDC82D458FF700D0DD76 /* MainMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainMenu.swift; sourceTree = "<group>"; };
@@ -213,6 +215,7 @@
 		427C17FB2BD311B500955B98 /* Leader KeyTests */ = {
 			isa = PBXGroup;
 			children = (
+				4284834B2E813212009D7EEF /* KeyboardLayoutTests.swift */,
 				42454DDC2D71CBAB004E1374 /* ConfigValidatorTests.swift */,
 				427C17FC2BD311B500955B98 /* UserConfigTests.swift */,
 			);
@@ -307,7 +310,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1530;
-				LastUpgradeCheck = 1630;
+				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					427C17E62BD311B400955B98 = {
 						CreatedOnToolsVersion = 15.3;
@@ -434,6 +437,7 @@
 			files = (
 				42454DDD2D71CBAB004E1374 /* ConfigValidatorTests.swift in Sources */,
 				427C17FD2BD311B500955B98 /* UserConfigTests.swift in Sources */,
+				4284834C2E813212009D7EEF /* KeyboardLayoutTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -512,6 +516,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -570,6 +575,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 			};
 			name = Release;

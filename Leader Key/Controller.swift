@@ -211,22 +211,37 @@ class Controller {
     }
   }
 
-  private func charForEvent(_ event: NSEvent) -> String? {
-    let code = event.keyCode
+  internal func charForEvent(_ event: NSEvent) -> String? {
+    let forceEnglish = Defaults[.forceEnglishKeyboardLayout]
 
-    // Check our centralized key map first
-    if let entry = KeyMaps.entry(for: code) {
-      // For letter keys, always respect shift modifier regardless of forceEnglishKeyboardLayout
-      if entry.glyph.first?.isLetter == true && !entry.isReserved {
-        let char = event.modifierFlags.contains(.shift) ? entry.glyph.uppercased() : entry.glyph
-        return char
-      }
-      // For special keys (arrows, space, etc.), always return the glyph
-      return entry.glyph
+    // 1. If the user forces English, or if the key is non-printable,
+    //    fall back to the hard-coded map.
+    if forceEnglish {
+      return englishGlyph(for: event)
     }
 
-    // Fallback to system characters for unmapped keys
-    return event.charactersIgnoringModifiers
+    // 2. Use the system-translated character first.
+    if let printable = event.charactersIgnoringModifiers,
+      !printable.isEmpty,
+      printable.unicodeScalars.first?.isASCII ?? false
+    {
+      return printable  // already contains correct case
+    }
+
+    // 3. For arrows, ␣, ⌫ … use map as last resort.
+    return englishGlyph(for: event)
+  }
+
+  private func englishGlyph(for event: NSEvent) -> String? {
+    guard let entry = KeyMaps.entry(for: event.keyCode) else {
+      return event.charactersIgnoringModifiers
+    }
+    if entry.glyph.first?.isLetter == true && !entry.isReserved {
+      return event.modifierFlags.contains(.shift)
+        ? entry.glyph.uppercased()
+        : entry.glyph
+    }
+    return entry.glyph
   }
 
   private func positionCheatsheetWindow() {
