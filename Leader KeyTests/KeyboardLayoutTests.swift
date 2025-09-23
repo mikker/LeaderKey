@@ -13,7 +13,7 @@ class KeyboardLayoutTests: XCTestCase {
   override func setUp() {
     super.setUp()
     cancellables = Set<AnyCancellable>()
-    
+
     // Create test instances
     userConfig = UserConfig()
     userState = UserState(userConfig: userConfig)

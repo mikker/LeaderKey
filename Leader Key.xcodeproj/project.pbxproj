@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		115AA5BF2DA521C600C17E18 /* ActionIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115AA5BE2DA521C200C17E18 /* ActionIcon.swift */; };
+		6D9B9C042DBA000000000002 /* KeyCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D9B9C032DBA000000000002 /* KeyCapture.swift */; };
+		6D9B9C062DBA000000000003 /* ConfigEditorShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D9B9C052DBA000000000003 /* ConfigEditorShared.swift */; };
 		115AA5C22DA546D500C17E18 /* SymbolPicker in Frameworks */ = {isa = PBXBuildFile; productRef = 115AA5C12DA546D500C17E18 /* SymbolPicker */; };
 		130196C62D73B3DE0093148B /* Breadcrumbs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 130196C52D73B3DC0093148B /* Breadcrumbs.swift */; };
 		423632222D68CA6500878D92 /* MysteryBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 423632212D68CA6500878D92 /* MysteryBox.swift */; };
@@ -106,6 +108,8 @@
 		605385A22D523CAD00BEDB4B /* Pulsate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pulsate.swift; sourceTree = "<group>"; };
 		606C56EE2DAB875A00198B9F /* Cheater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cheater.swift; sourceTree = "<group>"; };
 		6D9B9C002DBA000000000001 /* ConfigOutlineEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigOutlineEditorView.swift; sourceTree = "<group>"; };
+		6D9B9C032DBA000000000002 /* KeyCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyCapture.swift; sourceTree = "<group>"; };
+		6D9B9C052DBA000000000003 /* ConfigEditorShared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigEditorShared.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -241,6 +245,8 @@
 				6D9B9C002DBA000000000001 /* ConfigOutlineEditorView.swift */,
 				427C18372BD3262100955B98 /* VisualEffectBackground.swift */,
 				42F4CDCC2D45B13600D0DD76 /* KeyButton.swift */,
+				6D9B9C032DBA000000000002 /* KeyCapture.swift */,
+				6D9B9C052DBA000000000003 /* ConfigEditorShared.swift */,
 				115AA5BE2DA521C200C17E18 /* ActionIcon.swift */,
 			);
 			path = Views;
@@ -420,6 +426,8 @@
 				427C18282BD31E2E00955B98 /* GeneralPane.swift in Sources */,
 				423632282D6A806700878D92 /* Theme.swift in Sources */,
 				6D9B9C012DBA000000000001 /* ConfigOutlineEditorView.swift in Sources */,
+				6D9B9C042DBA000000000002 /* KeyCapture.swift in Sources */,
+				6D9B9C062DBA000000000003 /* ConfigEditorShared.swift in Sources */,
 				42F4CDD12D48C52400D0DD76 /* Extensions.swift in Sources */,
 				427C182F2BD3206200955B98 /* UserState.swift in Sources */,
 				427C18202BD31C3D00955B98 /* AppDelegate.swift in Sources */,

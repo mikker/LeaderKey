@@ -538,8 +538,6 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
   private func setup() {
     wantsLayer = true
 
-    wantsLayer = true
-
     let container = NSStackView()
     container.orientation = .horizontal
     container.spacing = 8
@@ -630,25 +628,21 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
   }
 
   private func showMoreMenu(anchor: NSView?) {
-    guard let anchor else { return }
-    let menu = NSMenu()
-    menu.addItem(withTitle: "Duplicate", action: #selector(handleDuplicate), keyEquivalent: "")
-    menu.addItem(withTitle: "Delete", action: #selector(handleDelete), keyEquivalent: "")
-    for item in menu.items { item.target = self }
-    let point = NSPoint(x: 0, y: anchor.bounds.height)
-    menu.popUp(positioning: nil, at: point, in: anchor)
+    ConfigEditorUI.presentMoreMenu(
+      anchor: anchor,
+      onDuplicate: { self.onDuplicate?() },
+      onDelete: { self.onDelete?() }
+    )
   }
-
-  @objc private func handleDuplicate() { onDuplicate?() }
-  @objc private func handleDelete() { onDelete?() }
 
   private func updateButtons(for action: Action) {
     keyButton.title =
       (action.key?.isEmpty ?? true)
       ? "Key" : (KeyMaps.glyph(for: action.key ?? "") ?? action.key ?? "Key")
     let isPlaceholder = (action.label?.isEmpty ?? true)
-    setButtonTitle(
-      labelButton, text: isPlaceholder ? "Label" : (action.label ?? "Label"),
+    ConfigEditorUI.setButtonTitle(
+      labelButton,
+      text: isPlaceholder ? "Label" : (action.label ?? "Label"),
       placeholder: isPlaceholder)
   }
 
@@ -682,10 +676,13 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
 
   private func rebuildValue(for action: Action) {
     while let v = valueStack.arrangedSubviews.first { v.removeFromSuperview() }
-    switch action.type {
-    case .application:
+    let descriptor = ValueDescriptor.forAction(action)
+    switch descriptor.kind {
+    case .picker(let picker):
       let choose = Self.chooseButton(
-        title: "Choose…", chooseDir: false, allowedTypes: [.application, .applicationBundle],
+        title: picker.buttonTitle,
+        chooseDir: picker.chooseDirectories,
+        allowedTypes: picker.allowedTypes,
         width: Layout.chooserWidth
       ) { [weak self] url in
         guard var a = self?.currentAction() else { return }
@@ -694,58 +691,19 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
         self?.rebuildValue(for: a)
         self?.updateIcon(for: a)
       }
-      let label = NSTextField(labelWithString: action.value)
-      label.lineBreakMode = .byTruncatingMiddle
-      label.controlSize = .regular
-      label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-      do {  // Target width without forcing conflicts
-        let c = label.widthAnchor.constraint(lessThanOrEqualToConstant: Layout.valueWidth)
-        c.priority = .defaultHigh
-        c.isActive = true
-      }
+      let label = Self.valueLabel(text: descriptor.display)
       for v in [choose, label] { valueStack.addArrangedSubview(v) }
-    case .folder:
-      let choose = Self.chooseButton(
-        title: "Choose…", chooseDir: true, allowedTypes: nil, width: Layout.chooserWidth
-      ) { [weak self] url in
-        guard var a = self?.currentAction() else { return }
-        a.value = url.path
-        self?.onChange?(.action(a))
-        self?.rebuildValue(for: a)
-        self?.updateIcon(for: a)
-      }
-      let label = NSTextField(labelWithString: action.value)
-      label.lineBreakMode = .byTruncatingMiddle
-      label.controlSize = .regular
-      label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-      do {
-        let c = label.widthAnchor.constraint(lessThanOrEqualToConstant: Layout.valueWidth)
-        c.priority = .defaultHigh
-        c.isActive = true
-      }
-      for v in [choose, label] { valueStack.addArrangedSubview(v) }
-    default:
-      let edit = NSButton(title: "Edit…", target: nil, action: nil)
-      edit.controlSize = .regular
-      edit.bezelStyle = .rounded
-      edit.widthAnchor.constraint(equalToConstant: Layout.chooserWidth).isActive = true
-      let preview = NSTextField(labelWithString: action.value)
-      preview.lineBreakMode = .byTruncatingMiddle
-      preview.controlSize = .regular
-      preview.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-      do {
-        let c = preview.widthAnchor.constraint(lessThanOrEqualToConstant: Layout.valueWidth)
-        c.priority = .defaultHigh
-        c.isActive = true
-      }
+    case .prompt(let promptTitle):
+      let edit = Self.editButton(width: Layout.chooserWidth)
       edit.targetClosure { [weak self] in
-        self?.promptText(title: "Value", initial: action.value) { text in
+        self?.promptText(title: promptTitle, initial: action.value) { text in
           guard var a = self?.currentAction() else { return }
           a.value = text
           self?.onChange?(.action(a))
           self?.rebuildValue(for: a)
         }
       }
+      let preview = Self.valueLabel(text: descriptor.display)
       for v in [edit, preview] { valueStack.addArrangedSubview(v) }
     }
   }
@@ -754,6 +712,65 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
     guard let action = currentAction() else { return }
     onChange?(.action(action))
     rebuildValue(for: action)  // ensure value UI matches type after change
+  }
+
+  private struct ValueDescriptor {
+    struct PickerConfig {
+      let buttonTitle: String
+      let chooseDirectories: Bool
+      let allowedTypes: [UTType]?
+    }
+    enum Kind {
+      case picker(PickerConfig)
+      case prompt(String)
+    }
+
+    let kind: Kind
+    let display: String
+
+    static func forAction(_ action: Action) -> ValueDescriptor {
+      switch action.type {
+      case .application:
+        let config = PickerConfig(
+          buttonTitle: "Choose…",
+          chooseDirectories: false,
+          allowedTypes: [.application, .applicationBundle]
+        )
+        return ValueDescriptor(kind: .picker(config), display: action.value)
+      case .folder:
+        let config = PickerConfig(
+          buttonTitle: "Choose…",
+          chooseDirectories: true,
+          allowedTypes: nil
+        )
+        return ValueDescriptor(kind: .picker(config), display: action.value)
+      case .command:
+        return ValueDescriptor(kind: .prompt("Command"), display: action.value)
+      case .url:
+        return ValueDescriptor(kind: .prompt("URL"), display: action.value)
+      default:
+        return ValueDescriptor(kind: .prompt("Value"), display: action.value)
+      }
+    }
+  }
+
+  private static func valueLabel(text: String) -> NSTextField {
+    let label = NSTextField(labelWithString: text)
+    label.lineBreakMode = .byTruncatingMiddle
+    label.controlSize = .regular
+    label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+    let constraint = label.widthAnchor.constraint(lessThanOrEqualToConstant: Layout.valueWidth)
+    constraint.priority = .defaultHigh
+    constraint.isActive = true
+    return label
+  }
+
+  private static func editButton(width: CGFloat) -> NSButton {
+    let button = NSButton(title: "Edit…", target: nil, action: nil)
+    button.controlSize = .regular
+    button.bezelStyle = .rounded
+    button.widthAnchor.constraint(equalToConstant: width).isActive = true
+    return button
   }
 
   private func currentAction() -> Action? {
@@ -777,8 +794,10 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
     b.targetClosure {
       let panel = NSOpenPanel()
       panel.allowsMultipleSelection = false
-      panel.canChooseDirectories = chooseDir
-      panel.canChooseFiles = !chooseDir
+      let allowsAppBundles = allowsAppBundles(allowedTypes)
+      panel.treatsFilePackagesAsDirectories = false
+      panel.canChooseDirectories = chooseDir || allowsAppBundles
+      panel.canChooseFiles = !chooseDir || allowsAppBundles
       if let types = allowedTypes { panel.allowedContentTypes = types }
       panel.directoryURL =
         chooseDir
@@ -786,6 +805,13 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
       if panel.runModal() == .OK, let url = panel.url { picked(url) }
     }
     return b
+  }
+
+  private static func allowsAppBundles(_ types: [UTType]?) -> Bool {
+    guard let types else { return false }
+    return types.contains { type in
+      type == .application || type == .applicationBundle
+    }
   }
 
   private static func index(for type: Type) -> Int {
@@ -828,30 +854,13 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
 
     keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
       guard let self = self else { return event }
-      if event.keyCode == 53 {  // Escape cancels
-        self.endKeyCapture(set: nil)
-        return nil
-      }
-      // Preserve actual letter casing (Shift-modified input) before falling back to key maps
-      if let characters = event.characters,
-         characters.count == 1,
-         let ch = characters.first,
-         ch.isLetter {
-        self.endKeyCapture(set: String(ch))
-        return nil
-      }
-      // Use KeyMap system for consistent key representation
-      if let entry = KeyMaps.entry(for: event.keyCode) {
-        self.endKeyCapture(set: entry.glyph)
-        return nil
-      }
-      // Fallback for unmapped keys
-      let chars = event.charactersIgnoringModifiers ?? event.characters ?? ""
-      if let ch = chars.first {
-        self.endKeyCapture(set: String(ch))
-        return nil
-      }
-      return event
+      let handled = KeyCapture.handle(
+        event: event,
+        onSet: { self.endKeyCapture(set: $0) },
+        onCancel: { self.endKeyCapture(set: nil) },
+        onClear: { self.endKeyCapture(set: nil) }
+      )
+      return handled ? nil : event
     }
   }
 
@@ -869,7 +878,8 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
       keyButton.title = "Key"
       return
     }
-    a.key = char
+    let normalized = char?.isEmpty == true ? nil : char
+    a.key = normalized
     onChange?(.action(a))
     updateButtons(for: a)
 
@@ -879,15 +889,12 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
 
   // MARK: Icon helpers (action)
   private func showIconMenu(anchor: NSView?) {
-    guard let anchor else { return }
-    let menu = NSMenu()
-    menu.addItem(withTitle: "App Icon…", action: #selector(handlePickAppIcon), keyEquivalent: "")
-    menu.addItem(withTitle: "Symbol…", action: #selector(handlePickSymbol), keyEquivalent: "")
-    menu.addItem(NSMenuItem.separator())
-    menu.addItem(withTitle: "Clear", action: #selector(handleClearIcon), keyEquivalent: "")
-    for item in menu.items { item.target = self }
-    let point = NSPoint(x: 0, y: anchor.bounds.height)
-    menu.popUp(positioning: nil, at: point, in: anchor)
+    ConfigEditorUI.presentIconMenu(
+      anchor: anchor,
+      onPickAppIcon: { self.handlePickAppIcon() },
+      onPickSymbol: { self.handlePickSymbol() },
+      onClear: { self.handleClearIcon() }
+    )
   }
 
   @objc private func handlePickAppIcon() {
@@ -936,36 +943,7 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
   }
 
   private func updateIcon(for action: Action) {
-    iconButton.image = Self.iconImage(for: action)
-  }
-
-  private static func iconImage(for action: Action) -> NSImage? {
-    if let iconPath = action.iconPath, !iconPath.isEmpty {
-      if iconPath.hasSuffix(".app") { return NSWorkspace.shared.icon(forFile: iconPath) }
-      if let img = NSImage(systemSymbolName: iconPath, accessibilityDescription: nil) { return img }
-    }
-    switch action.type {
-    case .application:
-      return NSWorkspace.shared.icon(forFile: action.value)
-    case .url:
-      return NSImage(systemSymbolName: "link", accessibilityDescription: nil)
-    case .command:
-      return NSImage(systemSymbolName: "terminal", accessibilityDescription: nil)
-    case .folder:
-      return NSImage(systemSymbolName: "folder", accessibilityDescription: nil)
-    default:
-      return NSImage(systemSymbolName: "questionmark", accessibilityDescription: nil)
-    }
-  }
-
-  private func setButtonTitle(_ button: NSButton, text: String, placeholder: Bool) {
-    let attr = NSMutableAttributedString(string: text)
-    let color: NSColor = placeholder ? .secondaryLabelColor : .labelColor
-    attr.addAttribute(
-      .foregroundColor, value: color, range: NSRange(location: 0, length: attr.length))
-    // Set plain title first so .title stays in sync for reads, then apply color
-    button.title = text
-    button.attributedTitle = attr
+    iconButton.image = action.resolvedIcon()
   }
 
   // symbol picker presenting delegated to shared helper
@@ -1109,8 +1087,9 @@ private class GroupCellView: NSTableCellView, NSWindowDelegate {
       (group.key?.isEmpty ?? true)
       ? "Group Key" : (KeyMaps.glyph(for: group.key ?? "") ?? group.key ?? "Group Key")
     let isPlaceholder = (group.label?.isEmpty ?? true)
-    setButtonTitle(
-      labelButton, text: isPlaceholder ? "Label" : (group.label ?? "Label"),
+    ConfigEditorUI.setButtonTitle(
+      labelButton,
+      text: isPlaceholder ? "Label" : (group.label ?? "Label"),
       placeholder: isPlaceholder)
     updateGlobalShortcutView(for: group)
   }
@@ -1207,30 +1186,13 @@ private class GroupCellView: NSTableCellView, NSWindowDelegate {
 
     keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
       guard let self = self else { return event }
-      if event.keyCode == 53 {
-        self.endKeyCapture(set: nil)
-        return nil
-      }
-      // Preserve actual letter casing (Shift-modified input) before falling back to key maps
-      if let characters = event.characters,
-         characters.count == 1,
-         let ch = characters.first,
-         ch.isLetter {
-        self.endKeyCapture(set: String(ch))
-        return nil
-      }
-      // Use KeyMap system for consistent key representation
-      if let entry = KeyMaps.entry(for: event.keyCode) {
-        self.endKeyCapture(set: entry.glyph)
-        return nil
-      }
-      // Fallback for unmapped keys
-      let chars = event.charactersIgnoringModifiers ?? event.characters ?? ""
-      if let ch = chars.first {
-        self.endKeyCapture(set: String(ch))
-        return nil
-      }
-      return event
+      let handled = KeyCapture.handle(
+        event: event,
+        onSet: { self.endKeyCapture(set: $0) },
+        onCancel: { self.endKeyCapture(set: nil) },
+        onClear: { self.endKeyCapture(set: nil) }
+      )
+      return handled ? nil : event
     }
   }
 
@@ -1249,15 +1211,17 @@ private class GroupCellView: NSTableCellView, NSWindowDelegate {
       return
     }
 
+    let normalized = char?.isEmpty == true ? nil : char
+
     // If key changed and there was a global shortcut, remove it
-    if let oldKey = g.key, !oldKey.isEmpty, char != oldKey {
+    if let oldKey = g.key, !oldKey.isEmpty, normalized != oldKey {
       var shortcuts = Defaults[.groupShortcuts]
       shortcuts.remove(oldKey)
       Defaults[.groupShortcuts] = shortcuts
       KeyboardShortcuts.reset([KeyboardShortcuts.Name("group-\(oldKey)")])
     }
 
-    g.key = char
+    g.key = normalized
     onChange?(.group(g))
     updateButtons(for: g)
 
@@ -1271,15 +1235,12 @@ private class GroupCellView: NSTableCellView, NSWindowDelegate {
 
   // MARK: Icon helpers (group)
   private func showIconMenu(anchor: NSView?) {
-    guard let anchor else { return }
-    let menu = NSMenu()
-    menu.addItem(withTitle: "App Icon…", action: #selector(handlePickAppIcon), keyEquivalent: "")
-    menu.addItem(withTitle: "Symbol…", action: #selector(handlePickSymbol), keyEquivalent: "")
-    menu.addItem(NSMenuItem.separator())
-    menu.addItem(withTitle: "Clear", action: #selector(handleClearIcon), keyEquivalent: "")
-    for item in menu.items { item.target = self }
-    let point = NSPoint(x: 0, y: anchor.bounds.height)
-    menu.popUp(positioning: nil, at: point, in: anchor)
+    ConfigEditorUI.presentIconMenu(
+      anchor: anchor,
+      onPickAppIcon: { self.handlePickAppIcon() },
+      onPickSymbol: { self.handlePickSymbol() },
+      onClear: { self.handleClearIcon() }
+    )
   }
 
   @objc private func handlePickAppIcon() {
@@ -1328,41 +1289,16 @@ private class GroupCellView: NSTableCellView, NSWindowDelegate {
   }
 
   private func updateIcon(for group: Group) {
-    iconButton.image = Self.iconImage(for: group)
+    iconButton.image = group.resolvedIcon()
   }
-
-  private static func iconImage(for group: Group) -> NSImage? {
-    if let iconPath = group.iconPath, !iconPath.isEmpty {
-      if iconPath.hasSuffix(".app") { return NSWorkspace.shared.icon(forFile: iconPath) }
-      if let img = NSImage(systemSymbolName: iconPath, accessibilityDescription: nil) { return img }
-    }
-    return NSImage(systemSymbolName: "folder", accessibilityDescription: nil)
-  }
-
-  private func setButtonTitle(_ button: NSButton, text: String, placeholder: Bool) {
-    let attr = NSMutableAttributedString(string: text)
-    let color: NSColor = placeholder ? .secondaryLabelColor : .labelColor
-    attr.addAttribute(
-      .foregroundColor, value: color, range: NSRange(location: 0, length: attr.length))
-    // Keep .title updated for logic that reads it; apply visual dim via attributedTitle
-    button.title = text
-    button.attributedTitle = attr
-  }
-
-  // symbol picker presenting delegated to shared helper
 
   private func showMoreMenu(anchor: NSView?) {
-    guard let anchor else { return }
-    let menu = NSMenu()
-    menu.addItem(withTitle: "Duplicate", action: #selector(handleDuplicate), keyEquivalent: "")
-    menu.addItem(withTitle: "Delete", action: #selector(handleDelete), keyEquivalent: "")
-    for item in menu.items { item.target = self }
-    let point = NSPoint(x: 0, y: anchor.bounds.height)
-    menu.popUp(positioning: nil, at: point, in: anchor)
+    ConfigEditorUI.presentMoreMenu(
+      anchor: anchor,
+      onDuplicate: { self.onDuplicate?() },
+      onDelete: { self.onDelete?() }
+    )
   }
-
-  @objc private func handleDuplicate() { onDuplicate?() }
-  @objc private func handleDelete() { onDelete?() }
 }
 
 // MARK: - Editor Node
