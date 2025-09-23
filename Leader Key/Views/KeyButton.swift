@@ -117,11 +117,19 @@ struct KeyListenerView: NSViewRepresentable {
         break
       }
 
-      // Use centralized key mapping for all other keys
-      if let entry = KeyMaps.entry(for: event.keyCode) {
+      // For letters, use the actual character typed (which includes shift state)
+      if let characters = event.characters, 
+         !characters.isEmpty,
+         characters.count == 1,
+         characters.first?.isLetter == true {
+        text.wrappedValue = characters
+      }
+      // Use centralized key mapping for special keys (Enter, arrows, etc.)
+      else if let entry = KeyMaps.entry(for: event.keyCode) {
         text.wrappedValue = entry.glyph
-      } else if let characters = event.characters, !characters.isEmpty {
-        // Fallback for unmapped keys
+      } 
+      // Fallback for unmapped keys
+      else if let characters = event.characters, !characters.isEmpty {
         text.wrappedValue = String(characters.first!)
       }
 

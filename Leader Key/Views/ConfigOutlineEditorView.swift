@@ -828,6 +828,14 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
         self.endKeyCapture(set: nil)
         return nil
       }
+      // Preserve actual letter casing (Shift-modified input) before falling back to key maps
+      if let characters = event.characters,
+         characters.count == 1,
+         let ch = characters.first,
+         ch.isLetter {
+        self.endKeyCapture(set: String(ch))
+        return nil
+      }
       // Use KeyMap system for consistent key representation
       if let entry = KeyMaps.entry(for: event.keyCode) {
         self.endKeyCapture(set: entry.glyph)
@@ -1197,6 +1205,14 @@ private class GroupCellView: NSTableCellView, NSWindowDelegate {
       guard let self = self else { return event }
       if event.keyCode == 53 {
         self.endKeyCapture(set: nil)
+        return nil
+      }
+      // Preserve actual letter casing (Shift-modified input) before falling back to key maps
+      if let characters = event.characters,
+         characters.count == 1,
+         let ch = characters.first,
+         ch.isLetter {
+        self.endKeyCapture(set: String(ch))
         return nil
       }
       // Use KeyMap system for consistent key representation

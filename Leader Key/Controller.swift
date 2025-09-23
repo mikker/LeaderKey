@@ -220,7 +220,21 @@ class Controller {
       return englishGlyph(for: event)
     }
 
-    // 2. Use the system-translated character first.
+    // 2. For special keys like Enter, always use the mapped glyph
+    if let entry = KeyMaps.entry(for: event.keyCode) {
+      // For Enter, Space, Tab, arrows, etc. - use the glyph representation
+      if event.keyCode == KeyHelpers.enter.rawValue ||
+         event.keyCode == KeyHelpers.space.rawValue ||
+         event.keyCode == KeyHelpers.tab.rawValue ||
+         event.keyCode == KeyHelpers.leftArrow.rawValue ||
+         event.keyCode == KeyHelpers.rightArrow.rawValue ||
+         event.keyCode == KeyHelpers.upArrow.rawValue ||
+         event.keyCode == KeyHelpers.downArrow.rawValue {
+        return entry.glyph
+      }
+    }
+
+    // 3. Use the system-translated character for regular keys.
     if let printable = event.charactersIgnoringModifiers,
       !printable.isEmpty,
       printable.unicodeScalars.first?.isASCII ?? false
@@ -228,7 +242,7 @@ class Controller {
       return printable  // already contains correct case
     }
 
-    // 3. For arrows, ␣, ⌫ … use map as last resort.
+    // 4. For arrows, ␣, ⌫ … use map as last resort.
     return englishGlyph(for: event)
   }
 
