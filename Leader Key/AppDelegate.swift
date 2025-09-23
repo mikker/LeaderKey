@@ -147,7 +147,7 @@ class AppDelegate: NSObject, NSApplicationDelegate,
 
   // MARK: - Sparkle Gentle Reminders
 
-  var supportsGentleScheduledUpdateReminders: Bool {
+  @objc var supportsGentleScheduledUpdateReminders: Bool {
     return true
   }
 
