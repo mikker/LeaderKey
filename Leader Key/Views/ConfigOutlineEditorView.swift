@@ -691,6 +691,8 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
         guard var a = self?.currentAction() else { return }
         a.value = url.path
         self?.onChange?(.action(a))
+        self?.rebuildValue(for: a)
+        self?.updateIcon(for: a)
       }
       let label = NSTextField(labelWithString: action.value)
       label.lineBreakMode = .byTruncatingMiddle
@@ -709,6 +711,8 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
         guard var a = self?.currentAction() else { return }
         a.value = url.path
         self?.onChange?(.action(a))
+        self?.rebuildValue(for: a)
+        self?.updateIcon(for: a)
       }
       let label = NSTextField(labelWithString: action.value)
       label.lineBreakMode = .byTruncatingMiddle
