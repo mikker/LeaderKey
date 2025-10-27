@@ -126,6 +126,9 @@ class AppDelegate: NSObject, NSApplicationDelegate,
         self.processKeys([groupKey])
       }
     }
+    if Defaults[.groupShortcuts].isEmpty && !KeyboardShortcuts.isEnabled(for: .activate) {
+      showSettings()
+    }
   }
 
   func applicationWillTerminate(_ notification: Notification) {
