@@ -15,7 +15,6 @@
 		423632282D6A806700878D92 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 423632272D6A806700878D92 /* Theme.swift */; };
 		42454DDB2D71CB39004E1374 /* ConfigValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42454DDA2D71CB39004E1374 /* ConfigValidator.swift */; };
 		42454DDD2D71CBAB004E1374 /* ConfigValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42454DDC2D71CBAB004E1374 /* ConfigValidatorTests.swift */; };
-		EC5CEBC4C47B4C5DB2258813 /* URLSchemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC5CEBC4C47B4C5DB2258814 /* URLSchemeTests.swift */; };
 		425495402D75EFAD0020300E /* ForTheHorde.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4254953F2D75EFAD0020300E /* ForTheHorde.swift */; };
 		426E625B2D2E6A98009FD2F2 /* CommandRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 426E625A2D2E6A98009FD2F2 /* CommandRunner.swift */; };
 		4279AFED2C6A175500952A83 /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = 4279AFEC2C6A175500952A83 /* LaunchAtLogin */; };
@@ -26,7 +25,6 @@
 		427C181A2BD3123C00955B98 /* Defaults in Frameworks */ = {isa = PBXBuildFile; productRef = 427C18192BD3123C00955B98 /* Defaults */; };
 		427C181C2BD314B500955B98 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 427C181B2BD314B500955B98 /* Constants.swift */; };
 		427C18202BD31C3D00955B98 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 427C181F2BD31C3D00955B98 /* AppDelegate.swift */; };
-		73192AF63CAF425397D7C0D1 /* URLSchemeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73192AF63CAF425397D7C0D2 /* URLSchemeHandler.swift */; };
 		427C18232BD31DF100955B98 /* Settings in Frameworks */ = {isa = PBXBuildFile; productRef = 427C18222BD31DF100955B98 /* Settings */; };
 		427C18282BD31E2E00955B98 /* GeneralPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = 427C18242BD31E2E00955B98 /* GeneralPane.swift */; };
 		427C18292BD31E2E00955B98 /* MainWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 427C18252BD31E2E00955B98 /* MainWindow.swift */; };
@@ -62,6 +60,8 @@
 		6D9B9C012DBA000000000001 /* ConfigOutlineEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D9B9C002DBA000000000001 /* ConfigOutlineEditorView.swift */; };
 		6D9B9C042DBA000000000002 /* KeyCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D9B9C032DBA000000000002 /* KeyCapture.swift */; };
 		6D9B9C062DBA000000000003 /* ConfigEditorShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D9B9C052DBA000000000003 /* ConfigEditorShared.swift */; };
+		73192AF63CAF425397D7C0D1 /* URLSchemeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73192AF63CAF425397D7C0D2 /* URLSchemeHandler.swift */; };
+		EC5CEBC4C47B4C5DB2258813 /* URLSchemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC5CEBC4C47B4C5DB2258814 /* URLSchemeTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -83,7 +83,6 @@
 		423632272D6A806700878D92 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		42454DDA2D71CB39004E1374 /* ConfigValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigValidator.swift; sourceTree = "<group>"; };
 		42454DDC2D71CBAB004E1374 /* ConfigValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigValidatorTests.swift; sourceTree = "<group>"; };
-		EC5CEBC4C47B4C5DB2258814 /* URLSchemeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSchemeTests.swift; sourceTree = "<group>"; };
 		4254953F2D75EFAD0020300E /* ForTheHorde.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ForTheHorde.swift; sourceTree = "<group>"; };
 		426E625A2D2E6A98009FD2F2 /* CommandRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandRunner.swift; sourceTree = "<group>"; };
 		4279AFEA2C6A08B100952A83 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = "Leader Key/Support/Info.plist"; sourceTree = SOURCE_ROOT; };
@@ -95,7 +94,6 @@
 		427C17FC2BD311B500955B98 /* UserConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserConfigTests.swift; sourceTree = "<group>"; };
 		427C181B2BD314B500955B98 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		427C181F2BD31C3D00955B98 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		73192AF63CAF425397D7C0D2 /* URLSchemeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSchemeHandler.swift; sourceTree = "<group>"; };
 		427C18242BD31E2E00955B98 /* GeneralPane.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GeneralPane.swift; sourceTree = "<group>"; };
 		427C18252BD31E2E00955B98 /* MainWindow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainWindow.swift; sourceTree = "<group>"; };
 		427C18262BD31E2E00955B98 /* StatusItem.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StatusItem.swift; sourceTree = "<group>"; };
@@ -128,6 +126,8 @@
 		6D9B9C002DBA000000000001 /* ConfigOutlineEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigOutlineEditorView.swift; sourceTree = "<group>"; };
 		6D9B9C032DBA000000000002 /* KeyCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyCapture.swift; sourceTree = "<group>"; };
 		6D9B9C052DBA000000000003 /* ConfigEditorShared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigEditorShared.swift; sourceTree = "<group>"; };
+		73192AF63CAF425397D7C0D2 /* URLSchemeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSchemeHandler.swift; sourceTree = "<group>"; };
+		EC5CEBC4C47B4C5DB2258814 /* URLSchemeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSchemeTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -175,26 +175,6 @@
 				428483532E813219009D7EEF /* KeyboardPane.swift */,
 			);
 			path = Settings;
-			sourceTree = "<group>";
-		};
-		428483552E81321B009D7EEF /* KeyboardLayout */ = {
-			isa = PBXGroup;
-			children = (
-				4284834D2E813213009D7EEF /* KeyboardCheatsheetView.swift */,
-				4284834F2E813215009D7EEF /* KeyboardLayoutModel.swift */,
-				428483512E813217009D7EEF /* KeyboardLayoutView.swift */,
-				428483572E81321D009D7EEF /* KeyView.swift */,
-			);
-			path = KeyboardLayout;
-			sourceTree = "<group>";
-		};
-		4284835C2E813222009D7EEF /* Cheatsheet */ = {
-			isa = PBXGroup;
-			children = (
-				428483592E81321F009D7EEF /* KeyBadge.swift */,
-				4284835B2E813221009D7EEF /* CheatsheetRows.swift */,
-			);
-			path = Cheatsheet;
 			sourceTree = "<group>";
 		};
 		427C17DE2BD311B400955B98 = {
@@ -293,6 +273,26 @@
 				115AA5BE2DA521C200C17E18 /* ActionIcon.swift */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		428483552E81321B009D7EEF /* KeyboardLayout */ = {
+			isa = PBXGroup;
+			children = (
+				4284834D2E813213009D7EEF /* KeyboardCheatsheetView.swift */,
+				4284834F2E813215009D7EEF /* KeyboardLayoutModel.swift */,
+				428483512E813217009D7EEF /* KeyboardLayoutView.swift */,
+				428483572E81321D009D7EEF /* KeyView.swift */,
+			);
+			path = KeyboardLayout;
+			sourceTree = "<group>";
+		};
+		4284835C2E813222009D7EEF /* Cheatsheet */ = {
+			isa = PBXGroup;
+			children = (
+				428483592E81321F009D7EEF /* KeyBadge.swift */,
+				4284835B2E813221009D7EEF /* CheatsheetRows.swift */,
+			);
+			path = Cheatsheet;
 			sourceTree = "<group>";
 		};
 		42E70A552C823FF200FCF902 /* Frameworks */ = {
@@ -647,12 +647,13 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = "Leader Key/Leader_Key.entitlements";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 155;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"Leader Key/Support/Preview Content\"";
+				DEVELOPMENT_TEAM = ZX5S4CUJ9H;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -669,7 +670,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.17.3;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.brnbw.Leader-Key";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.alfredo289.Leader-Key";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -683,12 +684,13 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = "Leader Key/Leader_Key.entitlements";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 155;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"Leader Key/Support/Preview Content\"";
+				DEVELOPMENT_TEAM = ZX5S4CUJ9H;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -705,7 +707,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.17.3;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.brnbw.Leader-Key";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.alfredo289.Leader-Key";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -734,13 +736,15 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 155;
 				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = ZX5S4CUJ9H;
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.brnbw.Leader-KeyTests";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.Alfredo289.Leader-KeyTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;

@@ -71,7 +71,8 @@ class Controller {
 
     switch Defaults[.autoOpenCheatsheet] {
     case .always:
-      showCheatsheet()
+      let centered = Defaults[.cheatsheetStyle] == .keyboard
+      showCheatsheet(centered: centered)
     case .delay:
       scheduleCheatsheet()
     default: break
@@ -465,6 +466,12 @@ class Controller {
   }
 
   private func startModifierMonitoring() {
+    // Remove any existing monitor to prevent accumulation if show() is called multiple times
+    if let existingMonitor = modifierMonitor {
+      NSEvent.removeMonitor(existingMonitor)
+      modifierMonitor = nil
+    }
+
     modifierMonitor = NSEvent.addLocalMonitorForEvents(
       matching: .flagsChanged
     ) { [weak self] event in

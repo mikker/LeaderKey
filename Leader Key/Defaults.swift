@@ -41,6 +41,8 @@ extension Defaults.Keys {
   static let groupShortcuts = Key<Set<String>>(
     "groupShortcuts",
     default: Set(), suite: defaultsSuite)
+  static let keyboardLayoutType = Key<KeyboardLayoutType>(
+    "keyboardLayoutType", default: .qwerty, suite: defaultsSuite)
 }
 
 enum AutoOpenCheatsheetSetting: String, Defaults.Serializable {
@@ -80,4 +82,20 @@ enum Screen: String, Defaults.Serializable {
 enum CheatsheetStyle: String, Defaults.Serializable {
   case list
   case keyboard
+}
+
+enum KeyboardLayoutType: String, Codable, Defaults.Serializable, CaseIterable, Identifiable {
+  case qwerty
+  case qwertz
+
+  var id: Self { self }
+
+  var displayName: String {
+    switch self {
+    case .qwerty:
+      return "QWERTY (US/UK)"
+    case .qwertz:
+      return "QWERTZ (German)"
+    }
+  }
 }

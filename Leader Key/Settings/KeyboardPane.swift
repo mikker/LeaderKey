@@ -506,6 +506,7 @@ struct KeyboardPane: View {
   private let maxKeyboardScale: CGFloat = 1.4
   @EnvironmentObject private var config: UserConfig
   @Default(.cheatsheetStyle) var cheatsheetStyle
+  @Default(.keyboardLayoutType) var keyboardLayoutType
 
   @State private var editingItem: EditorWrapper?
   @State private var editingGroupWrapper: GroupWrapper?
@@ -680,6 +681,17 @@ struct KeyboardPane: View {
             .frame(maxWidth: .infinity, alignment: .center)
             .padding(.vertical, 24)
         }
+      }
+
+      Settings.Section(title: "Layout") {
+        Picker("Keyboard Layout", selection: $keyboardLayoutType) {
+          ForEach(KeyboardLayoutType.allCases) { layout in
+            Text(layout.displayName).tag(layout)
+          }
+        }
+        .pickerStyle(.menu)
+        .frame(maxWidth: 200)
+        .labelsHidden()
       }
     }
     .sheet(

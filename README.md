@@ -28,7 +28,7 @@ $ brew install leader-key
 
 ### Post-Install setup
 - Open the settings menu with the menu bar icon <img width="17" alt="Screenshot 2025-05-21 at 1 58 46 PM" src="https://github.com/user-attachments/assets/7ba2cd99-dbd1-4b23-a35b-c5579e797321" />
-- Choose your [`leader`](#what-do-i-set-as-my-leader-key) (`Shortcut` that will open the app) 
+- Choose your [`leader`](#what-do-i-set-as-my-leader-key) (`Shortcut` that will open the app)
 
   <img width="213" alt="Screenshot 2025-05-21 at 2 01 56 PM" src="https://github.com/user-attachments/assets/5e486a9a-ee1c-4ac7-a2d9-f4d0a46eb734" />
 - Add your [shortcuts](#example-shortcuts) to the `Config` settings
