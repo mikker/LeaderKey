@@ -5,6 +5,23 @@ import Defaults
 
 let emptyRoot = Group(key: "🚫", label: "Config error", actions: [])
 
+/// Configuration file format
+enum ConfigFormat {
+  case json
+  case toml
+
+  var fileExtension: String {
+    switch self {
+    case .json: return "json"
+    case .toml: return "toml"
+    }
+  }
+
+  var fileName: String {
+    "config.\(fileExtension)"
+  }
+}
+
 class UserConfig: ObservableObject {
   @Published var root = emptyRoot {
     didSet {
@@ -17,7 +34,9 @@ class UserConfig: ObservableObject {
   // O(1) lookup for row validation; keys are path strings like "1/0/3"
   @Published var validationErrorsByPath: [String: ValidationErrorType] = [:]
 
-  let fileName = "config.json"
+  /// Current configuration format (detected on load)
+  @Published private(set) var configFormat: ConfigFormat = .toml
+
   private let alertHandler: AlertHandler
   private let fileManager: FileManager
   private var lastReadChecksum: String?
@@ -75,16 +94,12 @@ class UserConfig: ObservableObject {
     setValidationErrors(ConfigValidator.validate(group: root))
 
     do {
-      let encoder = JSONEncoder()
-      encoder.outputFormatting = [
-        .prettyPrinted, .withoutEscapingSlashes, .sortedKeys,
-      ]
-      let jsonData = try encoder.encode(root)
+      let data = try encodeConfigData(for: root, format: configFormat)
 
-      try writeFile(data: jsonData)
+      try writeFile(data: data)
 
       // Update checksum after successful write using data directly
-      lastReadChecksum = calculateChecksum(jsonData)
+      lastReadChecksum = calculateChecksum(data)
     } catch {
       handleError(error, critical: true)
     }
@@ -96,15 +111,12 @@ class UserConfig: ObservableObject {
 
     // Create a new debounced save work item
     let currentRoot = root
+    let currentFormat = configFormat
     let workItem = DispatchWorkItem { [weak self] in
       guard let self = self else { return }
 
-      // Perform file I/O on background queue
-      let encoder = JSONEncoder()
-      encoder.outputFormatting = [.prettyPrinted, .withoutEscapingSlashes, .sortedKeys]
-
       do {
-        let jsonData = try encoder.encode(currentRoot)
+        let configData = try self.encodeConfigData(for: currentRoot, format: currentFormat)
 
         // Check conflicts on background queue first, then switch to main for UI
         if let lastChecksum = self.lastReadChecksum, self.exists {
@@ -130,14 +142,14 @@ class UserConfig: ObservableObject {
               }
 
               // Continue with save after conflict resolution
-              self.performSaveWithData(jsonData, currentRoot: currentRoot)
+              self.performSaveWithData(configData, currentRoot: currentRoot)
             }
             return
           }
         }
 
         DispatchQueue.main.async {
-          self.performSaveWithData(jsonData, currentRoot: currentRoot)
+          self.performSaveWithData(configData, currentRoot: currentRoot)
         }
       } catch {
         DispatchQueue.main.async {
@@ -152,7 +164,7 @@ class UserConfig: ObservableObject {
     configIOQueue.asyncAfter(deadline: .now() + .milliseconds(300), execute: workItem)
   }
 
-  private func performSaveWithData(_ jsonData: Data, currentRoot: Group) {
+  private func performSaveWithData(_ configData: Data, currentRoot: Group) {
     // Validation on main queue
     let validationErrors = ConfigValidator.validate(group: currentRoot)
     setValidationErrors(validationErrors)
@@ -162,17 +174,39 @@ class UserConfig: ObservableObject {
       guard let self = self else { return }
 
       do {
-        try self.writeFile(data: jsonData)
+        try self.writeFile(data: configData)
 
         DispatchQueue.main.async {
           // Update checksum on main queue using data directly
-          self.lastReadChecksum = self.calculateChecksum(jsonData)
+          self.lastReadChecksum = self.calculateChecksum(configData)
         }
       } catch {
         DispatchQueue.main.async {
           self.handleError(error, critical: true)
         }
       }
+    }
+  }
+
+  private func encodeConfigData(for root: Group, format: ConfigFormat) throws -> Data {
+    switch format {
+    case .json:
+      let encoder = JSONEncoder()
+      encoder.outputFormatting = [
+        .prettyPrinted, .withoutEscapingSlashes, .sortedKeys,
+      ]
+      return try encoder.encode(root)
+
+    case .toml:
+      let tomlString = TOMLConfig.serialize(root)
+      guard let tomlData = tomlString.data(using: .utf8) else {
+        throw NSError(
+          domain: "UserConfig",
+          code: 1,
+          userInfo: [NSLocalizedDescriptionKey: "Failed to encode TOML as UTF-8"]
+        )
+      }
+      return tomlData
     }
   }
 
@@ -208,8 +242,14 @@ class UserConfig: ObservableObject {
 
   // MARK: - File Operations
 
+  /// Path to the current config file (TOML preferred, falls back to JSON)
   var path: String {
-    (Defaults[.configDir] as NSString).appendingPathComponent(fileName)
+    path(for: configFormat)
+  }
+
+  /// Path for a specific format
+  func path(for format: ConfigFormat) -> String {
+    (Defaults[.configDir] as NSString).appendingPathComponent(format.fileName)
   }
 
   var url: URL {
@@ -217,7 +257,22 @@ class UserConfig: ObservableObject {
   }
 
   var exists: Bool {
-    fileManager.fileExists(atPath: path)
+    fileManager.fileExists(atPath: path(for: .toml))
+      || fileManager.fileExists(atPath: path(for: .json))
+  }
+
+  /// Detect which config format exists (TOML preferred)
+  func detectConfigFormat() -> ConfigFormat {
+    let tomlPath = path(for: .toml)
+    let jsonPath = path(for: .json)
+
+    if fileManager.fileExists(atPath: tomlPath) {
+      return .toml
+    } else if fileManager.fileExists(atPath: jsonPath) {
+      return .json
+    }
+    // Default to TOML for new configs
+    return .toml
   }
 
   private func ensureConfigFileExists() {
@@ -231,14 +286,17 @@ class UserConfig: ObservableObject {
   }
 
   private func bootstrapConfig() throws {
-    guard let data = defaultConfig.data(using: .utf8) else {
+    // Create TOML config by default
+    guard let data = defaultConfigTOML.data(using: .utf8) else {
       throw NSError(
         domain: "UserConfig",
         code: 1,
         userInfo: [NSLocalizedDescriptionKey: "Failed to encode default config"]
       )
     }
-    try writeFile(data: data)
+    configFormat = .toml
+    let tomlPath = path(for: .toml)
+    try data.write(to: URL(fileURLWithPath: tomlPath), options: .atomic)
   }
 
   private func writeFile(data: Data) throws {
@@ -294,39 +352,105 @@ class UserConfig: ObservableObject {
       return
     }
 
+    let format = detectConfigFormat()
+
     configIOQueue.async { [weak self] in
       guard let self = self else { return }
 
       do {
-        let configString = try self.readFile()
+        let configPath = self.path(for: format)
+        let configString = try String(contentsOfFile: configPath, encoding: .utf8)
 
-        guard let jsonData = configString.data(using: .utf8) else {
-          throw NSError(
-            domain: "UserConfig",
-            code: 1,
-            userInfo: [
-              NSLocalizedDescriptionKey: "Failed to encode config file as UTF-8"
-            ]
-          )
+        let decodedRoot: Group
+
+        switch format {
+        case .json:
+          guard let jsonData = configString.data(using: .utf8) else {
+            throw NSError(
+              domain: "UserConfig",
+              code: 1,
+              userInfo: [
+                NSLocalizedDescriptionKey: "Failed to encode config file as UTF-8"
+              ]
+            )
+          }
+          let decoder = JSONDecoder()
+          decodedRoot = try decoder.decode(Group.self, from: jsonData)
+
+        case .toml:
+          decodedRoot = try TOMLConfig.parse(configString)
         }
 
-        let decoder = JSONDecoder()
-        let decodedRoot = try decoder.decode(Group.self, from: jsonData)
         let checksum = self.calculateChecksum(configString)
         let validationErrors = ConfigValidator.validate(group: decodedRoot)
 
         DispatchQueue.main.async {
+          self.configFormat = format
           self.root = decodedRoot
           self.lastReadChecksum = checksum
           self.setValidationErrors(validationErrors)
           self.isLoading = false
-
         }
       } catch {
         DispatchQueue.main.async {
           self.handleError(error, critical: false)
           self.isLoading = false
         }
+      }
+    }
+  }
+
+  /// Convert current JSON config to TOML
+  func convertToTOML() {
+    let tomlContent = TOMLConfig.serialize(root)
+    let tomlPath = path(for: .toml)
+    let jsonPath = path(for: .json)
+    let backupPath = jsonPath + ".backup"
+    let checksum = calculateChecksum(tomlContent)
+
+    func finalizeConversion(style: NSAlert.Style, informativeText: String) {
+      DispatchQueue.main.async {
+        self.configFormat = .toml
+        self.lastReadChecksum = checksum
+        _ = self.alertHandler.showAlert(
+          style: style,
+          message: "Configuration converted",
+          informativeText: informativeText,
+          buttons: ["OK"]
+        )
+      }
+    }
+
+    do {
+      // Write TOML file
+      try tomlContent.write(toFile: tomlPath, atomically: true, encoding: .utf8)
+
+      // Rename JSON file as backup
+      if fileManager.fileExists(atPath: jsonPath) {
+        if fileManager.fileExists(atPath: backupPath) {
+          try fileManager.removeItem(atPath: backupPath)
+        }
+        try fileManager.moveItem(atPath: jsonPath, toPath: backupPath)
+        finalizeConversion(
+          style: .informational,
+          informativeText:
+            "Your configuration has been converted to TOML format.\nBackup saved as config.json.backup"
+        )
+      } else {
+        finalizeConversion(
+          style: .warning,
+          informativeText:
+            "Your configuration has been converted to TOML format.\nNo JSON config was found to back up."
+        )
+      }
+    } catch {
+      DispatchQueue.main.async {
+        _ = self.alertHandler.showAlert(
+          style: .warning,
+          message: "Conversion failed",
+          informativeText: "Failed to convert configuration: \(error.localizedDescription)",
+          buttons: ["OK"]
+        )
       }
     }
   }
@@ -372,32 +496,26 @@ extension UserConfig {
   }
 }
 
-let defaultConfig = """
-  {
-      "type": "group",
-      "actions": [
-          { "key": "t", "type": "application", "value": "/System/Applications/Utilities/Terminal.app" },
-          {
-              "key": "o",
-              "type": "group",
-              "actions": [
-                  { "key": "s", "type": "application", "value": "/Applications/Safari.app" },
-                  { "key": "e", "type": "application", "value": "/Applications/Mail.app" },
-                  { "key": "i", "type": "application", "value": "/System/Applications/Music.app" },
-                  { "key": "m", "type": "application", "value": "/Applications/Messages.app" }
-              ]
-          },
-          {
-              "key": "r",
-              "type": "group",
-              "actions": [
-                  { "key": "e", "type": "url", "value": "raycast://extensions/raycast/emoji-symbols/search-emoji-symbols" },
-                  { "key": "p", "type": "url", "value": "raycast://confetti" },
-                  { "key": "c", "type": "url", "value": "raycast://extensions/raycast/system/open-camera" }
-              ]
-          }
-      ]
-  }
+let defaultConfigTOML = """
+  # Leader Key Configuration
+  # Edit this file to customize your keyboard shortcuts
+
+  # Simple shortcuts - just press the key after the leader key
+  t = "Terminal"
+
+  # Groups organize related shortcuts
+  [o]
+  label = "[apps]"
+  s = "Safari"
+  e = "Mail"
+  i = "Music"
+  m = "Messages"
+
+  [r]
+  label = "[raycast]"
+  e = ["raycast://extensions/raycast/emoji-symbols/search-emoji-symbols", "emoji"]
+  p = ["raycast://confetti", "confetti"]
+  c = ["raycast://extensions/raycast/system/open-camera", "camera"]
   """
 
 enum Type: String, Codable {
@@ -417,7 +535,7 @@ protocol Item {
 }
 
 struct Action: Item, Codable, Equatable {
-  // UI-only stable identity. Not persisted to JSON.
+  // UI-only stable identity. Not persisted to config.
   var uiid: UUID = UUID()
 
   var key: String?
@@ -427,9 +545,10 @@ struct Action: Item, Codable, Equatable {
   var iconPath: String?
 
   var displayName: String {
-    guard let labelValue = label else { return bestGuessDisplayName }
-    guard !labelValue.isEmpty else { return bestGuessDisplayName }
-    return labelValue
+    if let labelValue = label, !labelValue.isEmpty {
+      return labelValue
+    }
+    return bestGuessDisplayName
   }
 
   var bestGuessDisplayName: String {
@@ -496,9 +615,10 @@ struct Group: Item, Codable, Equatable {
   var actions: [ActionOrGroup]
 
   var displayName: String {
-    guard let labelValue = label else { return "Group" }
-    if labelValue.isEmpty { return "Group" }
-    return labelValue
+    if let labelValue = label, !labelValue.isEmpty {
+      return labelValue
+    }
+    return "Group"
   }
 
   static func == (lhs: Group, rhs: Group) -> Bool {
@@ -595,8 +715,8 @@ enum ActionOrGroup: Codable, Equatable {
       }
       try container.encode(action.type, forKey: .type)
       try container.encode(action.value, forKey: .value)
-      if action.label != nil && !action.label!.isEmpty {
-        try container.encodeIfPresent(action.label, forKey: .label)
+      if let label = action.label, !label.isEmpty {
+        try container.encode(label, forKey: .label)
       }
       try container.encodeIfPresent(action.iconPath, forKey: .iconPath)
     case .group(let group):
@@ -609,8 +729,8 @@ enum ActionOrGroup: Codable, Equatable {
       }
       try container.encode(Type.group, forKey: .type)
       try container.encode(group.actions, forKey: .actions)
-      if group.label != nil && !group.label!.isEmpty {
-        try container.encodeIfPresent(group.label, forKey: .label)
+      if let label = group.label, !label.isEmpty {
+        try container.encode(label, forKey: .label)
       }
       try container.encodeIfPresent(group.iconPath, forKey: .iconPath)
     }

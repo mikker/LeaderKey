@@ -11,7 +11,7 @@ extension KeyboardShortcuts.Name {
 struct KeyMapEntry: Hashable, Codable {
   let code: UInt16  // Hardware scancode (49)
   let glyph: String  // Visual symbol for UI ("␣")
-  let text: String  // Text identifier for JSON ("space")
+  let text: String  // Text identifier for config file ("space")
   let reserved: Bool  // Whether this key can be bound by users
 }
 
@@ -166,7 +166,7 @@ extension KeyMaps {
     return input
   }
 
-  /// Convert a key from any representation to text for JSON storage
+  /// Convert a key from any representation to text for config file storage
   static func text(for input: String) -> String? {
     // Try as glyph first
     if let entry = byGlyph[input] {

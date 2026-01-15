@@ -7,7 +7,22 @@ This file provides guidance to coding agents when working with code in this repo
 ## Build & Test Commands
 
 - Build and run: `xcodebuild -scheme "Leader Key" -configuration Debug build`
+- Build without signing (contributors without a signing certificate):
+  ```
+  xcodebuild -scheme "Leader Key" -configuration Debug build \
+    CODE_SIGN_IDENTITY="" \
+    CODE_SIGNING_REQUIRED=NO \
+    CODE_SIGNING_ALLOWED=NO
+  ```
 - Run all tests: `xcodebuild -scheme "Leader Key" -testPlan "TestPlan" test`
+- Run all tests without signing:
+  ```
+  xcodebuild -scheme "Leader Key" -testPlan "TestPlan" test \
+    -configuration Debug \
+    CODE_SIGN_IDENTITY="" \
+    CODE_SIGNING_REQUIRED=NO \
+    CODE_SIGNING_ALLOWED=NO
+  ```
 - Run single test: `xcodebuild -scheme "Leader Key" -testPlan "TestPlan" -only-testing:Leader KeyTests/UserConfigTests/testInitializesWithDefaults test`
 - Bump version: `bin/bump`
 - Create release: `bin/release`
@@ -20,7 +35,7 @@ Leader Key is a macOS application that provides customizable keyboard shortcuts.
 
 - `AppDelegate`: Application lifecycle, global shortcuts registration, update management
 - `Controller`: Central event handling, manages key sequences and window display
-- `UserConfig`: JSON configuration management with validation
+- `UserConfig`: TOML-first (JSON legacy) configuration management with validation
 - `UserState`: Tracks navigation through key sequences
 - `MainWindow`: Base class for theme windows
 
@@ -32,7 +47,7 @@ Leader Key is a macOS application that provides customizable keyboard shortcuts.
 
 **Configuration Flow:**
 
-- Config stored at `~/Library/Application Support/Leader Key/config.json`
+- Config stored at `~/Library/Application Support/Leader Key/config.toml` (legacy `config.json` supported)
 - `FileMonitor` watches for changes and triggers reload
 - `ConfigValidator` ensures no key conflicts
 - Actions support: applications, URLs, commands, folders
@@ -56,4 +71,3 @@ Leader Key is a macOS application that provides customizable keyboard shortcuts.
 - **Documentation**: Use comments for complex logic or non-obvious implementations
 
 Follow Swift idioms and default formatting (4-space indentation, spaces around operators).
-

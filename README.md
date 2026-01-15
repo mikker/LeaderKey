@@ -47,6 +47,13 @@ $ brew install leader-key
 - <kbd>leader</kbd><kbd>m</kbd><kbd>m</kbd> → Mute audio (`media mute`)
 - <kbd>leader</kbd><kbd>w</kbd><kbd>m</kbd> → Maximize current window (`window maximize`)
 
+## Configuration
+
+Leader Key uses a TOML config format inspired by [Hammerflow](https://hammerflow.dev/) and its [sample config](https://github.com/saml-dev/Hammerflow.spoon/blob/main/sample.toml).
+Use [config.sample.toml](config.sample.toml) as a starting point.
+
+Default config path: `~/Library/Application Support/Leader Key/config.toml` (legacy `config.json` is still supported).
+
 ## URL Scheme
 
 Leader Key supports URL scheme automation for integration with tools like Alfred, Raycast, shell scripts, and more.
@@ -58,7 +65,7 @@ Leader Key supports URL scheme automation for integration with tools like Alfred
 # Reload configuration from disk
 open "leaderkey://config-reload"
 
-# Show config.json in Finder
+# Show config file in Finder
 open "leaderkey://config-reveal"
 ```
 
@@ -95,7 +102,7 @@ open "leaderkey://navigate?keys=a,b,c&execute=false"
 ### Example Use Cases
 
 - **Alfred/Raycast workflows**: Trigger Leader Key shortcuts programmatically
-- **Shell scripts**: Automate configuration reloads after editing config.json
+- **Shell scripts**: Automate configuration reloads after editing config file
 - **Keyboard maestro**: Chain Leader Key actions with other automations
 - **External triggers**: Open specific action sequences from other applications
 
