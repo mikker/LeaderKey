@@ -4,6 +4,25 @@ import XCTest
 
 @testable import Leader_Key
 
+/// Helper to create fake NSEvent for testing
+func fakeEvent(
+  keyCode: UInt16, characters: String, charactersIgnoringModifiers: String,
+  modifierFlags: NSEvent.ModifierFlags = []
+) -> NSEvent {
+  return NSEvent.keyEvent(
+    with: .keyDown,
+    location: NSPoint.zero,
+    modifierFlags: modifierFlags,
+    timestamp: 0,
+    windowNumber: 0,
+    context: nil,
+    characters: characters,
+    charactersIgnoringModifiers: charactersIgnoringModifiers,
+    isARepeat: false,
+    keyCode: keyCode
+  )!
+}
+
 class KeyboardLayoutTests: XCTestCase {
   var controller: Controller!
   var cancellables: Set<AnyCancellable>!
@@ -29,27 +48,6 @@ class KeyboardLayoutTests: XCTestCase {
     userState = nil
     userConfig = nil
     super.tearDown()
-  }
-
-  // Helper to create fake NSEvent for testing
-  private func fakeEvent(
-    keyCode: UInt16, characters: String, charactersIgnoringModifiers: String,
-    modifierFlags: NSEvent.ModifierFlags = []
-  ) -> NSEvent {
-    // This is a simplified mock - in real implementation we'd need to create a proper NSEvent
-    // For now, we'll test the logic indirectly through Controller methods
-    return NSEvent.keyEvent(
-      with: .keyDown,
-      location: NSPoint.zero,
-      modifierFlags: modifierFlags,
-      timestamp: 0,
-      windowNumber: 0,
-      context: nil,
-      characters: characters,
-      charactersIgnoringModifiers: charactersIgnoringModifiers,
-      isARepeat: false,
-      keyCode: keyCode
-    )!
   }
 
   func testAZERTYLayoutWithForceEnglishDisabled() {

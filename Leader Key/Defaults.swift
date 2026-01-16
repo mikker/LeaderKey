@@ -15,6 +15,10 @@ extension Defaults.Keys {
     "forceEnglishKeyboardLayout", default: false, suite: defaultsSuite)
   static let modifierKeyConfiguration = Key<ModifierKeyConfig>(
     "modifierKeyConfiguration", default: .controlGroupOptionSticky, suite: defaultsSuite)
+  static let hijackControl = Key<Bool>(
+    "hijackControl", default: false, suite: defaultsSuite)
+  static let hijackOption = Key<Bool>(
+    "hijackOption", default: false, suite: defaultsSuite)
   static let theme = Key<Theme>(
     "theme", default: .mysteryBox, suite: defaultsSuite)
 

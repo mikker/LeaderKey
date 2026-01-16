@@ -20,6 +20,7 @@ class AppDelegate: NSObject, NSApplicationDelegate,
   let config = UserConfig()
 
   var state: UserState!
+  var eventMonitor: Any?
   @IBOutlet var updaterController: SPUStandardUpdaterController!
 
   lazy var settingsWindowController = SettingsWindowController(
@@ -90,6 +91,7 @@ class AppDelegate: NSObject, NSApplicationDelegate,
     // Activation policy is managed solely by the Settings window
 
     registerGlobalShortcuts()
+    installEventMonitor()
   }
 
   func activate() {
@@ -131,7 +133,30 @@ class AppDelegate: NSObject, NSApplicationDelegate,
     }
   }
 
+  func installEventMonitor() {
+    // Install local event monitor to intercept modifier key combinations
+    eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+      guard let self = self else { return event }
+
+      // Only intercept when Leader Key window is key (actively receiving input)
+      guard self.controller.window.isKeyWindow else { return event }
+
+      // Check if we should hijack this event
+      if self.controller.shouldHijackEvent(event) {
+        // Pass the event to the controller and consume it
+        self.controller.keyDown(with: event)
+        return nil  // Returning nil prevents the event from being processed further
+      }
+
+      return event  // Allow normal processing
+    }
+  }
+
   func applicationWillTerminate(_ notification: Notification) {
+    // Clean up event monitor
+    if let monitor = eventMonitor {
+      NSEvent.removeMonitor(monitor)
+    }
     // Config saves automatically on changes
   }
 

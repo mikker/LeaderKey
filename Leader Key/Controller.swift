@@ -325,6 +325,16 @@ class Controller {
     userState.clear()
   }
 
+  func shouldHijackEvent(_ event: NSEvent) -> Bool {
+    let hijackControl = Defaults[.hijackControl]
+    let hijackOption = Defaults[.hijackOption]
+
+    let shouldHijackControl = event.modifierFlags.contains(.control) && hijackControl
+    let shouldHijackOption = event.modifierFlags.contains(.option) && hijackOption
+
+    return shouldHijackControl || shouldHijackOption
+  }
+
   private func openURL(_ action: Action) {
     guard let url = URL(string: action.value) else {
       showAlert(

@@ -11,6 +11,8 @@ struct AdvancedPane: View {
 
   @Default(.configDir) var configDir
   @Default(.modifierKeyConfiguration) var modifierKeyConfiguration
+  @Default(.hijackControl) var hijackControl
+  @Default(.hijackOption) var hijackOption
   @Default(.autoOpenCheatsheet) var autoOpenCheatsheet
   @Default(.cheatsheetDelayMS) var cheatsheetDelayMS
   @Default(.reactivateBehavior) var reactivateBehavior
@@ -79,6 +81,25 @@ struct AdvancedPane: View {
           }
         }
         .padding(.top, 2)
+      }
+
+      Settings.Section(
+        title: "Hijack Modifier Keys", bottomDivider: true
+      ) {
+        VStack(alignment: .leading, spacing: 12) {
+          Text(
+            "When enabled, Leader Key will capture modifier key combinations early, preventing macOS from intercepting them for global shortcuts."
+          )
+          .font(.callout)
+          .foregroundColor(.secondary)
+          .fixedSize(horizontal: false, vertical: true)
+
+          HStack(spacing: 24) {
+            Toggle("Control (⌃)", isOn: $hijackControl)
+            Toggle("Option (⌥)", isOn: $hijackOption)
+            Spacer()
+          }
+        }
       }
 
       Settings.Section(title: "Cheatsheet", bottomDivider: true) {
