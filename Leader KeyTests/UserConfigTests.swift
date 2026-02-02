@@ -142,6 +142,42 @@ final class UserConfigTests: XCTestCase {
     XCTAssertEqual(testAlertManager.shownAlerts.count, 0)
   }
 
+  func testActionDecodesPrompt() throws {
+    let json = """
+      {
+        "key": "f",
+        "type": "url",
+        "label": "Example API",
+        "value": "https://api.example.com/{input}",
+        "prompt": "Enter Id:"
+      }
+      """
+
+    let data = try XCTUnwrap(json.data(using: .utf8))
+    let action = try JSONDecoder().decode(Action.self, from: data)
+
+    XCTAssertEqual(action.prompt, "Enter Id:")
+  }
+
+  func testActionEncodesPrompt() throws {
+    let action = Action(
+      key: "f",
+      type: .url,
+      label: "Example API",
+      value: "https://api.example.com/{input}",
+      iconPath: nil,
+      prompt: "Enter Id:"
+    )
+
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = [.sortedKeys]
+    let data = try encoder.encode(action)
+    let json = try XCTUnwrap(String(data: data, encoding: .utf8))
+
+    XCTAssertTrue(json.contains("\"prompt\""))
+    XCTAssertTrue(json.contains("Enter Id:"))
+  }
+
   private func waitForConfigLoad() {
     let expectation = expectation(description: "config load flush")
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {

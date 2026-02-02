@@ -425,6 +425,7 @@ struct Action: Item, Codable, Equatable {
   var label: String?
   var value: String
   var iconPath: String?
+  var prompt: String?
 
   var displayName: String {
     guard let labelValue = label else { return bestGuessDisplayName }
@@ -447,11 +448,11 @@ struct Action: Item, Codable, Equatable {
       return value
     }
   }
-  private enum CodingKeys: String, CodingKey { case key, type, label, value, iconPath }
+  private enum CodingKeys: String, CodingKey { case key, type, label, value, iconPath, prompt }
 
   init(
     uiid: UUID = UUID(), key: String?, type: Type, label: String? = nil, value: String,
-    iconPath: String? = nil
+    iconPath: String? = nil, prompt: String? = nil
   ) {
     self.uiid = uiid
     self.key = key
@@ -459,6 +460,7 @@ struct Action: Item, Codable, Equatable {
     self.label = label
     self.value = value
     self.iconPath = iconPath
+    self.prompt = prompt
   }
 
   init(from decoder: Decoder) throws {
@@ -469,6 +471,7 @@ struct Action: Item, Codable, Equatable {
     self.label = try c.decodeIfPresent(String.self, forKey: .label)
     self.value = try c.decode(String.self, forKey: .value)
     self.iconPath = try c.decodeIfPresent(String.self, forKey: .iconPath)
+    self.prompt = try c.decodeIfPresent(String.self, forKey: .prompt)
   }
 
   func encode(to encoder: Encoder) throws {
@@ -482,6 +485,7 @@ struct Action: Item, Codable, Equatable {
     try c.encode(value, forKey: .value)
     if let l = label, !l.isEmpty { try c.encode(l, forKey: .label) }
     try c.encodeIfPresent(iconPath, forKey: .iconPath)
+    if let p = prompt, !p.isEmpty { try c.encode(p, forKey: .prompt) }
   }
 }
 
@@ -555,7 +559,7 @@ enum ActionOrGroup: Codable, Equatable {
   }
 
   private enum CodingKeys: String, CodingKey {
-    case key, type, value, actions, label, iconPath
+    case key, type, value, actions, label, iconPath, prompt
   }
 
   var uiid: UUID {
@@ -578,7 +582,8 @@ enum ActionOrGroup: Codable, Equatable {
       self = .group(Group(key: key, label: label, iconPath: iconPath, actions: actions))
     default:
       let value = try container.decode(String.self, forKey: .value)
-      self = .action(Action(key: key, type: type, label: label, value: value, iconPath: iconPath))
+      let prompt = try container.decodeIfPresent(String.self, forKey: .prompt)
+      self = .action(Action(key: key, type: type, label: label, value: value, iconPath: iconPath, prompt: prompt))
     }
   }
 
@@ -599,6 +604,9 @@ enum ActionOrGroup: Codable, Equatable {
         try container.encodeIfPresent(action.label, forKey: .label)
       }
       try container.encodeIfPresent(action.iconPath, forKey: .iconPath)
+      if action.prompt != nil && !action.prompt!.isEmpty {
+        try container.encodeIfPresent(action.prompt, forKey: .prompt)
+      }
     case .group(let group):
       // Always encode key in textual form for JSON
       if let keyValue = group.key {

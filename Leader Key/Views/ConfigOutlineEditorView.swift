@@ -513,12 +513,14 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
     static let labelWidth: CGFloat = 160
     static let iconButtonWidth: CGFloat = 28
     static let iconSize: CGFloat = 24
+    static let promptWidth: CGFloat = 80
   }
   private var keyButton = NSButton()
   private var typePopup = NSPopUpButton()
   private var iconButton = NSButton()
   private var valueStack = NSStackView()
   private var labelButton = NSButton()
+  private var promptButton = NSButton()
   private var moreBtn = NSButton()
 
   private var onChange: ((EditorPayload) -> Void)?
@@ -559,6 +561,14 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
       minConstraint.priority = .required
       minConstraint.isActive = true
     }
+    promptButton.bezelStyle = .rounded
+    promptButton.controlSize = .regular
+    promptButton.toolTip = "Set a prompt for user input. Use {input} in the value as placeholder."
+    do {
+      let minConstraint = promptButton.widthAnchor.constraint(greaterThanOrEqualToConstant: Layout.promptWidth)
+      minConstraint.priority = .required
+      minConstraint.isActive = true
+    }
     moreBtn.bezelStyle = .rounded
     moreBtn.controlSize = .regular
     moreBtn.image = NSImage(systemSymbolName: "ellipsis.circle", accessibilityDescription: nil)
@@ -569,13 +579,13 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
     iconButton.imageScaling = .scaleProportionallyDown
     iconButton.widthAnchor.constraint(equalToConstant: Layout.iconButtonWidth).isActive = true
 
-    for view in [keyButton, typePopup, iconButton, labelButton, moreBtn] {
+    for view in [keyButton, typePopup, iconButton, labelButton, promptButton, moreBtn] {
       view.makeRigid()
     }
 
     valueStack.makeFlex()
 
-    for view in [keyButton, typePopup, iconButton, valueStack, labelButton, moreBtn] {
+    for view in [keyButton, typePopup, iconButton, valueStack, labelButton, promptButton, moreBtn] {
       container.addArrangedSubview(view)
     }
     addSubview(container)
@@ -596,6 +606,19 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
       self.promptText(title: "Label", initial: self.currentAction()?.label ?? "") { text in
         guard var a = self.currentAction() else { return }
         a.label = text.isEmpty ? nil : text
+        self.onChange?(.action(a))
+        self.updateButtons(for: a)
+      }
+    }
+    promptButton.targetClosure { [weak self] in
+      guard let self else { return }
+      self.promptText(
+        title: "Prompt",
+        message: "Enter the prompt message shown to users.\nUse {input} in the value field as a placeholder for user input.",
+        initial: self.currentAction()?.prompt ?? ""
+      ) { text in
+        guard var a = self.currentAction() else { return }
+        a.prompt = text.isEmpty ? nil : text
         self.onChange?(.action(a))
         self.updateButtons(for: a)
       }
@@ -639,11 +662,19 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
     keyButton.title =
       (action.key?.isEmpty ?? true)
       ? "Key" : (KeyMaps.glyph(for: action.key ?? "") ?? action.key ?? "Key")
-    let isPlaceholder = (action.label?.isEmpty ?? true)
+    let isLabelPlaceholder = (action.label?.isEmpty ?? true)
     ConfigEditorUI.setButtonTitle(
       labelButton,
-      text: isPlaceholder ? "Label" : (action.label ?? "Label"),
-      placeholder: isPlaceholder)
+      text: isLabelPlaceholder ? "Label" : (action.label ?? "Label"),
+      placeholder: isLabelPlaceholder)
+    
+    let isPromptPlaceholder = (action.prompt?.isEmpty ?? true)
+    ConfigEditorUI.setButtonTitle(
+      promptButton,
+      text: isPromptPlaceholder ? "Prompt" : (action.prompt ?? "Prompt"),
+      placeholder: isPromptPlaceholder)
+    
+    promptButton.isHidden = !(action.type == .url || action.type == .command)
   }
 
   private func updateValidationStyle(_ error: ValidationErrorType?) {
@@ -712,6 +743,7 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
     guard let action = currentAction() else { return }
     onChange?(.action(action))
     rebuildValue(for: action)  // ensure value UI matches type after change
+    updateButtons(for: action)  // ensure prompt button visibility updates when type changes
   }
 
   private struct ValueDescriptor {
@@ -828,12 +860,19 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
   }
 
   private func promptText(title: String, initial: String, onOK: @escaping (String) -> Void) {
+    promptText(title: title, message: nil, initial: initial, onOK: onOK)
+  }
+
+  private func promptText(title: String, message: String?, initial: String, onOK: @escaping (String) -> Void) {
     let alert = NSAlert()
     alert.messageText = title
+    if let message = message {
+      alert.informativeText = message
+    }
     alert.addButton(withTitle: "OK")
     alert.addButton(withTitle: "Cancel")
     let field = NSTextField(string: initial)
-    field.frame = NSRect(x: 0, y: 0, width: 260, height: 22)
+    field.frame = NSRect(x: 0, y: 0, width: 300, height: 22)
     alert.accessoryView = field
     // Focus and select all when the dialog opens
     alert.window.initialFirstResponder = field

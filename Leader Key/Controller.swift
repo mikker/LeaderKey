@@ -22,6 +22,7 @@ class Controller {
   var window: MainWindow!
   var cheatsheetWindow: NSWindow!
   private var cheatsheetTimer: Timer?
+  private var inputPromptWindow: InputPromptWindow?
 
   private var cancellables = Set<AnyCancellable>()
 
@@ -160,7 +161,11 @@ class Controller {
     switch hit {
     case .action(let action):
       if execute {
-        if let mods = modifiers, isInStickyMode(mods) {
+        if action.requiresInput {
+          hide {
+            self.showInputPrompt(for: action)
+          }
+        } else if let mods = modifiers, isInStickyMode(mods) {
           runAction(action)
         } else {
           hide {
@@ -300,17 +305,21 @@ class Controller {
   }
 
   private func runAction(_ action: Action) {
+    runActionWithValue(action, value: action.value)
+  }
+
+  private func runActionWithValue(_ action: Action, value: String) {
     switch action.type {
     case .application:
       NSWorkspace.shared.openApplication(
-        at: URL(fileURLWithPath: action.value),
+        at: URL(fileURLWithPath: value),
         configuration: NSWorkspace.OpenConfiguration())
     case .url:
-      openURL(action)
+      openURLWithValue(action, value: value)
     case .command:
-      CommandRunner.run(action.value)
+      CommandRunner.run(value)
     case .folder:
-      let path: String = (action.value as NSString).expandingTildeInPath
+      let path: String = (value as NSString).expandingTildeInPath
       NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: path)
     default:
       print("\(action.type) unknown")
@@ -321,14 +330,41 @@ class Controller {
     }
   }
 
+  private func showInputPrompt(for action: Action) {
+    guard let promptMessage = action.prompt else { return }
+    
+    inputPromptWindow?.close()
+    inputPromptWindow = nil
+    
+    inputPromptWindow = InputPromptWindow(
+      label: action.displayName,
+      prompt: promptMessage,
+      placeholder: "",
+      onSubmit: { [weak self] input in
+        guard let self = self else { return }
+        let substitutedValue = action.valueWithInput(input)
+        self.runActionWithValue(action, value: substitutedValue)
+        self.inputPromptWindow = nil
+      },
+      onCancel: { [weak self] in
+        self?.inputPromptWindow = nil
+      }
+    )
+    inputPromptWindow?.showAndFocus()
+  }
+
   private func clear() {
     userState.clear()
   }
 
   private func openURL(_ action: Action) {
-    guard let url = URL(string: action.value) else {
+    openURLWithValue(action, value: action.value)
+  }
+
+  private func openURLWithValue(_ action: Action, value: String) {
+    guard let url = URL(string: value) else {
       showAlert(
-        title: "Invalid URL", message: "Failed to parse URL: \(action.value)")
+        title: "Invalid URL", message: "Failed to parse URL: \(value)")
       return
     }
 
@@ -336,7 +372,7 @@ class Controller {
       showAlert(
         title: "Invalid URL",
         message:
-          "URL is missing protocol (e.g. https://, raycast://): \(action.value)"
+          "URL is missing protocol (e.g. https://, raycast://): \(value)"
       )
       return
     }
