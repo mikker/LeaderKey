@@ -24,6 +24,7 @@ class TestAlertManager: AlertHandler {
 
 final class UserConfigTests: XCTestCase {
   var tempBaseDir: String!
+  var testDefaultDir: String!
   var testAlertManager: TestAlertManager!
   var subject: UserConfig!
   var originalSuite: UserDefaults!
@@ -38,12 +39,21 @@ final class UserConfigTests: XCTestCase {
     // Create a unique temporary directory for each test
     tempBaseDir = NSTemporaryDirectory().appending("/LeaderKeyTests-\(UUID().uuidString)")
     try? FileManager.default.createDirectory(atPath: tempBaseDir, withIntermediateDirectories: true)
+    testDefaultDir = tempBaseDir.appending("/DefaultConfigDir")
+
+    // Point config dir at temp location before creating UserConfig.
+    Defaults[.configDir] = tempBaseDir
 
     testAlertManager = TestAlertManager()
-    subject = UserConfig(alertHandler: testAlertManager)
-
-    // Set the config directory to our temp directory by default
-    Defaults[.configDir] = tempBaseDir
+    let isolatedDefaultDir = testDefaultDir!
+    subject = UserConfig(
+      alertHandler: testAlertManager,
+      defaultDirectoryResolver: {
+        try? FileManager.default.createDirectory(
+          atPath: isolatedDefaultDir, withIntermediateDirectories: true)
+        return isolatedDefaultDir
+      }
+    )
   }
 
   override func tearDown() {
@@ -67,7 +77,7 @@ final class UserConfigTests: XCTestCase {
   }
 
   func testCreatesDefaultConfigDirIfNotExists() throws {
-    let defaultDir = UserConfig.defaultDirectory()
+    let defaultDir = testDefaultDir!
     // Remove both directory and config file
     try? FileManager.default.removeItem(atPath: defaultDir)
     try? FileManager.default.removeItem(
@@ -90,7 +100,7 @@ final class UserConfigTests: XCTestCase {
     subject.ensureAndLoad()
     waitForConfigLoad()
 
-    XCTAssertEqual(Defaults[.configDir], UserConfig.defaultDirectory())
+    XCTAssertEqual(Defaults[.configDir], testDefaultDir)
     XCTAssertEqual(testAlertManager.shownAlerts.count, 1)
     XCTAssertEqual(testAlertManager.shownAlerts[0].style, .warning)
     XCTAssertTrue(
@@ -99,8 +109,10 @@ final class UserConfigTests: XCTestCase {
   }
 
   func testShowsAlertWhenConfigFileFailsToParse() throws {
-    // First ensure we're in the default directory since custom dirs are no longer supported
-    Defaults[.configDir] = UserConfig.defaultDirectory()
+    // Ensure we're exercising the default directory path (isolated under tempBaseDir).
+    Defaults[.configDir] = testDefaultDir
+    try? FileManager.default.createDirectory(
+      atPath: testDefaultDir, withIntermediateDirectories: true)
 
     let invalidJSON = "{ invalid json }"
     try invalidJSON.write(to: subject.url, atomically: true, encoding: .utf8)

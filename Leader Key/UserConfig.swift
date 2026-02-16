@@ -20,6 +20,7 @@ class UserConfig: ObservableObject {
   let fileName = "config.json"
   private let alertHandler: AlertHandler
   private let fileManager: FileManager
+  private let defaultDirectoryResolver: () -> String
   private var lastReadChecksum: String?
   private var isLoading = false
   private let configIOQueue = DispatchQueue(label: "ConfigIO", qos: .userInitiated)
@@ -27,10 +28,12 @@ class UserConfig: ObservableObject {
 
   init(
     alertHandler: AlertHandler = DefaultAlertHandler(),
-    fileManager: FileManager = .default
+    fileManager: FileManager = .default,
+    defaultDirectoryResolver: @escaping () -> String = UserConfig.defaultDirectory
   ) {
     self.alertHandler = alertHandler
     self.fileManager = fileManager
+    self.defaultDirectoryResolver = defaultDirectoryResolver
   }
 
   // MARK: - Public Interface
@@ -194,7 +197,7 @@ class UserConfig: ObservableObject {
 
   private func ensureValidConfigDirectory() {
     let dir = Defaults[.configDir]
-    let defaultDir = Self.defaultDirectory()
+    let defaultDir = defaultDirectoryResolver()
 
     if !fileManager.fileExists(atPath: dir) {
       alertHandler.showAlert(
