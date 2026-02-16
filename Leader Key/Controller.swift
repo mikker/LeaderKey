@@ -55,6 +55,7 @@ class Controller {
   }
 
   func show() {
+    userState.frontmostBundleID = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
     Events.send(.willActivate)
 
     let screen = Defaults[.screen].getNSScreen() ?? NSScreen()
@@ -127,7 +128,9 @@ class Controller {
     }
   }
 
-  func handleKey(_ key: String, withModifiers modifiers: NSEvent.ModifierFlags? = nil, execute: Bool = true) {
+  func handleKey(
+    _ key: String, withModifiers modifiers: NSEvent.ModifierFlags? = nil, execute: Bool = true
+  ) {
     if key == "?" {
       showCheatsheet()
       return
@@ -137,7 +140,9 @@ class Controller {
       (userState.currentGroup != nil)
       ? userState.currentGroup : userConfig.root
 
-    let hit = list?.actions.first { item in
+    let actions = AppFilter.resolve(actions: list?.actions ?? [], for: userState.frontmostBundleID)
+
+    let hit = actions.first { item in
       switch item {
       case .group(let group):
         // Normalize both keys for comparison
@@ -168,7 +173,7 @@ class Controller {
           }
         }
       }
-      // If execute is false, just stay visible showing the matched action
+    // If execute is false, just stay visible showing the matched action
     case .group(let group):
       if execute, let mods = modifiers, shouldRunGroupSequenceWithModifiers(mods) {
         hide {

@@ -408,12 +408,18 @@ enum Type: String, Codable {
   case folder
 }
 
+struct When: Codable, Equatable {
+  var includeApps: [String]?
+  var excludeApps: [String]?
+}
+
 protocol Item {
   var key: String? { get }
   var type: Type { get }
   var label: String? { get }
   var displayName: String { get }
   var iconPath: String? { get set }
+  var when: When? { get set }
 }
 
 struct Action: Item, Codable, Equatable {
@@ -425,6 +431,7 @@ struct Action: Item, Codable, Equatable {
   var label: String?
   var value: String
   var iconPath: String?
+  var when: When?
 
   var displayName: String {
     guard let labelValue = label else { return bestGuessDisplayName }
@@ -447,11 +454,11 @@ struct Action: Item, Codable, Equatable {
       return value
     }
   }
-  private enum CodingKeys: String, CodingKey { case key, type, label, value, iconPath }
+  private enum CodingKeys: String, CodingKey { case key, type, label, value, iconPath, when }
 
   init(
     uiid: UUID = UUID(), key: String?, type: Type, label: String? = nil, value: String,
-    iconPath: String? = nil
+    iconPath: String? = nil, when: When? = nil
   ) {
     self.uiid = uiid
     self.key = key
@@ -459,6 +466,7 @@ struct Action: Item, Codable, Equatable {
     self.label = label
     self.value = value
     self.iconPath = iconPath
+    self.when = when
   }
 
   init(from decoder: Decoder) throws {
@@ -469,6 +477,7 @@ struct Action: Item, Codable, Equatable {
     self.label = try c.decodeIfPresent(String.self, forKey: .label)
     self.value = try c.decode(String.self, forKey: .value)
     self.iconPath = try c.decodeIfPresent(String.self, forKey: .iconPath)
+    self.when = try c.decodeIfPresent(When.self, forKey: .when)
   }
 
   func encode(to encoder: Encoder) throws {
@@ -482,6 +491,7 @@ struct Action: Item, Codable, Equatable {
     try c.encode(value, forKey: .value)
     if let l = label, !l.isEmpty { try c.encode(l, forKey: .label) }
     try c.encodeIfPresent(iconPath, forKey: .iconPath)
+    try c.encodeIfPresent(when, forKey: .when)
   }
 }
 
@@ -494,6 +504,7 @@ struct Group: Item, Codable, Equatable {
   var label: String?
   var iconPath: String?
   var actions: [ActionOrGroup]
+  var when: When?
 
   var displayName: String {
     guard let labelValue = label else { return "Group" }
@@ -504,12 +515,13 @@ struct Group: Item, Codable, Equatable {
   static func == (lhs: Group, rhs: Group) -> Bool {
     return lhs.key == rhs.key && lhs.type == rhs.type && lhs.label == rhs.label
       && lhs.iconPath == rhs.iconPath && lhs.actions == rhs.actions
+      && lhs.when == rhs.when
   }
-  private enum CodingKeys: String, CodingKey { case key, type, label, iconPath, actions }
+  private enum CodingKeys: String, CodingKey { case key, type, label, iconPath, actions, when }
 
   init(
     uiid: UUID = UUID(), key: String?, type: Type = .group, label: String? = nil,
-    iconPath: String? = nil, actions: [ActionOrGroup]
+    iconPath: String? = nil, actions: [ActionOrGroup], when: When? = nil
   ) {
     self.uiid = uiid
     self.key = key
@@ -517,6 +529,7 @@ struct Group: Item, Codable, Equatable {
     self.label = label
     self.iconPath = iconPath
     self.actions = actions
+    self.when = when
   }
 
   init(from decoder: Decoder) throws {
@@ -527,6 +540,7 @@ struct Group: Item, Codable, Equatable {
     self.label = try c.decodeIfPresent(String.self, forKey: .label)
     self.iconPath = try c.decodeIfPresent(String.self, forKey: .iconPath)
     self.actions = try c.decode([ActionOrGroup].self, forKey: .actions)
+    self.when = try c.decodeIfPresent(When.self, forKey: .when)
   }
 
   func encode(to encoder: Encoder) throws {
@@ -540,6 +554,7 @@ struct Group: Item, Codable, Equatable {
     try c.encode(actions, forKey: .actions)
     if let l = label, !l.isEmpty { try c.encode(l, forKey: .label) }
     try c.encodeIfPresent(iconPath, forKey: .iconPath)
+    try c.encodeIfPresent(when, forKey: .when)
   }
 }
 
@@ -555,7 +570,7 @@ enum ActionOrGroup: Codable, Equatable {
   }
 
   private enum CodingKeys: String, CodingKey {
-    case key, type, value, actions, label, iconPath
+    case key, type, value, actions, label, iconPath, when
   }
 
   var uiid: UUID {
@@ -565,20 +580,29 @@ enum ActionOrGroup: Codable, Equatable {
     }
   }
 
+  var when: When? {
+    switch self {
+    case .action(let a): return a.when
+    case .group(let g): return g.when
+    }
+  }
+
   init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     let key = try container.decode(String?.self, forKey: .key)
     let type = try container.decode(Type.self, forKey: .type)
     let label = try container.decodeIfPresent(String.self, forKey: .label)
     let iconPath = try container.decodeIfPresent(String.self, forKey: .iconPath)
+    let when = try container.decodeIfPresent(When.self, forKey: .when)
 
     switch type {
     case .group:
       let actions = try container.decode([ActionOrGroup].self, forKey: .actions)
-      self = .group(Group(key: key, label: label, iconPath: iconPath, actions: actions))
+      self = .group(Group(key: key, label: label, iconPath: iconPath, actions: actions, when: when))
     default:
       let value = try container.decode(String.self, forKey: .value)
-      self = .action(Action(key: key, type: type, label: label, value: value, iconPath: iconPath))
+      self = .action(
+        Action(key: key, type: type, label: label, value: value, iconPath: iconPath, when: when))
     }
   }
 
@@ -599,6 +623,7 @@ enum ActionOrGroup: Codable, Equatable {
         try container.encodeIfPresent(action.label, forKey: .label)
       }
       try container.encodeIfPresent(action.iconPath, forKey: .iconPath)
+      try container.encodeIfPresent(action.when, forKey: .when)
     case .group(let group):
       // Always encode key in textual form for JSON
       if let keyValue = group.key {
@@ -613,6 +638,7 @@ enum ActionOrGroup: Codable, Equatable {
         try container.encodeIfPresent(group.label, forKey: .label)
       }
       try container.encodeIfPresent(group.iconPath, forKey: .iconPath)
+      try container.encodeIfPresent(group.when, forKey: .when)
     }
   }
 }

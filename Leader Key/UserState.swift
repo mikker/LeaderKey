@@ -8,6 +8,7 @@ final class UserState: ObservableObject {
   @Published var display: String?
   @Published var isShowingRefreshState: Bool
   @Published var navigationPath: [Group] = []
+  @Published var frontmostBundleID: String?
 
   var currentGroup: Group? {
     return navigationPath.last

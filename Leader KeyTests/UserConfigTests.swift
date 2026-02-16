@@ -142,6 +142,113 @@ final class UserConfigTests: XCTestCase {
     XCTAssertEqual(testAlertManager.shownAlerts.count, 0)
   }
 
+  func testWhenFieldRoundTrip() throws {
+    let json = """
+      {
+        "type": "group",
+        "actions": [
+          {
+            "key": "a",
+            "type": "application",
+            "value": "/Applications/Safari.app",
+            "when": {
+              "includeApps": ["com.google.Chrome"],
+              "excludeApps": ["com.google.Chrome.canary"]
+            }
+          }
+        ]
+      }
+      """
+
+    let data = json.data(using: .utf8)!
+    let decoded = try JSONDecoder().decode(Group.self, from: data)
+
+    // Verify decoded when field
+    if case .action(let action) = decoded.actions.first {
+      XCTAssertNotNil(action.when)
+      XCTAssertEqual(action.when?.includeApps, ["com.google.Chrome"])
+      XCTAssertEqual(action.when?.excludeApps, ["com.google.Chrome.canary"])
+    } else {
+      XCTFail("Expected an action")
+    }
+
+    // Re-encode and decode to verify round-trip
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+    let reEncoded = try encoder.encode(decoded)
+    let reDecoded = try JSONDecoder().decode(Group.self, from: reEncoded)
+
+    if case .action(let action) = reDecoded.actions.first {
+      XCTAssertEqual(action.when?.includeApps, ["com.google.Chrome"])
+      XCTAssertEqual(action.when?.excludeApps, ["com.google.Chrome.canary"])
+    } else {
+      XCTFail("Expected an action after round-trip")
+    }
+  }
+
+  func testWhenFieldOmittedWhenNil() throws {
+    let json = """
+      {
+        "type": "group",
+        "actions": [
+          {
+            "key": "a",
+            "type": "application",
+            "value": "/Applications/Safari.app"
+          }
+        ]
+      }
+      """
+
+    let data = json.data(using: .utf8)!
+    let decoded = try JSONDecoder().decode(Group.self, from: data)
+
+    // Verify when is nil
+    if case .action(let action) = decoded.actions.first {
+      XCTAssertNil(action.when)
+    } else {
+      XCTFail("Expected an action")
+    }
+
+    // Re-encode and verify no "when" key in JSON
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+    let reEncoded = try encoder.encode(decoded)
+    let jsonString = String(data: reEncoded, encoding: .utf8)!
+    XCTAssertFalse(jsonString.contains("when"), "JSON should not contain 'when' key when nil")
+  }
+
+  func testWhenFieldOnGroup() throws {
+    let json = """
+      {
+        "type": "group",
+        "actions": [
+          {
+            "key": "g",
+            "type": "group",
+            "actions": [
+              { "key": "a", "type": "application", "value": "/Applications/App.app" }
+            ],
+            "when": {
+              "includeApps": ["com.google.Chrome"]
+            }
+          }
+        ]
+      }
+      """
+
+    let data = json.data(using: .utf8)!
+    let decoded = try JSONDecoder().decode(Group.self, from: data)
+
+    if case .group(let group) = decoded.actions.first {
+      XCTAssertNotNil(group.when)
+      XCTAssertEqual(group.when?.includeApps, ["com.google.Chrome"])
+      XCTAssertNil(group.when?.excludeApps)
+    } else {
+      XCTFail("Expected a group")
+    }
+  }
+
   private func waitForConfigLoad() {
     let expectation = expectation(description: "config load flush")
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {

@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A1B2C3D42E8200000000AA02 /* AppFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D42E8200000000AA01 /* AppFilter.swift */; };
+		A1B2C3D42E8200000000BB02 /* AppFilterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D42E8200000000BB01 /* AppFilterTests.swift */; };
 		115AA5BF2DA521C600C17E18 /* ActionIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115AA5BE2DA521C200C17E18 /* ActionIcon.swift */; };
 		115AA5C22DA546D500C17E18 /* SymbolPicker in Frameworks */ = {isa = PBXBuildFile; productRef = 115AA5C12DA546D500C17E18 /* SymbolPicker */; };
 		130196C62D73B3DE0093148B /* Breadcrumbs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 130196C52D73B3DC0093148B /* Breadcrumbs.swift */; };
@@ -68,6 +70,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		A1B2C3D42E8200000000AA01 /* AppFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppFilter.swift; sourceTree = "<group>"; };
+		A1B2C3D42E8200000000BB01 /* AppFilterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppFilterTests.swift; sourceTree = "<group>"; };
 		115AA5BE2DA521C200C17E18 /* ActionIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionIcon.swift; sourceTree = "<group>"; };
 		130196C52D73B3DC0093148B /* Breadcrumbs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Breadcrumbs.swift; sourceTree = "<group>"; };
 		423632142D678F4400878D92 /* TestPlan.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = TestPlan.xctestplan; sourceTree = "<group>"; };
@@ -185,6 +189,7 @@
 			isa = PBXGroup;
 			children = (
 				42B21FBB2D67566100F4A2C7 /* Alerts.swift */,
+				A1B2C3D42E8200000000AA01 /* AppFilter.swift */,
 				427C181F2BD31C3D00955B98 /* AppDelegate.swift */,
 				73192AF63CAF425397D7C0D2 /* URLSchemeHandler.swift */,
 				42F4CDCE2D46E2B300D0DD76 /* Cheatsheet.swift */,
@@ -224,6 +229,7 @@
 		427C17FB2BD311B500955B98 /* Leader KeyTests */ = {
 			isa = PBXGroup;
 			children = (
+				A1B2C3D42E8200000000BB01 /* AppFilterTests.swift */,
 				4284834B2E813212009D7EEF /* KeyboardLayoutTests.swift */,
 				42454DDC2D71CBAB004E1374 /* ConfigValidatorTests.swift */,
 				EC5CEBC4C47B4C5DB2258814 /* URLSchemeTests.swift */,
@@ -409,6 +415,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A1B2C3D42E8200000000AA02 /* AppFilter.swift in Sources */,
 				427C182B2BD31E2E00955B98 /* Controller.swift in Sources */,
 				423632222D68CA6500878D92 /* MysteryBox.swift in Sources */,
 				605385A32D523CAD00BEDB4B /* Pulsate.swift in Sources */,
@@ -450,6 +457,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A1B2C3D42E8200000000BB02 /* AppFilterTests.swift in Sources */,
 				42454DDD2D71CBAB004E1374 /* ConfigValidatorTests.swift in Sources */,
 				EC5CEBC4C47B4C5DB2258813 /* URLSchemeTests.swift in Sources */,
 				427C17FD2BD311B500955B98 /* UserConfigTests.swift in Sources */,

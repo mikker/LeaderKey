@@ -210,6 +210,170 @@ final class ConfigValidatorTests: XCTestCase {
     XCTAssertEqual(KeyMaps.glyph(for: "R"), "R")
   }
 
+  // MARK: - Tier-Aware Duplicate Detection
+
+  func testDuplicateKeysAllowedWithDifferentTiers() {
+    // Tier A + Tier C for same key = OK (precedence resolves it)
+    let group = Group(
+      key: nil,
+      label: "Root",
+      actions: [
+        .action(Action(key: "a", type: .application, value: "/Applications/Global.app")),
+        .action(
+          Action(
+            key: "a", type: .application, value: "/Applications/Chrome.app",
+            when: When(includeApps: ["com.google.Chrome"]))),
+      ]
+    )
+
+    let errors = ConfigValidator.validate(group: group)
+    let duplicateErrors = errors.filter { $0.type == .duplicateKey }
+    XCTAssertEqual(duplicateErrors.count, 0, "Tier A + Tier C should not be flagged as duplicates")
+  }
+
+  func testDuplicateKeysErrorWhenBothGlobal() {
+    // Two Tier C entries for same key = error (existing behavior preserved)
+    let group = Group(
+      key: nil,
+      label: "Root",
+      actions: [
+        .action(Action(key: "a", type: .application, value: "/Applications/App1.app")),
+        .action(Action(key: "a", type: .application, value: "/Applications/App2.app")),
+      ]
+    )
+
+    let errors = ConfigValidator.validate(group: group)
+    let duplicateErrors = errors.filter { $0.type == .duplicateKey }
+    XCTAssertEqual(
+      duplicateErrors.count, 2, "Two global entries for same key should produce errors")
+  }
+
+  func testDuplicateKeysErrorWhenMultipleTierB() {
+    // Two Tier B for same key = error
+    let group = Group(
+      key: nil,
+      label: "Root",
+      actions: [
+        .action(
+          Action(
+            key: "a", type: .application, value: "/Applications/App1.app",
+            when: When(excludeApps: ["com.google.Chrome"]))),
+        .action(
+          Action(
+            key: "a", type: .application, value: "/Applications/App2.app",
+            when: When(excludeApps: ["com.apple.Safari"]))),
+      ]
+    )
+
+    let errors = ConfigValidator.validate(group: group)
+    let duplicateErrors = errors.filter { $0.type == .duplicateKey }
+    XCTAssertEqual(
+      duplicateErrors.count, 2, "Multiple Tier B entries for same key should produce errors")
+  }
+
+  func testDuplicateKeysErrorWhenTierAOverlap() {
+    // Two Tier A items with same includeApps bundle for same key = error
+    let group = Group(
+      key: nil,
+      label: "Root",
+      actions: [
+        .action(
+          Action(
+            key: "a", type: .application, value: "/Applications/App1.app",
+            when: When(includeApps: ["com.google.Chrome"]))),
+        .action(
+          Action(
+            key: "a", type: .application, value: "/Applications/App2.app",
+            when: When(includeApps: ["com.google.Chrome"]))),
+      ]
+    )
+
+    let errors = ConfigValidator.validate(group: group)
+    let duplicateErrors = errors.filter { $0.type == .duplicateKey }
+    XCTAssertEqual(duplicateErrors.count, 2, "Overlapping Tier A entries should produce errors")
+  }
+
+  func testInvalidWhen_sameBundleInBothArrays() {
+    let group = Group(
+      key: nil,
+      label: "Root",
+      actions: [
+        .action(
+          Action(
+            key: "a", type: .application, value: "/Applications/App1.app",
+            when: When(includeApps: ["com.google.Chrome"], excludeApps: ["com.google.Chrome"])))
+      ]
+    )
+
+    let errors = ConfigValidator.validate(group: group)
+    let whenErrors = errors.filter { $0.type == .invalidWhen }
+    XCTAssertEqual(whenErrors.count, 1, "Same bundle in both arrays should produce an error")
+  }
+
+  func testDuplicateKeysAllowedTierAAndTierB() {
+    // Tier A + Tier B for same key = OK
+    let group = Group(
+      key: nil,
+      label: "Root",
+      actions: [
+        .action(
+          Action(
+            key: "a", type: .application, value: "/Applications/EverywhereExcept.app",
+            when: When(excludeApps: ["com.apple.Finder"]))),
+        .action(
+          Action(
+            key: "a", type: .application, value: "/Applications/Chrome.app",
+            when: When(includeApps: ["com.google.Chrome"]))),
+      ]
+    )
+
+    let errors = ConfigValidator.validate(group: group)
+    let duplicateErrors = errors.filter { $0.type == .duplicateKey }
+    XCTAssertEqual(duplicateErrors.count, 0, "Tier A + Tier B should not be flagged as duplicates")
+  }
+
+  func testDuplicateKeysAllowedTierBAndTierC() {
+    // Tier B + Tier C for same key = OK
+    let group = Group(
+      key: nil,
+      label: "Root",
+      actions: [
+        .action(Action(key: "a", type: .application, value: "/Applications/Global.app")),
+        .action(
+          Action(
+            key: "a", type: .application, value: "/Applications/EverywhereExcept.app",
+            when: When(excludeApps: ["com.google.Chrome"]))),
+      ]
+    )
+
+    let errors = ConfigValidator.validate(group: group)
+    let duplicateErrors = errors.filter { $0.type == .duplicateKey }
+    XCTAssertEqual(duplicateErrors.count, 0, "Tier B + Tier C should not be flagged as duplicates")
+  }
+
+  func testTierADifferentBundlesAllowed() {
+    // Two Tier A items for different bundles on same key = OK
+    let group = Group(
+      key: nil,
+      label: "Root",
+      actions: [
+        .action(
+          Action(
+            key: "a", type: .application, value: "/Applications/Chrome.app",
+            when: When(includeApps: ["com.google.Chrome"]))),
+        .action(
+          Action(
+            key: "a", type: .application, value: "/Applications/Safari.app",
+            when: When(includeApps: ["com.apple.Safari"]))),
+      ]
+    )
+
+    let errors = ConfigValidator.validate(group: group)
+    let duplicateErrors = errors.filter { $0.type == .duplicateKey }
+    XCTAssertEqual(
+      duplicateErrors.count, 0, "Tier A entries for different bundles should be allowed")
+  }
+
   func testKeyMatchingLogic() {
     // Test the core key matching logic used in Controller.handleKey
     let testCases: [(input: String, config: String, shouldMatch: Bool)] = [
