@@ -20,32 +20,20 @@ class UserConfig: ObservableObject {
   let fileName = "config.json"
   private let alertHandler: AlertHandler
   private let fileManager: FileManager
+  private let defaultDirectoryResolver: () -> String
   private var lastReadChecksum: String?
   private var isLoading = false
   private let configIOQueue = DispatchQueue(label: "ConfigIO", qos: .userInitiated)
   private var saveWorkItem: DispatchWorkItem?
 
-  /// Test seam to override where default config directory resolves.
-  static var defaultDirectoryProvider: () -> String = {
-    let appSupportDir = FileManager.default.urls(
-      for: .applicationSupportDirectory, in: .userDomainMask)[0]
-    let path = (appSupportDir.path as NSString).appendingPathComponent(
-      "Leader Key")
-    do {
-      try FileManager.default.createDirectory(
-        atPath: path, withIntermediateDirectories: true)
-    } catch {
-      fatalError("Failed to create config directory")
-    }
-    return path
-  }
-
   init(
     alertHandler: AlertHandler = DefaultAlertHandler(),
-    fileManager: FileManager = .default
+    fileManager: FileManager = .default,
+    defaultDirectoryResolver: @escaping () -> String = UserConfig.defaultDirectory
   ) {
     self.alertHandler = alertHandler
     self.fileManager = fileManager
+    self.defaultDirectoryResolver = defaultDirectoryResolver
   }
 
   // MARK: - Public Interface
@@ -194,12 +182,22 @@ class UserConfig: ObservableObject {
   // MARK: - Directory Management
 
   static func defaultDirectory() -> String {
-    defaultDirectoryProvider()
+    let appSupportDir = FileManager.default.urls(
+      for: .applicationSupportDirectory, in: .userDomainMask)[0]
+    let path = (appSupportDir.path as NSString).appendingPathComponent(
+      "Leader Key")
+    do {
+      try FileManager.default.createDirectory(
+        atPath: path, withIntermediateDirectories: true)
+    } catch {
+      fatalError("Failed to create config directory")
+    }
+    return path
   }
 
   private func ensureValidConfigDirectory() {
     let dir = Defaults[.configDir]
-    let defaultDir = Self.defaultDirectory()
+    let defaultDir = defaultDirectoryResolver()
 
     if !fileManager.fileExists(atPath: dir) {
       alertHandler.showAlert(
