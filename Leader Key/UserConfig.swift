@@ -25,6 +25,21 @@ class UserConfig: ObservableObject {
   private let configIOQueue = DispatchQueue(label: "ConfigIO", qos: .userInitiated)
   private var saveWorkItem: DispatchWorkItem?
 
+  /// Test seam to override where default config directory resolves.
+  static var defaultDirectoryProvider: () -> String = {
+    let appSupportDir = FileManager.default.urls(
+      for: .applicationSupportDirectory, in: .userDomainMask)[0]
+    let path = (appSupportDir.path as NSString).appendingPathComponent(
+      "Leader Key")
+    do {
+      try FileManager.default.createDirectory(
+        atPath: path, withIntermediateDirectories: true)
+    } catch {
+      fatalError("Failed to create config directory")
+    }
+    return path
+  }
+
   init(
     alertHandler: AlertHandler = DefaultAlertHandler(),
     fileManager: FileManager = .default
@@ -179,17 +194,7 @@ class UserConfig: ObservableObject {
   // MARK: - Directory Management
 
   static func defaultDirectory() -> String {
-    let appSupportDir = FileManager.default.urls(
-      for: .applicationSupportDirectory, in: .userDomainMask)[0]
-    let path = (appSupportDir.path as NSString).appendingPathComponent(
-      "Leader Key")
-    do {
-      try FileManager.default.createDirectory(
-        atPath: path, withIntermediateDirectories: true)
-    } catch {
-      fatalError("Failed to create config directory")
-    }
-    return path
+    defaultDirectoryProvider()
   }
 
   private func ensureValidConfigDirectory() {

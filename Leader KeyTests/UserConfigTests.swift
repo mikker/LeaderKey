@@ -24,9 +24,11 @@ class TestAlertManager: AlertHandler {
 
 final class UserConfigTests: XCTestCase {
   var tempBaseDir: String!
+  var testDefaultDir: String!
   var testAlertManager: TestAlertManager!
   var subject: UserConfig!
   var originalSuite: UserDefaults!
+  var originalDefaultDirectoryProvider: (() -> String)!
 
   override func setUp() {
     super.setUp()
@@ -34,16 +36,26 @@ final class UserConfigTests: XCTestCase {
     // Create a temporary UserDefaults suite for testing
     originalSuite = defaultsSuite
     defaultsSuite = UserDefaults(suiteName: UUID().uuidString)!
+    originalDefaultDirectoryProvider = UserConfig.defaultDirectoryProvider
 
     // Create a unique temporary directory for each test
     tempBaseDir = NSTemporaryDirectory().appending("/LeaderKeyTests-\(UUID().uuidString)")
     try? FileManager.default.createDirectory(atPath: tempBaseDir, withIntermediateDirectories: true)
+    testDefaultDir = tempBaseDir.appending("/DefaultConfigDir")
+
+    // Ensure tests never touch real ~/Library/Application Support/Leader Key.
+    let isolatedDefaultDir = testDefaultDir!
+    UserConfig.defaultDirectoryProvider = {
+      try? FileManager.default.createDirectory(
+        atPath: isolatedDefaultDir, withIntermediateDirectories: true)
+      return isolatedDefaultDir
+    }
+
+    // Point config dir at temp location before creating UserConfig.
+    Defaults[.configDir] = tempBaseDir
 
     testAlertManager = TestAlertManager()
     subject = UserConfig(alertHandler: testAlertManager)
-
-    // Set the config directory to our temp directory by default
-    Defaults[.configDir] = tempBaseDir
   }
 
   override func tearDown() {
@@ -52,6 +64,7 @@ final class UserConfigTests: XCTestCase {
 
     // Restore original UserDefaults suite
     defaultsSuite = originalSuite
+    UserConfig.defaultDirectoryProvider = originalDefaultDirectoryProvider
 
     subject = nil
     super.tearDown()
@@ -99,7 +112,7 @@ final class UserConfigTests: XCTestCase {
   }
 
   func testShowsAlertWhenConfigFileFailsToParse() throws {
-    // First ensure we're in the default directory since custom dirs are no longer supported
+    // Ensure we're exercising the default directory path (isolated under tempBaseDir).
     Defaults[.configDir] = UserConfig.defaultDirectory()
 
     let invalidJSON = "{ invalid json }"
