@@ -1,0 +1,40 @@
+# Leader Key Configuration (sample)
+# Keys map to actions. Use a single character key for each shortcut.
+# Simple actions use: key = "value"
+# Array syntax: key = ["value", "Label"]
+
+t = "Terminal"
+d = "~/Downloads"
+g = "https://github.com"
+p = ["say hello", "Speak"]
+
+[o]
+label = "[apps]"
+s = "Safari"
+c = ["Visual Studio Code", "VS Code"]
+m = "/Applications/Mail.app"
+
+[w]
+label = "[web]"
+g = "https://github.com"
+h = "https://news.ycombinator.com"
+
+[r]
+label = "[raycast]"
+e = "raycast://extensions/raycast/emoji-symbols/search-emoji-symbols"
+p = "raycast://confetti"
+
+[r.c]
+value = "raycast://extensions/raycast/system/open-camera"
+label = "camera"
+icon = "camera"
+
+[s]
+label = "[system]"
+l = ["pmset displaysleepnow", "Sleep Displays"]
+
+[s.k]
+value = "/System/Library/CoreServices/Menu Extras/User.menu/Contents/Resources/CGSession -suspend"
+type = "command"
+label = "Lock Screen"
+icon = "lock.fill"

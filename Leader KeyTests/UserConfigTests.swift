@@ -102,15 +102,16 @@ final class UserConfigTests: XCTestCase {
     // First ensure we're in the default directory since custom dirs are no longer supported
     Defaults[.configDir] = UserConfig.defaultDirectory()
 
-    let invalidJSON = "{ invalid json }"
-    try invalidJSON.write(to: subject.url, atomically: true, encoding: .utf8)
+    // Invalid TOML - missing equals sign
+    let invalidTOML = "invalid toml without equals"
+    try invalidTOML.write(to: subject.url, atomically: true, encoding: .utf8)
 
     subject.ensureAndLoad()
     waitForConfigLoad()
 
     XCTAssertEqual(subject.root, emptyRoot)
     XCTAssertGreaterThan(testAlertManager.shownAlerts.count, 0)
-    // Verify that at least one warning alert was shown (JSON parsing errors are non-critical)
+    // Verify that at least one warning alert was shown (parsing errors are non-critical)
     XCTAssertTrue(
       testAlertManager.shownAlerts.contains { alert in
         alert.style == .warning
@@ -118,16 +119,13 @@ final class UserConfigTests: XCTestCase {
   }
 
   func testValidationIssuesDoNotTriggerAlerts() throws {
-    let json = """
-      {
-        "actions": [
-          { "key": "a", "type": "application", "value": "/Applications/Safari.app" },
-          { "key": "a", "type": "url", "value": "https://example.com" }
-        ]
-      }
+    // Use valid TOML with an invalid key to trigger validation
+    let toml = """
+      badkey = "/Applications/Safari.app"
+      b = "https://example.com"
       """
 
-    try json.write(to: subject.url, atomically: true, encoding: .utf8)
+    try toml.write(to: subject.url, atomically: true, encoding: .utf8)
 
     subject.ensureAndLoad()
     waitForConfigLoad()

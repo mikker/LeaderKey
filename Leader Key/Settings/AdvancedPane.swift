@@ -17,6 +17,16 @@ struct AdvancedPane: View {
   @Default(.showAppIconsInCheatsheet) var showAppIconsInCheatsheet
   @Default(.screen) var screen
 
+  private var showConfigFormatSection: Bool {
+    config.configFormat == .json
+  }
+
+  @ViewBuilder private var configFormatLabel: some View {
+    if showConfigFormatSection {
+      Text("Config format")
+    }
+  }
+
   var body: some View {
     Settings.Container(contentWidth: contentWidth) {
       Settings.Section(
@@ -45,6 +55,34 @@ struct AdvancedPane: View {
           Button("Reset") {
             configDir = UserConfig.defaultDirectory()
           }
+        }
+      }
+
+      Settings.Section(
+        bottomDivider: showConfigFormatSection,
+        label: { configFormatLabel }
+      ) {
+        if showConfigFormatSection {
+          HStack {
+            Text("Current format:")
+            Text("JSON")
+              .fontWeight(.medium)
+            Text("(deprecated)")
+              .foregroundColor(.orange)
+          }
+
+          VStack(alignment: .leading, spacing: 8) {
+            Text(
+              "TOML format offers a simpler, more readable syntax. Converting will backup your JSON config."
+            )
+            .font(.callout)
+            .foregroundColor(.secondary)
+
+            Button("Convert to TOML") {
+              config.convertToTOML()
+            }
+          }
+          .padding(.top, 4)
         }
       }
 
