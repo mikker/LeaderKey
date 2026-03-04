@@ -7,10 +7,13 @@ enum Cheatsheet {
 
   struct KeyBadge: SwiftUI.View {
     let key: String
+        @Default(.theme) var currentTheme: Theme
 
     var body: some SwiftUI.View {
       Text(KeyMaps.glyph(for: key) ?? key)
-        .font(.system(.body, design: .rounded))
+         .font(currentTheme == .menlo
+         ? .custom("Menlo", size: 14)
+         : .system(.body, design: .rounded))
         .multilineTextAlignment(.center)
         .fontWeight(.bold)
         .padding(.vertical, 4)
@@ -25,12 +28,15 @@ enum Cheatsheet {
     let indent: Int
     @Default(.showDetailsInCheatsheet) var showDetails
     @Default(.showAppIconsInCheatsheet) var showIcons
+    @Default(.theme) var currentTheme: Theme
 
     var body: some SwiftUI.View {
       HStack {
         HStack {
           ForEach(0..<indent, id: \.self) { _ in
-            Text("  ")
+            Text("  ").font(currentTheme == .menlo
+              ? .custom("Menlo", size: 14)
+              : .system(.body, design: .rounded))
           }
           KeyBadge(key: action.key ?? "●")
 
@@ -39,12 +45,18 @@ enum Cheatsheet {
           }
 
           Text(action.displayName)
+            .font(currentTheme == .menlo
+            ? .custom("Menlo", size: 14)
+            : .system(.body, design: .rounded))
             .lineLimit(1)
             .truncationMode(.middle)
         }
         Spacer()
         if showDetails {
           Text(action.value)
+            .font(currentTheme == .menlo
+            ? .custom("Menlo", size: 14)
+            : .system(.body, design: .rounded))
             .foregroundStyle(.secondary)
             .lineLimit(1)
             .truncationMode(.middle)
@@ -57,6 +69,7 @@ enum Cheatsheet {
     @Default(.expandGroupsInCheatsheet) var expand
     @Default(.showDetailsInCheatsheet) var showDetails
     @Default(.showAppIconsInCheatsheet) var showIcons
+    @Default(.theme) var currentTheme: Theme
 
     let group: Group
     let indent: Int
@@ -65,7 +78,10 @@ enum Cheatsheet {
       VStack(alignment: .leading, spacing: 4) {
         HStack {
           ForEach(0..<indent, id: \.self) { _ in
-            Text("  ")
+            Text("  ") .font(currentTheme == .menlo
+              ? .custom("Menlo", size: 14)
+              : .system(.body, design: .rounded))
+
           }
           KeyBadge(key: group.key ?? "")
 
@@ -76,11 +92,16 @@ enum Cheatsheet {
           Image(systemName: "chevron.right")
             .foregroundStyle(.secondary)
 
-          Text(group.displayName)
+          Text(group.displayName).font(currentTheme == .menlo
+           ? .custom("Menlo", size: 14)
+           : .system(.body, design: .rounded))
 
           Spacer()
           if showDetails {
             Text("\(group.actions.count.description) item(s)")
+              .font(currentTheme == .menlo
+              ? .custom("Menlo", size: 14)
+              : .system(.body, design: .rounded))
               .foregroundStyle(.secondary)
               .lineLimit(1)
               .truncationMode(.middle)
@@ -103,6 +124,7 @@ enum Cheatsheet {
   struct CheatsheetView: SwiftUI.View {
     @EnvironmentObject var userState: UserState
     @State private var contentHeight: CGFloat = 0
+    @Default(.theme) var currentTheme: Theme
 
     var maxHeight: CGFloat {
       if let screen = NSScreen.main {
@@ -128,12 +150,16 @@ enum Cheatsheet {
     }
 
     var body: some SwiftUI.View {
+      @Default(.theme) var currentTheme: Theme
       ScrollView {
         SwiftUI.VStack(alignment: .leading, spacing: 4) {
           if let group = userState.currentGroup {
             HStack {
               KeyBadge(key: group.key ?? "•")
               Text(group.key == nil ? "Leader Key" : group.displayName)
+                .font(currentTheme == .menlo
+                ? .custom("Menlo", size: 14)
+                : .system(.body, design: .rounded))
                 .foregroundStyle(.secondary)
             }
             .padding(.bottom, 8)
