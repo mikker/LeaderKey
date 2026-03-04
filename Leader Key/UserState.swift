@@ -8,6 +8,8 @@ final class UserState: ObservableObject {
   @Published var display: String?
   @Published var isShowingRefreshState: Bool
   @Published var navigationPath: [Group] = []
+  @Published var shiftHeld: Bool = false
+  @Published var cheatsheetCentered: Bool = false
 
   var currentGroup: Group? {
     return navigationPath.last
@@ -32,5 +34,13 @@ final class UserState: ObservableObject {
 
   func navigateToGroup(_ group: Group) {
     navigationPath.append(group)
+  }
+
+  func navigateBack() -> Bool {
+    if navigationPath.isEmpty {
+      return false
+    }
+    navigationPath.removeLast()
+    return true
   }
 }

@@ -22,6 +22,8 @@ class Controller {
   var window: MainWindow!
   var cheatsheetWindow: NSWindow!
   private var cheatsheetTimer: Timer?
+  private var modifierMonitor: Any?
+  private var isCheatsheetCentered = false
 
   private var cancellables = Set<AnyCancellable>()
 
@@ -56,6 +58,7 @@ class Controller {
 
   func show() {
     Events.send(.willActivate)
+    startModifierMonitoring()
 
     let screen = Defaults[.screen].getNSScreen() ?? NSScreen()
     window.show(on: screen) {
@@ -77,6 +80,12 @@ class Controller {
 
   func hide(afterClose: (() -> Void)? = nil) {
     Events.send(.willDeactivate)
+    stopModifierMonitoring()
+
+    // Reset centered mode state
+    window.alphaValue = 1
+    isCheatsheetCentered = false
+    userState.cheatsheetCentered = false
 
     window.hide {
       self.clear()
@@ -89,8 +98,8 @@ class Controller {
   }
 
   func keyDown(with event: NSEvent) {
-    // Reset the delay timer
-    if Defaults[.autoOpenCheatsheet] == .delay {
+    // Reset the delay timer only if not already in centered mode
+    if Defaults[.autoOpenCheatsheet] == .delay && !isCheatsheetCentered {
       scheduleCheatsheet()
     }
 
@@ -116,20 +125,30 @@ class Controller {
     switch event.keyCode {
     case KeyHelpers.backspace.rawValue:
       clear()
-      delay(1) {
-        self.positionCheatsheetWindow()
+      if !isCheatsheetCentered {
+        delay(1) {
+          self.positionCheatsheetWindow()
+        }
       }
     case KeyHelpers.escape.rawValue:
-      window.resignKey()
+      // If in a subgroup, go back one level; otherwise close
+      if !userState.navigateBack() {
+        window.resignKey()
+      }
     default:
       guard let char = charForEvent(event) else { return }
       handleKey(char, withModifiers: event.modifierFlags)
     }
   }
 
-  func handleKey(_ key: String, withModifiers modifiers: NSEvent.ModifierFlags? = nil, execute: Bool = true) {
+  func handleKey(
+    _ key: String,
+    withModifiers modifiers: NSEvent.ModifierFlags? = nil,
+    execute: Bool = true
+  ) {
     if key == "?" {
-      showCheatsheet()
+      let centered = Defaults[.cheatsheetStyle] == .keyboard
+      showCheatsheet(centered: centered)
       return
     }
 
@@ -168,7 +187,6 @@ class Controller {
           }
         }
       }
-      // If execute is false, just stay visible showing the matched action
     case .group(let group):
       if execute, let mods = modifiers, shouldRunGroupSequenceWithModifiers(mods) {
         hide {
@@ -182,9 +200,11 @@ class Controller {
       window.notFound()
     }
 
-    // Why do we need to wait here?
-    delay(1) {
-      self.positionCheatsheetWindow()
+    // Reposition cheatsheet only if not in centered mode
+    if !isCheatsheetCentered {
+      delay(1) {
+        self.positionCheatsheetWindow()
+      }
     }
   }
 
@@ -192,7 +212,9 @@ class Controller {
     return shouldRunGroupSequenceWithModifiers(event.modifierFlags)
   }
 
-  private func shouldRunGroupSequenceWithModifiers(_ modifierFlags: NSEvent.ModifierFlags) -> Bool {
+  private func shouldRunGroupSequenceWithModifiers(
+    _ modifierFlags: NSEvent.ModifierFlags
+  ) -> Bool {
     let config = Defaults[.modifierKeyConfiguration]
 
     switch config {
@@ -226,7 +248,8 @@ class Controller {
     // 2. For special keys like Enter, always use the mapped glyph
     if let entry = KeyMaps.entry(for: event.keyCode) {
       // For Enter, Space, Tab, arrows, etc. - use the glyph representation
-      if event.keyCode == KeyHelpers.enter.rawValue || event.keyCode == KeyHelpers.space.rawValue
+      if event.keyCode == KeyHelpers.enter.rawValue
+        || event.keyCode == KeyHelpers.space.rawValue
         || event.keyCode == KeyHelpers.tab.rawValue
         || event.keyCode == KeyHelpers.leftArrow.rawValue
         || event.keyCode == KeyHelpers.rightArrow.rawValue
@@ -270,12 +293,90 @@ class Controller {
       mainWindow.cheatsheetOrigin(cheatsheetSize: cheatsheet.frame.size))
   }
 
-  private func showCheatsheet() {
+  private func centerCheatsheetWindow() {
+    guard let cheatsheet = cheatsheetWindow,
+      let screen = cheatsheetDisplayScreen()
+    else {
+      return
+    }
+
+    let screenCenter = screen.center()
+    let cheatsheetFrame = cheatsheet.frame
+
+    // Match the vertical offset used by themes (slightly above center)
+    // Most themes use: center.y + windowSize / 8
+    let verticalOffset: CGFloat = cheatsheetFrame.height / 8
+
+    let x = screenCenter.x - cheatsheetFrame.width / 2
+    let y = screenCenter.y - cheatsheetFrame.height / 2 + verticalOffset
+
+    cheatsheet.setFrameOrigin(NSPoint(x: x, y: y))
+  }
+
+  private func cheatsheetDisplayScreen() -> NSScreen? {
+    return window?.screen
+      ?? Defaults[.screen].getNSScreen()
+      ?? NSScreen.main
+  }
+
+  private func sizeCheatsheetWindowToFitContent() {
+    guard let cheatsheet = cheatsheetWindow,
+      let contentView = cheatsheet.contentView
+    else {
+      return
+    }
+
+    contentView.layoutSubtreeIfNeeded()
+
+    let fittingSize = contentView.fittingSize
+    guard fittingSize.width > 0, fittingSize.height > 0 else {
+      return
+    }
+
+    cheatsheet.setContentSize(fittingSize)
+  }
+
+  private func showCheatsheet(centered: Bool = false) {
     if !window.hasCheatsheet {
       return
     }
-    positionCheatsheetWindow()
-    cheatsheetWindow?.orderFront(nil)
+
+    if centered {
+      // Hide the main window visually but keep it as key window for input
+      window.alphaValue = 0
+      isCheatsheetCentered = true
+      userState.cheatsheetCentered = true
+      sizeCheatsheetWindowToFitContent()
+      centerCheatsheetWindow()
+      cheatsheetWindow?.orderFront(nil)
+
+      // Re-center after SwiftUI has finished laying out
+      DispatchQueue.main.async { [weak self] in
+        self?.sizeCheatsheetWindowToFitContent()
+        self?.centerCheatsheetWindow()
+
+        // Final centering pass to ensure accuracy
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+          self?.sizeCheatsheetWindowToFitContent()
+          self?.centerCheatsheetWindow()
+        }
+      }
+    } else {
+      cheatsheetWindow?.setContentSize(
+        NSSize(width: CheatsheetView.preferredWidth, height: 640)
+      )
+      positionCheatsheetWindow()
+      cheatsheetWindow?.orderFront(nil)
+    }
+  }
+
+  private func exitCenteredMode() {
+    if isCheatsheetCentered {
+      window.alphaValue = 1
+      isCheatsheetCentered = false
+      userState.cheatsheetCentered = false
+      cheatsheetWindow?.orderOut(nil)
+    }
   }
 
   private func scheduleCheatsheet() {
@@ -284,7 +385,9 @@ class Controller {
     cheatsheetTimer = Timer.scheduledTimer(
       withTimeInterval: Double(Defaults[.cheatsheetDelayMS]) / 1000.0, repeats: false
     ) { [weak self] _ in
-      self?.showCheatsheet()
+      // Show centered cheatsheet when using keyboard style, regular position for list
+      let centered = Defaults[.cheatsheetStyle] == .keyboard
+      self?.showCheatsheet(centered: centered)
     }
   }
 
@@ -359,6 +462,23 @@ class Controller {
     alert.alertStyle = .warning
     alert.addButton(withTitle: "OK")
     alert.runModal()
+  }
+
+  private func startModifierMonitoring() {
+    modifierMonitor = NSEvent.addLocalMonitorForEvents(
+      matching: .flagsChanged
+    ) { [weak self] event in
+      self?.userState.shiftHeld = event.modifierFlags.contains(.shift)
+      return event
+    }
+  }
+
+  private func stopModifierMonitoring() {
+    if let monitor = modifierMonitor {
+      NSEvent.removeMonitor(monitor)
+      modifierMonitor = nil
+    }
+    userState.shiftHeld = false
   }
 }
 

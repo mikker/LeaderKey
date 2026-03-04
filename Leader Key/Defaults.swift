@@ -31,6 +31,8 @@ extension Defaults.Keys {
     "showDetailsInCheatsheet", default: true, suite: defaultsSuite)
   static let showFaviconsInCheatsheet = Key<Bool>(
     "showFaviconsInCheatsheet", default: true, suite: defaultsSuite)
+  static let cheatsheetStyle = Key<CheatsheetStyle>(
+    "cheatsheetStyle", default: .list, suite: defaultsSuite)
   static let reactivateBehavior = Key<ReactivateBehavior>(
     "reactivateBehavior", default: .hide, suite: defaultsSuite)
   static let screen = Key<Screen>(
@@ -73,4 +75,9 @@ enum Screen: String, Defaults.Serializable {
   case primary
   case mouse
   case activeWindow
+}
+
+enum CheatsheetStyle: String, Defaults.Serializable {
+  case list
+  case keyboard
 }

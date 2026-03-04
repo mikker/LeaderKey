@@ -13,6 +13,7 @@ struct AdvancedPane: View {
   @Default(.modifierKeyConfiguration) var modifierKeyConfiguration
   @Default(.autoOpenCheatsheet) var autoOpenCheatsheet
   @Default(.cheatsheetDelayMS) var cheatsheetDelayMS
+  @Default(.cheatsheetStyle) var cheatsheetStyle
   @Default(.reactivateBehavior) var reactivateBehavior
   @Default(.showAppIconsInCheatsheet) var showAppIconsInCheatsheet
   @Default(.screen) var screen
@@ -114,6 +115,26 @@ struct AdvancedPane: View {
         ).padding(.leading, 20).disabled(!showAppIconsInCheatsheet)
         Defaults.Toggle(
           "Show item details in cheatsheet", key: .showDetailsInCheatsheet)
+
+        Divider()
+          .padding(.vertical, 8)
+
+        HStack(alignment: .firstTextBaseline) {
+          Text("Cheatsheet Style:")
+          Picker("", selection: $cheatsheetStyle) {
+            Text("List").tag(CheatsheetStyle.list)
+            Text("Keyboard").tag(CheatsheetStyle.keyboard)
+          }
+          .pickerStyle(.segmented)
+          .frame(width: 200)
+          .labelsHidden()
+
+          Spacer()
+        }
+
+        Text("Choose how shortcuts are displayed in the cheatsheet overlay")
+          .foregroundColor(.secondary)
+          .font(.callout)
 
       }
 

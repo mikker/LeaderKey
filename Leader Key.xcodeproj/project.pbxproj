@@ -41,6 +41,13 @@
 		427C18502BD6652500955B98 /* Util.swift in Sources */ = {isa = PBXBuildFile; fileRef = 427C184F2BD6652500955B98 /* Util.swift */; };
 		427C18542BD6E59300955B98 /* NSWindow+Animations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 427C18532BD6E59300955B98 /* NSWindow+Animations.swift */; };
 		4284834C2E813212009D7EEF /* KeyboardLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4284834B2E813212009D7EEF /* KeyboardLayoutTests.swift */; };
+		4284834E2E813214009D7EEF /* KeyboardCheatsheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4284834D2E813213009D7EEF /* KeyboardCheatsheetView.swift */; };
+		428483502E813216009D7EEF /* KeyboardLayoutModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4284834F2E813215009D7EEF /* KeyboardLayoutModel.swift */; };
+		428483522E813218009D7EEF /* KeyboardLayoutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 428483512E813217009D7EEF /* KeyboardLayoutView.swift */; };
+		428483542E81321A009D7EEF /* KeyboardPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = 428483532E813219009D7EEF /* KeyboardPane.swift */; };
+		428483562E81321C009D7EEF /* KeyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 428483572E81321D009D7EEF /* KeyView.swift */; };
+		428483582E81321E009D7EEF /* KeyBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 428483592E81321F009D7EEF /* KeyBadge.swift */; };
+		4284835A2E813220009D7EEF /* CheatsheetRows.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4284835B2E813221009D7EEF /* CheatsheetRows.swift */; };
 		42B21FBC2D67566100F4A2C7 /* Alerts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42B21FBB2D67566100F4A2C7 /* Alerts.swift */; };
 		42CCB5A32DAD257700356FC0 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = FBCA04D82D9F02F700271163 /* Kingfisher */; };
 		42DFCD722D5B7D48002EA111 /* Events.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42DFCD712D5B7D46002EA111 /* Events.swift */; };
@@ -102,6 +109,13 @@
 		427C184F2BD6652500955B98 /* Util.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Util.swift; sourceTree = "<group>"; };
 		427C18532BD6E59300955B98 /* NSWindow+Animations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSWindow+Animations.swift"; sourceTree = "<group>"; };
 		4284834B2E813212009D7EEF /* KeyboardLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardLayoutTests.swift; sourceTree = "<group>"; };
+		4284834D2E813213009D7EEF /* KeyboardCheatsheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardCheatsheetView.swift; sourceTree = "<group>"; };
+		4284834F2E813215009D7EEF /* KeyboardLayoutModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardLayoutModel.swift; sourceTree = "<group>"; };
+		428483512E813217009D7EEF /* KeyboardLayoutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardLayoutView.swift; sourceTree = "<group>"; };
+		428483532E813219009D7EEF /* KeyboardPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardPane.swift; sourceTree = "<group>"; };
+		428483572E81321D009D7EEF /* KeyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyView.swift; sourceTree = "<group>"; };
+		428483592E81321F009D7EEF /* KeyBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyBadge.swift; sourceTree = "<group>"; };
+		4284835B2E813221009D7EEF /* CheatsheetRows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheatsheetRows.swift; sourceTree = "<group>"; };
 		42B21FBB2D67566100F4A2C7 /* Alerts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Alerts.swift; sourceTree = "<group>"; };
 		42DFCD712D5B7D46002EA111 /* Events.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Events.swift; sourceTree = "<group>"; };
 		42F4CDC82D458FF700D0DD76 /* MainMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainMenu.swift; sourceTree = "<group>"; };
@@ -158,8 +172,29 @@
 			children = (
 				427C18242BD31E2E00955B98 /* GeneralPane.swift */,
 				42FDC3192D51687B004F5C5C /* AdvancedPane.swift */,
+				428483532E813219009D7EEF /* KeyboardPane.swift */,
 			);
 			path = Settings;
+			sourceTree = "<group>";
+		};
+		428483552E81321B009D7EEF /* KeyboardLayout */ = {
+			isa = PBXGroup;
+			children = (
+				4284834D2E813213009D7EEF /* KeyboardCheatsheetView.swift */,
+				4284834F2E813215009D7EEF /* KeyboardLayoutModel.swift */,
+				428483512E813217009D7EEF /* KeyboardLayoutView.swift */,
+				428483572E81321D009D7EEF /* KeyView.swift */,
+			);
+			path = KeyboardLayout;
+			sourceTree = "<group>";
+		};
+		4284835C2E813222009D7EEF /* Cheatsheet */ = {
+			isa = PBXGroup;
+			children = (
+				428483592E81321F009D7EEF /* KeyBadge.swift */,
+				4284835B2E813221009D7EEF /* CheatsheetRows.swift */,
+			);
+			path = Cheatsheet;
 			sourceTree = "<group>";
 		};
 		427C17DE2BD311B400955B98 = {
@@ -205,6 +240,8 @@
 				427C182E2BD3206200955B98 /* UserState.swift */,
 				427C184F2BD6652500955B98 /* Util.swift */,
 				427C17EE2BD311B500955B98 /* Assets.xcassets */,
+				4284835C2E813222009D7EEF /* Cheatsheet */,
+				428483552E81321B009D7EEF /* KeyboardLayout */,
 				423632242D68CC5D00878D92 /* Settings */,
 				427C18362BD3243C00955B98 /* Support */,
 				423632232D68CB0F00878D92 /* Themes */,
@@ -443,6 +480,13 @@
 				42F4CDCD2D45B13600D0DD76 /* KeyButton.swift in Sources */,
 				606C56EF2DAB875A00198B9F /* Cheater.swift in Sources */,
 				427C181C2BD314B500955B98 /* Constants.swift in Sources */,
+				4284834E2E813214009D7EEF /* KeyboardCheatsheetView.swift in Sources */,
+				428483502E813216009D7EEF /* KeyboardLayoutModel.swift in Sources */,
+				428483522E813218009D7EEF /* KeyboardLayoutView.swift in Sources */,
+				428483542E81321A009D7EEF /* KeyboardPane.swift in Sources */,
+				428483562E81321C009D7EEF /* KeyView.swift in Sources */,
+				428483582E81321E009D7EEF /* KeyBadge.swift in Sources */,
+				4284835A2E813220009D7EEF /* CheatsheetRows.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

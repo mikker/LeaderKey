@@ -7,7 +7,7 @@ enum Cheater {
 
     required init(controller: Controller) {
       super.init(controller: controller, contentRect: NSRect(x: 0, y: 0, width: 0, height: 0))
-      let view = Cheatsheet.CheatsheetView()
+      let view = CheatsheetView()
       contentView = NSHostingView(rootView: view.environmentObject(self.controller.userState))
     }
 

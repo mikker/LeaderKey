@@ -124,8 +124,9 @@ struct FavIconImage: View {
       KFImage.url(URL(string: url)).placeholder({
         fallback
       }).resizable()
-        .padding(4)
+        .aspectRatio(contentMode: .fit)
         .frame(width: size.width, height: size.height, alignment: .center)
+        .clipShape(RoundedRectangle(cornerRadius: size.width * 0.2, style: .continuous))
     } else {
       fallback
     }

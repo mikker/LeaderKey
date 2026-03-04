@@ -372,6 +372,34 @@ extension UserConfig {
   }
 }
 
+extension Group {
+  func find(id: UUID) -> Group? {
+    if self.uiid == id { return self }
+    for action in actions {
+      if case .group(let g) = action {
+        if let found = g.find(id: id) { return found }
+      }
+    }
+    return nil
+  }
+
+  mutating func update(group: Group) -> Bool {
+    if self.uiid == group.uiid {
+      self = group
+      return true
+    }
+    for i in 0..<actions.count {
+      if case .group(var g) = actions[i] {
+        if g.update(group: group) {
+          actions[i] = .group(g)
+          return true
+        }
+      }
+    }
+    return false
+  }
+}
+
 let defaultConfig = """
   {
       "type": "group",
@@ -485,6 +513,8 @@ struct Action: Item, Codable, Equatable {
   }
 }
 
+typealias KeyGroup = Group
+
 struct Group: Item, Codable, Equatable {
   // UI-only stable identity. Not persisted to JSON.
   var uiid: UUID = UUID()
@@ -562,6 +592,13 @@ enum ActionOrGroup: Codable, Equatable {
     switch self {
     case .action(let a): return a.uiid
     case .group(let g): return g.uiid
+    }
+  }
+
+  var key: String? {
+    switch self {
+    case .action(let a): return a.key
+    case .group(let g): return g.key
     }
   }
 

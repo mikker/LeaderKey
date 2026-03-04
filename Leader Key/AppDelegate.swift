@@ -35,6 +35,13 @@ class AppDelegate: NSObject, NSApplicationDelegate,
         contentView: {
           AdvancedPane().environmentObject(self.config)
         }),
+      Settings.Pane(
+        identifier: .keyboard, title: "Keyboard",
+        toolbarIcon: NSImage(
+          systemSymbolName: "keyboard", accessibilityDescription: "Keyboard")!,
+        contentView: {
+          KeyboardPane().environmentObject(self.config)
+        }),
     ],
     style: .segmentedControl,
   )
