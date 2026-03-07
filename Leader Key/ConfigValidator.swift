@@ -15,6 +15,7 @@ enum ValidationErrorType {
   case emptyKey
   case nonSingleCharacterKey
   case duplicateKey
+  case invalidWhen
 }
 
 class ConfigValidator {
@@ -33,50 +34,143 @@ class ConfigValidator {
       validateKey(group.key, at: path, errors: &errors)
     }
 
-    // Check for duplicate keys within this group
-    var keysInGroup = [String: Int]()  // key: index
+    // Validate `when` self-consistency for the group itself
+    if !path.isEmpty {
+      validateWhen(group.when, at: path, errors: &errors)
+    }
+
+    // Collect items by normalized key for tier-aware duplicate detection
+    struct KeyEntry {
+      let index: Int
+      let when: When?
+    }
+    var keyEntries: [String: [KeyEntry]] = [:]
 
     for (index, item) in group.actions.enumerated() {
       let currentPath = path + [index]
 
-      // Get the key from the item
+      // Get the key and when from the item
       let key: String?
+      let itemWhen: When?
       switch item {
       case .action(let action):
         key = action.key
+        itemWhen = action.when
         // Validate the key for actions
         validateKey(key, at: currentPath, errors: &errors)
+        // Validate when self-consistency
+        validateWhen(itemWhen, at: currentPath, errors: &errors)
       case .group(let subgroup):
         key = subgroup.key
+        itemWhen = subgroup.when
         // Recursively validate subgroups
         validateGroup(subgroup, path: currentPath, errors: &errors)
-      // Note: We don't validate the key here because it will be validated in the recursive call
+      // Validate when self-consistency (done in recursive call for the group itself)
       }
 
-      // Check for duplicates
+      // Collect entries by normalized key
       if let key = key, !key.isEmpty {
-        // Normalize key to glyph representation for consistent comparison
         let normalizedKey = KeyMaps.glyph(for: key) ?? key
+        keyEntries[normalizedKey, default: []].append(KeyEntry(index: index, when: itemWhen))
+      }
+    }
 
-        if let existingIndex = keysInGroup[normalizedKey] {
-          // Found a duplicate key
-          let duplicatePath = path + [existingIndex]
+    // Tier-aware duplicate detection
+    for (normalizedKey, entries) in keyEntries {
+      guard entries.count > 1 else { continue }
+
+      // Classify each entry by tier (using nil bundleID since we check structurally)
+      struct TieredEntry {
+        let index: Int
+        let when: When?
+        let structuralTier: AppFilter.Tier  // tier based on structure, not a specific app
+      }
+
+      let tieredEntries: [TieredEntry] = entries.map { entry in
+        let tier = structuralTier(for: entry.when)
+        return TieredEntry(index: entry.index, when: entry.when, structuralTier: tier)
+      }
+
+      // Check for conflicts within each tier
+      let tierCEntries = tieredEntries.filter { $0.structuralTier == .c }
+      let tierBEntries = tieredEntries.filter { $0.structuralTier == .b }
+      let tierAEntries = tieredEntries.filter { $0.structuralTier == .a }
+
+      // Multiple Tier C entries for same key = error
+      if tierCEntries.count > 1 {
+        for entry in tierCEntries {
           errors.append(
             ValidationError(
-              path: duplicatePath,
+              path: path + [entry.index],
               message: "Multiple actions for the same key '\(normalizedKey)'",
               type: .duplicateKey
             ))
-          errors.append(
-            ValidationError(
-              path: currentPath,
-              message: "Multiple actions for the same key '\(normalizedKey)'",
-              type: .duplicateKey
-            ))
-        } else {
-          keysInGroup[normalizedKey] = index
         }
       }
+
+      // Multiple Tier B entries for same key = error (they overlap broadly)
+      if tierBEntries.count > 1 {
+        for entry in tierBEntries {
+          errors.append(
+            ValidationError(
+              path: path + [entry.index],
+              message: "Multiple 'everywhere-except' actions for the same key '\(normalizedKey)'",
+              type: .duplicateKey
+            ))
+        }
+      }
+
+      // Tier A overlaps: two items with includeApps containing the same bundle ID
+      if tierAEntries.count > 1 {
+        var bundleToEntries: [String: [TieredEntry]] = [:]
+        for entry in tierAEntries {
+          for bundle in entry.when?.includeApps ?? [] {
+            bundleToEntries[bundle, default: []].append(entry)
+          }
+        }
+        var reportedIndices = Set<Int>()
+        for (bundle, conflicting) in bundleToEntries {
+          if conflicting.count > 1 {
+            for entry in conflicting where !reportedIndices.contains(entry.index) {
+              reportedIndices.insert(entry.index)
+              errors.append(
+                ValidationError(
+                  path: path + [entry.index],
+                  message:
+                    "Multiple app-specific actions for '\(bundle)' on key '\(normalizedKey)'",
+                  type: .duplicateKey
+                ))
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /// Determine the structural tier of a `when` clause (without a specific bundleID).
+  private static func structuralTier(for when: When?) -> AppFilter.Tier {
+    guard let when = when else { return .c }
+    let include = when.includeApps ?? []
+    let exclude = when.excludeApps ?? []
+    if include.isEmpty && exclude.isEmpty { return .c }
+    if !include.isEmpty { return .a }
+    if include.isEmpty && !exclude.isEmpty { return .b }
+    return .c
+  }
+
+  /// Validate that a `when` clause is self-consistent.
+  private static func validateWhen(_ when: When?, at path: [Int], errors: inout [ValidationError]) {
+    guard let when = when else { return }
+    let include = Set(when.includeApps ?? [])
+    let exclude = Set(when.excludeApps ?? [])
+    let overlap = include.intersection(exclude)
+    if !overlap.isEmpty {
+      errors.append(
+        ValidationError(
+          path: path,
+          message: "Bundle ID '\(overlap.first!)' appears in both includeApps and excludeApps",
+          type: .invalidWhen
+        ))
     }
   }
 

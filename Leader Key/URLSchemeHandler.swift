@@ -36,8 +36,8 @@ class URLSchemeHandler {
       return .reset
     case "navigate":
       guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
-            let queryItems = components.queryItems,
-            let keysParam = queryItems.first(where: { $0.name == "keys" })?.value
+        let queryItems = components.queryItems,
+        let keysParam = queryItems.first(where: { $0.name == "keys" })?.value
       else {
         return .show
       }

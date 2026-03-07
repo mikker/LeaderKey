@@ -123,8 +123,10 @@ enum Cheatsheet {
     }
 
     var actions: [ActionOrGroup] {
-      (userState.currentGroup != nil)
+      let source =
+        (userState.currentGroup != nil)
         ? userState.currentGroup!.actions : userState.userConfig.root.actions
+      return AppFilter.resolve(actions: source, for: userState.frontmostBundleID)
     }
 
     var body: some SwiftUI.View {
