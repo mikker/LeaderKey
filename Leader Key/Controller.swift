@@ -160,24 +160,34 @@ class Controller {
     switch hit {
     case .action(let action):
       if execute {
+        // Capture keyPath BEFORE hiding (which clears navigation state)
+        let keyPath = statsKeyPath(leafKey: action.key)
+
         if let mods = modifiers, isInStickyMode(mods) {
-          runAction(action)
+          runAction(action, keyPath: keyPath)
         } else {
           hide {
-            self.runAction(action)
+            self.runAction(action, keyPath: keyPath)
           }
         }
       }
       // If execute is false, just stay visible showing the matched action
-    case .group(let group):
-      if execute, let mods = modifiers, shouldRunGroupSequenceWithModifiers(mods) {
-        hide {
-          self.runGroup(group)
-        }
-      } else {
-        userState.display = group.key
-        userState.navigateToGroup(group)
-      }
+	    case .group(let group):
+	      if execute, let mods = modifiers, shouldRunGroupSequenceWithModifiers(mods) {
+	        // Capture keyPath BEFORE hiding
+	        let parentPath = statsKeyPath(leafKey: nil)
+	        hide {
+	          self.runGroup(group, parentPath: parentPath)
+	        }
+	      } else {
+	        // Record group navigation for stats
+	        if let keyPath = statsKeyPath(leafKey: group.key) {
+	          StatsManager.shared.recordGroupNavigation(group: group, keyPath: keyPath)
+	        }
+
+	        userState.display = group.key
+	        userState.navigateToGroup(group)
+	      }
     case .none:
       window.notFound()
     }
@@ -288,20 +298,47 @@ class Controller {
     }
   }
 
-  private func runGroup(_ group: Group) {
-    for groupOrAction in group.actions {
-      switch groupOrAction {
-      case .group(let group):
-        runGroup(group)
-      case .action(let action):
-        runAction(action)
-      }
-    }
-  }
+	  private func runGroup(_ group: Group, parentPath: String? = nil) {
+	    let currentPath: String
+	    if let parent = parentPath, let groupKey = group.key {
+	      currentPath = parent + "/" + groupKey
+	    } else if let groupKey = group.key {
+	      currentPath = groupKey
+	    } else {
+	      currentPath = ""
+	    }
 
-  private func runAction(_ action: Action) {
-    switch action.type {
-    case .application:
+	    for groupOrAction in group.actions {
+	      switch groupOrAction {
+      case .group(let subGroup):
+        runGroup(subGroup, parentPath: currentPath)
+      case .action(let action):
+        let actionPath: String?
+        if !currentPath.isEmpty, let actionKey = action.key {
+          actionPath = currentPath + "/" + actionKey
+        } else if let actionKey = action.key {
+          actionPath = actionKey
+        } else {
+          actionPath = nil
+        }
+        runAction(action, keyPath: actionPath)
+      }
+	    }
+	  }
+
+	  private func statsKeyPath(leafKey: String?) -> String? {
+	    guard let leafKey, !leafKey.isEmpty else { return nil }
+	    let components = userState.navigationPath.compactMap(\.key).filter { !$0.isEmpty } + [leafKey]
+	    return components.joined(separator: "/")
+	  }
+
+	  private func runAction(_ action: Action, keyPath: String?) {
+	    if let keyPath = keyPath {
+	      StatsManager.shared.recordExecution(action: action, keyPath: keyPath)
+	    }
+
+	    switch action.type {
+	    case .application:
       NSWorkspace.shared.openApplication(
         at: URL(fileURLWithPath: action.value),
         configuration: NSWorkspace.OpenConfiguration())

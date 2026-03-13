@@ -35,6 +35,13 @@ class AppDelegate: NSObject, NSApplicationDelegate,
         contentView: {
           AdvancedPane().environmentObject(self.config)
         }),
+      Settings.Pane(
+        identifier: .stats, title: "Stats",
+        toolbarIcon: NSImage(
+          systemSymbolName: "chart.bar.fill", accessibilityDescription: "Stats")!,
+        contentView: {
+          StatsPane().environmentObject(self.config)
+        }),
     ],
     style: .segmentedControl,
   )
