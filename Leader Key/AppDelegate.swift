@@ -110,7 +110,7 @@ class AppDelegate: NSObject, NSApplicationDelegate,
     }
   }
 
-  public func registerGlobalShortcuts() {
+  @MainActor public func registerGlobalShortcuts() {
     KeyboardShortcuts.removeAllHandlers()
 
     KeyboardShortcuts.onKeyDown(for: .activate) {
