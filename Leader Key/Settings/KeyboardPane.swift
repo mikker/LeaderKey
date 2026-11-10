@@ -509,6 +509,7 @@ struct KeyboardPane: View {
 
   @State private var editingItem: EditorWrapper?
   @State private var editingGroupWrapper: GroupWrapper?
+  @State private var groupPendingDelete: KeyGroup?
   @State private var currentGroupPath: [UUID] = []
   @State private var shiftHeld = false
   @State private var stickyShiftMode = false  // Persists after editing capital letter keys
@@ -659,10 +660,13 @@ struct KeyboardPane: View {
               },
             onBindingMoved: { sourceKey, targetKey in
               moveBinding(from: sourceKey, to: targetKey)
+            },
+            menuItems: { key, item in
+              menuItems(for: item, on: key)
             }
             )
 
-          Text("Click a key to configure, drag a binding to move or swap it")
+          Text("Click a key to configure, drag to move or swap, right-click for more")
             .font(.body)
             .foregroundColor(.secondary)
             .frame(maxWidth: .infinity, alignment: .center)
@@ -718,10 +722,13 @@ struct KeyboardPane: View {
         },
         onDelete: {
           if let group = editingGroupWrapper?.group {
-            deleteGroup(group)
-            // If we deleted the current group, pop back
-            if !currentGroupPath.isEmpty {
+            if group.uiid == currentGroupPath.last {
+              deleteGroup(group)
+              // We deleted the group being shown, so pop back
               currentGroupPath.removeLast()
+            } else {
+              // A group edited from its key's right-click menu
+              deleteItem(.group(group))
             }
           }
           editingGroupWrapper = nil
@@ -730,6 +737,20 @@ struct KeyboardPane: View {
           editingGroupWrapper = nil
         }
       )
+    }
+    .confirmationDialog(
+      "Delete “\(groupPendingDelete?.displayName ?? "")”?",
+      isPresented: Binding(
+        get: { groupPendingDelete != nil },
+        set: { if !$0 { groupPendingDelete = nil } }
+      ),
+      presenting: groupPendingDelete
+    ) { group in
+      Button("Delete Group", role: .destructive) {
+        deleteItem(.group(group))
+      }
+    } message: { group in
+      Text("This also deletes the \(group.actions.count) bindings inside it.")
     }
     .onAppear {
       monitor = NSEvent.addLocalMonitorForEvents(
@@ -777,6 +798,48 @@ struct KeyboardPane: View {
     group.actions = newActions
 
     updateConfig(with: group)
+
+    if currentGroupPath.isEmpty, case .group(let deleted) = item, let key = deleted.key {
+      removeGroupShortcut(KeyMaps.text(for: key) ?? key)
+    }
+  }
+
+  private func menuItems(for item: ActionOrGroup, on key: String) -> [KeyMenuItem] {
+    switch item {
+    case .action(let action):
+      return [
+        KeyMenuItem(title: "Edit…", systemImage: "pencil") {
+          editingItem = EditorWrapper(item: .action(action), keyName: key, isNew: false)
+        },
+        KeyMenuItem(title: "Delete", systemImage: "trash", isDestructive: true) {
+          deleteItem(item)
+        },
+      ]
+    case .group(let group):
+      return [
+        KeyMenuItem(title: "Open", systemImage: "chevron.right") {
+          currentGroupPath.append(group.uiid)
+        },
+        KeyMenuItem(title: "Edit…", systemImage: "pencil") {
+          editingGroupWrapper = GroupWrapper(group: group)
+        },
+        KeyMenuItem(title: "Delete", systemImage: "trash", isDestructive: true) {
+          if group.actions.isEmpty {
+            deleteItem(item)
+          } else {
+            groupPendingDelete = group
+          }
+        },
+      ]
+    }
+  }
+
+  /// A deleted root group must not leave its global shortcut behind for the next binding on that key.
+  private func removeGroupShortcut(_ key: String) {
+    guard Defaults[.groupShortcuts].contains(key) else { return }
+    Defaults[.groupShortcuts].remove(key)
+    KeyboardShortcuts.reset([KeyboardShortcuts.Name("group-\(key)")])
+    (NSApplication.shared.delegate as? AppDelegate)?.registerGlobalShortcuts()
   }
 
   /// Moves the binding on `sourceKey` to `targetKey`, swapping if the target is already bound.
@@ -842,13 +905,10 @@ struct KeyboardPane: View {
   }
 
   private func updateConfig(with modifiedGroup: KeyGroup) {
-    if currentGroupPath.isEmpty {
-      config.root = modifiedGroup
-    } else {
-      var root = config.root
-      if root.update(group: modifiedGroup) {
-        config.root = root
-      }
+    // Matches by id, so this works for the shown group and for one of its child groups
+    var root = config.root
+    if root.update(group: modifiedGroup) {
+      config.root = root
     }
   }
 

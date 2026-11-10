@@ -11,6 +11,8 @@ struct KeyboardLayoutView: View {
   var onKeySelected: ((String) -> Void)? = nil
   /// Called with the source and target binding keys when a binding is dragged onto another key.
   var onBindingMoved: ((String, String) -> Void)? = nil
+  /// Builds the right-click menu for a bound key, given its binding key and binding.
+  var menuItems: ((String, ActionOrGroup) -> [KeyMenuItem])? = nil
 
   @State private var draggedBindingKey: String?
 
@@ -34,7 +36,8 @@ struct KeyboardLayoutView: View {
               },
               onDragStart: canRearrange(keyDef)
                 ? { draggedBindingKey = bindingKey(for: keyDef) } : nil,
-              dropDelegate: canRearrange(keyDef) ? dropDelegate(for: keyDef) : nil
+              dropDelegate: canRearrange(keyDef) ? dropDelegate(for: keyDef) : nil,
+              menuItems: menuItems(for: keyDef)
             )
           }
         }
@@ -57,6 +60,12 @@ struct KeyboardLayoutView: View {
 
   private func bindingKey(for keyDef: KeyDefinition) -> String {
     KeyboardLayout.bindingKey(for: keyDef, shifted: shiftHeld)
+  }
+
+  private func menuItems(for keyDef: KeyDefinition) -> [KeyMenuItem] {
+    guard let menuItems = menuItems, !keyDef.isModifier, let binding = getBinding(for: keyDef)
+    else { return [] }
+    return menuItems(bindingKey(for: keyDef), binding)
   }
 
   private func canRearrange(_ keyDef: KeyDefinition) -> Bool {

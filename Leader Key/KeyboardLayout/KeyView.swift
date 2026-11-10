@@ -13,6 +13,8 @@ struct KeyView: View {
   var onDragStart: (() -> Void)? = nil
   /// Accepts or rejects a binding dragged onto this key. Non-nil makes the key a drop target.
   var dropDelegate: KeyDropDelegate? = nil
+  /// Shown when the key is right-clicked. Empty means no menu.
+  var menuItems: [KeyMenuItem] = []
 
   @State private var isHovered = false
   @State private var isCursorPushed = false
@@ -153,6 +155,13 @@ struct KeyView: View {
         }
       }
     )
+    .contextMenu {
+      ForEach(menuItems) { item in
+        Button(role: item.isDestructive ? .destructive : nil, action: item.action) {
+          Label(item.title, systemImage: item.systemImage)
+        }
+      }
+    }
     .zIndex(isHovered ? 1 : 0)
   }
 
@@ -203,6 +212,16 @@ struct KeyView: View {
       return nil
     }
   }
+}
+
+/// One entry in the menu shown when a key is right-clicked.
+struct KeyMenuItem: Identifiable {
+  let title: String
+  let systemImage: String
+  var isDestructive: Bool = false
+  let action: () -> Void
+
+  var id: String { title }
 }
 
 /// Decides what happens when a dragged binding is dropped on a key.
