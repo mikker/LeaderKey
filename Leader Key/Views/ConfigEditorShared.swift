@@ -44,6 +44,7 @@ enum ConfigEditorUI {
     anchor: NSView?,
     onPickAppIcon: @escaping () -> Void,
     onPickSymbol: @escaping () -> Void,
+    onPickCustomImage: @escaping () -> Void,
     onClear: @escaping () -> Void
   ) {
     guard let anchor else { return }
@@ -58,11 +59,17 @@ enum ConfigEditorUI {
       action: #selector(MenuHandler.pickSymbol),
       keyEquivalent: ""
     )
+    menu.addItem(
+      withTitle: "Custom Icon…",
+      action: #selector(MenuHandler.pickCustomImage),
+      keyEquivalent: ""
+    )
     menu.addItem(NSMenuItem.separator())
     menu.addItem(withTitle: "Clear", action: #selector(MenuHandler.clearIcon), keyEquivalent: "")
     let handler = MenuHandler(
       onPickAppIcon: onPickAppIcon,
       onPickSymbol: onPickSymbol,
+      onPickCustomImage: onPickCustomImage,
       onClearIcon: onClear,
       onDuplicate: {},
       onDelete: {}
@@ -83,6 +90,7 @@ enum ConfigEditorUI {
   private final class MenuHandler: NSObject {
     let onPickAppIcon: (() -> Void)?
     let onPickSymbol: (() -> Void)?
+    let onPickCustomImage: (() -> Void)?
     let onClearIcon: (() -> Void)?
     let onDuplicate: () -> Void
     let onDelete: () -> Void
@@ -90,12 +98,14 @@ enum ConfigEditorUI {
     init(
       onPickAppIcon: (() -> Void)? = nil,
       onPickSymbol: (() -> Void)? = nil,
+      onPickCustomImage: (() -> Void)? = nil,
       onClearIcon: (() -> Void)? = nil,
       onDuplicate: @escaping () -> Void,
       onDelete: @escaping () -> Void
     ) {
       self.onPickAppIcon = onPickAppIcon
       self.onPickSymbol = onPickSymbol
+      self.onPickCustomImage = onPickCustomImage
       self.onClearIcon = onClearIcon
       self.onDuplicate = onDuplicate
       self.onDelete = onDelete
@@ -103,17 +113,32 @@ enum ConfigEditorUI {
 
     @objc func pickAppIcon() { onPickAppIcon?() }
     @objc func pickSymbol() { onPickSymbol?() }
+    @objc func pickCustomImage() { onPickCustomImage?() }
     @objc func clearIcon() { onClearIcon?() }
     @objc func duplicate() { onDuplicate() }
     @objc func delete() { onDelete() }
+  }
+
+  static func resizeAndRoundImage(_ image: NSImage, size: CGFloat) -> NSImage {
+    CustomIconRenderer.render(image, size: NSSize(width: size, height: size))
   }
 }
 
 extension Action {
   func resolvedIcon() -> NSImage? {
     if let iconPath = iconPath, !iconPath.isEmpty {
-      if iconPath.hasSuffix(".app") { return NSWorkspace.shared.icon(forFile: iconPath) }
-      if let img = NSImage(systemSymbolName: iconPath, accessibilityDescription: nil) { return img }
+      if iconPath.hasSuffix(".app") {
+        return NSWorkspace.shared.icon(forFile: iconPath)
+      }
+      if let customImage = CustomIconRenderer.renderCustomIcon(
+        from: iconPath,
+        size: NSSize(width: 28, height: 28)
+      ) {
+        return customImage
+      }
+      if let img = NSImage(systemSymbolName: iconPath, accessibilityDescription: nil) {
+        return img
+      }
     }
     switch type {
     case .application:
@@ -134,6 +159,12 @@ extension Group {
   func resolvedIcon() -> NSImage? {
     if let iconPath = iconPath, !iconPath.isEmpty {
       if iconPath.hasSuffix(".app") { return NSWorkspace.shared.icon(forFile: iconPath) }
+      if let customImage = CustomIconRenderer.renderCustomIcon(
+        from: iconPath,
+        size: NSSize(width: 28, height: 28)
+      ) {
+        return customImage
+      }
       if let img = NSImage(systemSymbolName: iconPath, accessibilityDescription: nil) { return img }
     }
     return NSImage(systemSymbolName: "folder", accessibilityDescription: nil)

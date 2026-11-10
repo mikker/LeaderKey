@@ -893,6 +893,7 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
       anchor: anchor,
       onPickAppIcon: { self.handlePickAppIcon() },
       onPickSymbol: { self.handlePickSymbol() },
+      onPickCustomImage: { self.handlePickCustomImage() },
       onClear: { self.handleClearIcon() }
     )
   }
@@ -931,6 +932,36 @@ private class ActionCellView: NSTableCellView, NSWindowDelegate {
         self.updateIcon(for: a)
       }
     )
+  }
+
+  @objc private func handlePickCustomImage() {
+    guard var a = currentAction() else { return }
+    let panel = NSOpenPanel()
+    panel.allowedContentTypes = [.png, .jpeg, .icns]
+    panel.canChooseFiles = true
+    panel.canChooseDirectories = false
+    panel.allowsMultipleSelection = false
+    panel.directoryURL = FileManager.default.homeDirectoryForCurrentUser
+    panel.message = "Choose a custom icon image"
+    if panel.runModal() == .OK {
+      guard let path = panel.url?.path else { return }
+
+      // Validate that the file can actually be loaded as an image
+      guard NSImage(contentsOfFile: path) != nil else {
+        let alert = NSAlert()
+        alert.messageText = "Invalid Image File"
+        alert.informativeText = "The selected file could not be loaded as an image. Please choose a valid PNG, JPEG, or ICNS file."
+        alert.alertStyle = .warning
+        alert.runModal()
+        return
+      }
+
+      DispatchQueue.main.async {
+        a.iconPath = path
+        self.onChange?(.action(a))
+        self.updateIcon(for: a)
+      }
+    }
   }
 
   @objc private func handleClearIcon() {
@@ -1239,6 +1270,7 @@ private class GroupCellView: NSTableCellView, NSWindowDelegate {
       anchor: anchor,
       onPickAppIcon: { self.handlePickAppIcon() },
       onPickSymbol: { self.handlePickSymbol() },
+      onPickCustomImage: { self.handlePickCustomImage() },
       onClear: { self.handleClearIcon() }
     )
   }
@@ -1277,6 +1309,36 @@ private class GroupCellView: NSTableCellView, NSWindowDelegate {
         self.updateIcon(for: g)
       }
     )
+  }
+
+  @objc private func handlePickCustomImage() {
+    guard var g = currentGroup() else { return }
+    let panel = NSOpenPanel()
+    panel.allowedContentTypes = [.png, .jpeg, .icns]
+    panel.canChooseFiles = true
+    panel.canChooseDirectories = false
+    panel.allowsMultipleSelection = false
+    panel.directoryURL = FileManager.default.homeDirectoryForCurrentUser
+    panel.message = "Choose a custom icon image"
+    if panel.runModal() == .OK {
+      guard let path = panel.url?.path else { return }
+
+      // Validate that the file can actually be loaded as an image
+      guard NSImage(contentsOfFile: path) != nil else {
+        let alert = NSAlert()
+        alert.messageText = "Invalid Image File"
+        alert.informativeText = "The selected file could not be loaded as an image. Please choose a valid PNG, JPEG, or ICNS file."
+        alert.alertStyle = .warning
+        alert.runModal()
+        return
+      }
+
+      DispatchQueue.main.async {
+        g.iconPath = path
+        self.onChange?(.group(g))
+        self.updateIcon(for: g)
+      }
+    }
   }
 
   @objc private func handleClearIcon() {

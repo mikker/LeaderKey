@@ -16,6 +16,9 @@ func actionIcon(item: ActionOrGroup, iconSize: NSSize, loadFavicons: Bool = true
   if let iconPath = iconPath, !iconPath.isEmpty {
     if iconPath.hasSuffix(".app") {
       return AnyView(AppIconImage(appPath: iconPath, size: iconSize))
+    } else if CustomIconRenderer.isCustomImagePath(iconPath) {
+      // Custom image file path
+      return AnyView(CustomIconImage(imagePath: iconPath, size: iconSize))
     } else {
       return AnyView(
         Image(systemName: iconPath)
@@ -100,6 +103,33 @@ struct AppIconImage: View {
       return true
     }
     return resizedIcon
+  }
+}
+
+struct CustomIconImage: View {
+  let imagePath: String
+  let size: NSSize
+  let defaultSystemName: String = "photo"
+
+  init(imagePath: String, size: NSSize = NSSize(width: 24, height: 24)) {
+    self.imagePath = imagePath
+    self.size = size
+  }
+
+  var body: some View {
+    let image =
+      if let nsImage = loadImage(path: imagePath) {
+        Image(nsImage: nsImage)
+      } else {
+        Image(systemName: defaultSystemName)
+      }
+    image.resizable()
+      .scaledToFit()
+      .frame(width: size.width, height: size.height)
+  }
+
+  private func loadImage(path: String) -> NSImage? {
+    CustomIconRenderer.renderCustomIcon(from: path, size: size)
   }
 }
 
