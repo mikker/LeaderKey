@@ -4,7 +4,9 @@ import SwiftUI
 
 enum Cheatsheet {
   static func createWindow(for userState: UserState) -> NSWindow {
-    let view = CheatsheetView().environmentObject(userState)
+    let view = CheatsheetView()
+      .environmentObject(userState)
+      .environmentObject(userState.userConfig as UserConfig)
     let controller = NSHostingController(rootView: view)
     controller.sizingOptions = .preferredContentSize
     let cheatsheet = PanelWindow(

@@ -9,7 +9,6 @@ final class UserState: ObservableObject {
   @Published var isShowingRefreshState: Bool
   @Published var navigationPath: [Group] = []
   @Published var shiftHeld: Bool = false
-  @Published var cheatsheetCentered: Bool = false
 
   var currentGroup: Group? {
     return navigationPath.last

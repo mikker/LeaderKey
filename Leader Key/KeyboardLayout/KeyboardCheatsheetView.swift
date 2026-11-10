@@ -2,10 +2,12 @@ import SwiftUI
 
 struct KeyboardCheatsheetView: View {
   @EnvironmentObject var userState: UserState
+  // Observed so edits made while the cheatsheet is hidden are drawn on the next open
+  @EnvironmentObject var userConfig: UserConfig
 
-  var scale: CGFloat {
-    userState.cheatsheetCentered ? KeyboardLayout.centeredScale : 1.0
-  }
+  // The keyboard cheatsheet is only ever shown centered. Keeping the scale fixed
+  // means opening it reuses the existing layout instead of rebuilding every key.
+  private let scale: CGFloat = KeyboardLayout.centeredScale
 
   var bindings: [String: ActionOrGroup] {
     var result: [String: ActionOrGroup] = [:]
@@ -13,7 +15,7 @@ struct KeyboardCheatsheetView: View {
     let actions =
       (userState.currentGroup != nil)
       ? userState.currentGroup!.actions
-      : userState.userConfig.root.actions
+      : userConfig.root.actions
 
     for item in actions {
       switch item {
@@ -83,5 +85,6 @@ struct KeyboardCheatsheetView: View {
 
   return KeyboardCheatsheetView()
     .environmentObject(state)
+    .environmentObject(config)
     .frame(width: 700, height: 350)
 }

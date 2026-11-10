@@ -85,7 +85,6 @@ class Controller {
     // Reset centered mode state
     window.alphaValue = 1
     isCheatsheetCentered = false
-    userState.cheatsheetCentered = false
 
     window.hide {
       self.clear()
@@ -359,7 +358,6 @@ class Controller {
       // Hide the main window visually but keep it as key window for input
       window.alphaValue = 0
       isCheatsheetCentered = true
-      userState.cheatsheetCentered = true
       sizeCheatsheetWindowToFitContent()
       centerCheatsheetWindow()
       cheatsheetWindow?.orderFront(nil)
@@ -388,7 +386,6 @@ class Controller {
     if isCheatsheetCentered {
       window.alphaValue = 1
       isCheatsheetCentered = false
-      userState.cheatsheetCentered = false
       cheatsheetWindow?.orderOut(nil)
     }
   }
