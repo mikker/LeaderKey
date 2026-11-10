@@ -285,6 +285,9 @@ class AppDelegate: NSObject, NSApplicationDelegate,
   private func showSettings() {
     // Behave like a normal app while Settings is open
     NSApp.setActivationPolicy(.regular)
+    // The segmented control already names each pane; without this the toolbar
+    // repeats every title as a label underneath it.
+    settingsWindowController.window?.toolbar?.displayMode = .iconOnly
     settingsWindowController.show()
     NSApp.activate(ignoringOtherApps: true)
     settingsWindowController.window?.delegate = self
