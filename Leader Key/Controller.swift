@@ -41,6 +41,7 @@ class Controller {
     Events.sink { event in
       switch event {
       case .didReload:
+        IconCache.removeAll()
         // This should all be handled by the themes
         self.userState.isShowingRefreshState = true
         self.show()

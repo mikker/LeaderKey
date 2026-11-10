@@ -69,6 +69,26 @@ func actionIcon(item: ActionOrGroup, iconSize: NSSize, loadFavicons: Bool = true
   )
 }
 
+/// Rendered icons, kept so redrawing a key does not hit the disk again.
+/// Cleared when the config reloads, which is when icon paths can change.
+enum IconCache {
+  private static let cache = NSCache<NSString, NSImage>()
+
+  static func image(kind: String, path: String, size: NSSize, make: () -> NSImage?) -> NSImage? {
+    let key = "\(kind)|\(size.width)x\(size.height)|\(path)" as NSString
+    if let cached = cache.object(forKey: key) {
+      return cached
+    }
+    guard let image = make() else { return nil }
+    cache.setObject(image, forKey: key)
+    return image
+  }
+
+  static func removeAll() {
+    cache.removeAllObjects()
+  }
+}
+
 struct AppIconImage: View {
   let appPath: String
   let size: NSSize
@@ -92,6 +112,10 @@ struct AppIconImage: View {
   }
 
   private func getAppIcon(path: String) -> NSImage? {
+    IconCache.image(kind: "app", path: path, size: size) { renderAppIcon(path: path) }
+  }
+
+  private func renderAppIcon(path: String) -> NSImage? {
     guard FileManager.default.fileExists(atPath: path) else {
       return nil
     }
@@ -129,7 +153,9 @@ struct CustomIconImage: View {
   }
 
   private func loadImage(path: String) -> NSImage? {
-    CustomIconRenderer.renderCustomIcon(from: path, size: size)
+    IconCache.image(kind: "custom", path: path, size: size) {
+      CustomIconRenderer.renderCustomIcon(from: path, size: size)
+    }
   }
 }
 
