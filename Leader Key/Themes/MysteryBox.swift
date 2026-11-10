@@ -58,6 +58,15 @@ enum MysteryBox {
 
         if userState.isShowingRefreshState {
           text.pulsate()
+        } else if let group = userState.currentGroup, group.iconPath?.isEmpty == false {
+          // Inside a group with its own icon, lead with the icon and keep the key as a caption
+          VStack(spacing: 10) {
+            actionIcon(item: .group(group), iconSize: NSSize(width: 80, height: 80))
+              .font(.system(size: 56))
+            Text(glyphText)
+              .font(.system(size: 17, weight: .semibold, design: .rounded))
+              .foregroundStyle(.secondary)
+          }
         } else {
           text
         }
