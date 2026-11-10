@@ -602,6 +602,17 @@ enum ActionOrGroup: Codable, Equatable {
     }
   }
 
+  func withKey(_ key: String?) -> ActionOrGroup {
+    switch self {
+    case .action(var a):
+      a.key = key
+      return .action(a)
+    case .group(var g):
+      g.key = key
+      return .group(g)
+    }
+  }
+
   init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     let key = try container.decode(String?.self, forKey: .key)

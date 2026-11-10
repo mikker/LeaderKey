@@ -19,11 +19,11 @@ struct KeyboardCheatsheetView: View {
       switch item {
       case .action(let action):
         if let key = action.key {
-          result[key] = item
+          result[KeyMaps.text(for: key) ?? key] = item
         }
       case .group(let group):
         if let key = group.key {
-          result[key] = item
+          result[KeyMaps.text(for: key) ?? key] = item
         }
       }
     }
@@ -62,9 +62,9 @@ struct KeyboardCheatsheetView: View {
       // Keyboard layout
       KeyboardLayoutView(
         bindings: bindings,
-        isEditable: false,
         shiftHeld: userState.shiftHeld,
-        scale: scale
+        scale: scale,
+        showLabels: true
       )
     }
     .padding(16 * scale)

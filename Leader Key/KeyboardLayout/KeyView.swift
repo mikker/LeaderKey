@@ -1,25 +1,29 @@
 import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct KeyView: View {
   let keyDef: KeyDefinition
   let binding: ActionOrGroup?
-  let isEditable: Bool
   let shiftHeld: Bool
   var scale: CGFloat = 1.0
+  var showLabels: Bool = false
   var onSelect: (() -> Void)? = nil
+  /// Called when a drag of this key's binding starts. Non-nil makes the key draggable.
+  var onDragStart: (() -> Void)? = nil
+  /// Accepts or rejects a binding dragged onto this key. Non-nil makes the key a drop target.
+  var dropDelegate: KeyDropDelegate? = nil
 
   @State private var isHovered = false
   @State private var isCursorPushed = false
+  @State private var isDropTargeted = false
 
   private var iconSize: NSSize {
     NSSize(width: 20 * scale, height: 20 * scale)
   }
 
   var body: some View {
-    let width =
-      keyDef.width * KeyboardLayout.scaledKeySize(scale) + (keyDef.width - 1)
-      * KeyboardLayout.scaledKeySpacing(scale)
+    let width = KeyboardLayout.keyWidth(for: keyDef, scale: scale)
     let height = KeyboardLayout.scaledKeySize(scale)
     let cornerRadius = 6 * scale
 
@@ -50,8 +54,9 @@ struct KeyView: View {
           VStack {
             actionIcon(item: binding, iconSize: iconSize, loadFavicons: true)
           }
+          .offset(y: showLabels ? -4 * scale : 0)
           .overlay {
-            if isHovered, let label = bindingLabel {
+            if isHovered, !showLabels, let label = bindingLabel {
               Text(label)
                 .font(.system(size: 9 * scale))
                 .lineLimit(1)
@@ -63,6 +68,22 @@ struct KeyView: View {
                 .fixedSize()
                 .offset(y: (iconSize.height / 2) + (5 * scale))
             }
+          }
+        }
+
+        // Always-visible binding name along the bottom
+        if showLabels, let label = bindingLabel {
+          VStack {
+            Spacer()
+            Text(label)
+              .font(.system(size: 7 * scale))
+              .lineLimit(1)
+              .truncationMode(.tail)
+              .foregroundColor(.primary)
+              .opacity(0.8)
+              .padding(.leading, 3 * scale)
+              .padding(.trailing, (isGroup ? 12 : 3) * scale)
+              .padding(.bottom, 2 * scale)
           }
         }
 
@@ -86,6 +107,12 @@ struct KeyView: View {
       if isHovered && !keyDef.isModifier && onSelect != nil {
         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
           .fill(Color.accentColor.opacity(0.2))
+      }
+
+      // Drop target outline
+      if isDropTargeted {
+        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+          .strokeBorder(Color.accentColor, lineWidth: 2 * scale)
       }
     }
     .frame(width: width, height: height)
@@ -115,12 +142,23 @@ struct KeyView: View {
         onSelect?()
       }
     }
+    .modifier(
+      KeyDragDrop(
+        onDragStart: binding == nil ? nil : onDragStart,
+        dropDelegate: dropDelegate,
+        isDropTargeted: $isDropTargeted
+      ) {
+        if let binding = binding {
+          actionIcon(item: binding, iconSize: iconSize, loadFavicons: true)
+        }
+      }
+    )
     .zIndex(isHovered ? 1 : 0)
   }
 
   private var displayLabel: String {
     if shiftHeld && !keyDef.isModifier {
-      let shiftedKey = KeyboardLayout.shiftedKey(for: keyDef.key)
+      let shiftedKey = KeyboardLayout.bindingKey(for: keyDef, shifted: true)
       return KeyMaps.glyph(for: shiftedKey) ?? shiftedKey.uppercased()
     }
 
@@ -128,10 +166,15 @@ struct KeyView: View {
     if keyDef.key.hasSuffix("_r") {
       displayKey = String(keyDef.key.dropLast(2))
     } else {
-      displayKey = keyDef.key
+      displayKey = KeyboardLayout.bindingKey(for: keyDef, shifted: false)
     }
 
     return KeyMaps.glyph(for: displayKey) ?? keyDef.label
+  }
+
+  private var isGroup: Bool {
+    if case .group = binding { return true }
+    return false
   }
 
   private var isShiftKey: Bool {
@@ -158,6 +201,72 @@ struct KeyView: View {
       return group.displayName
     case .none:
       return nil
+    }
+  }
+}
+
+/// Decides what happens when a dragged binding is dropped on a key.
+struct KeyDropDelegate {
+  /// Whether a drag that this keyboard started is in progress and may land here.
+  let canDrop: () -> Bool
+  let onDrop: () -> Void
+}
+
+private struct KeyDragDrop<Preview: View>: ViewModifier {
+  let onDragStart: (() -> Void)?
+  let dropDelegate: KeyDropDelegate?
+  @Binding var isDropTargeted: Bool
+  @ViewBuilder let preview: () -> Preview
+
+  func body(content: Content) -> some View {
+    draggable(content)
+      .onDrop(
+        of: dropDelegate == nil ? [] : [KeyDragDrop.payloadType],
+        delegate: Delegate(dropDelegate: dropDelegate, isDropTargeted: $isDropTargeted)
+      )
+  }
+
+  @ViewBuilder
+  private func draggable(_ content: Content) -> some View {
+    if let onDragStart = onDragStart {
+      content.onDrag {
+        onDragStart()
+        return NSItemProvider(object: "" as NSString)
+      } preview: {
+        preview()
+      }
+    } else {
+      content
+    }
+  }
+
+  private static var payloadType: UTType { .plainText }
+
+  private struct Delegate: DropDelegate {
+    let dropDelegate: KeyDropDelegate?
+    @Binding var isDropTargeted: Bool
+
+    func validateDrop(info: DropInfo) -> Bool {
+      dropDelegate?.canDrop() ?? false
+    }
+
+    func dropEntered(info: DropInfo) {
+      isDropTargeted = true
+    }
+
+    func dropExited(info: DropInfo) {
+      isDropTargeted = false
+    }
+
+    func dropUpdated(info: DropInfo) -> DropProposal? {
+      DropProposal(operation: .move)
+    }
+
+    func performDrop(info: DropInfo) -> Bool {
+      isDropTargeted = false
+      guard let dropDelegate = dropDelegate, dropDelegate.canDrop() else { return false }
+      dropDelegate.onDrop()
+      return true
     }
   }
 }

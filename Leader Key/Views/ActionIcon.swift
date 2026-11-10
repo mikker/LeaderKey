@@ -35,7 +35,7 @@ func actionIcon(item: ActionOrGroup, iconSize: NSSize, loadFavicons: Bool = true
       return AnyView(AppIconImage(appPath: value ?? "", size: iconSize))
     case .url:
       if loadFavicons {
-        return AnyView(FavIconImage(url: value ?? "", icon: "link"))
+        return AnyView(FavIconImage(url: value ?? "", icon: "link", size: iconSize))
       } else {
         return AnyView(
           Image(systemName: "link")

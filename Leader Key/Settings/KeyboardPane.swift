@@ -1,5 +1,6 @@
 import AppKit
 import Defaults
+import KeyboardShortcuts
 import Settings
 import SwiftUI
 import UniformTypeIdentifiers
@@ -505,12 +506,10 @@ struct KeyboardPane: View {
   private let contentWidth = 950.0
   private let maxKeyboardScale: CGFloat = 1.4
   @EnvironmentObject private var config: UserConfig
-  @Default(.cheatsheetStyle) var cheatsheetStyle
 
   @State private var editingItem: EditorWrapper?
   @State private var editingGroupWrapper: GroupWrapper?
   @State private var currentGroupPath: [UUID] = []
-  @State private var keyboardScale: CGFloat = 1.4
   @State private var shiftHeld = false
   @State private var stickyShiftMode = false  // Persists after editing capital letter keys
   @State private var monitor: Any?
@@ -529,11 +528,11 @@ struct KeyboardPane: View {
       switch item {
       case .action(let action):
         if let key = action.key {
-          result[key] = item
+          result[KeyMaps.text(for: key) ?? key] = item
         }
       case .group(let group):
         if let key = group.key {
-          result[key] = item
+          result[KeyMaps.text(for: key) ?? key] = item
         }
       }
     }
@@ -615,7 +614,6 @@ struct KeyboardPane: View {
 
           KeyboardLayoutView(
             bindings: bindings,
-            isEditable: false,
             shiftHeld: shiftHeld || stickyShiftMode,
             scale: maxKeyboardScale,
             onKeySelected: { key in
@@ -632,9 +630,9 @@ struct KeyboardPane: View {
                   stickyShiftMode = true
                 }
 
-                // If shift is held, use the shifted key for lookup and creation
-                let lookupKey =
-                  isShiftActive ? KeyboardLayout.shiftedKey(for: key) : key
+                // Use the same key the keyboard draws for lookup and creation
+                let lookupKey = KeyboardLayout.bindingKey(
+                  forStaticKey: key, shifted: isShiftActive)
 
                 if let existing = bindings[lookupKey] {
                   switch existing {
@@ -658,10 +656,13 @@ struct KeyboardPane: View {
                     isNew: true
                   )
                 }
-              }
+              },
+            onBindingMoved: { sourceKey, targetKey in
+              moveBinding(from: sourceKey, to: targetKey)
+            }
             )
 
-          Text("Click any key to configure")
+          Text("Click a key to configure, drag a binding to move or swap it")
             .font(.body)
             .foregroundColor(.secondary)
             .frame(maxWidth: .infinity, alignment: .center)
@@ -757,15 +758,6 @@ struct KeyboardPane: View {
     }
   }
 
-  private var keyboardMaxHeight: CGFloat {
-    let rows = CGFloat(KeyboardLayout.rows.count)
-    let scaledKeySize = KeyboardLayout.keySize * maxKeyboardScale
-    let scaledRowSpacing = KeyboardLayout.rowSpacing * maxKeyboardScale
-    let keyboardHeight = (scaledKeySize * rows) + (scaledRowSpacing * (rows - 1))
-    // Add padding (8px for .padding(.vertical, 4)) + 32px for the overlapping text
-    return ceil(keyboardHeight) + 40
-  }
-
   private func saveItem(_ item: ActionOrGroup) {
     var group = currentGroup
     let newActions = group.actions.filter { existing in
@@ -785,6 +777,49 @@ struct KeyboardPane: View {
     group.actions = newActions
 
     updateConfig(with: group)
+  }
+
+  /// Moves the binding on `sourceKey` to `targetKey`, swapping if the target is already bound.
+  private func moveBinding(from sourceKey: String, to targetKey: String) {
+    // Look items up through `bindings` so stored glyphs ("⇥") match drawn keys ("tab")
+    let current = bindings
+    var group = currentGroup
+    guard sourceKey != targetKey,
+      let sourceID = current[sourceKey]?.uiid,
+      let sourceIndex = group.actions.firstIndex(where: { $0.uiid == sourceID })
+    else { return }
+
+    let targetID = current[targetKey]?.uiid
+    let targetIndex = group.actions.firstIndex(where: { $0.uiid == targetID })
+    group.actions[sourceIndex] = group.actions[sourceIndex].withKey(targetKey)
+    if let targetIndex = targetIndex {
+      group.actions[targetIndex] = group.actions[targetIndex].withKey(sourceKey)
+    }
+
+    updateConfig(with: group)
+
+    if currentGroupPath.isEmpty {
+      swapGroupShortcuts(sourceKey, targetKey)
+    }
+  }
+
+  /// Global group shortcuts are stored by root key, so they have to follow a moved binding.
+  private func swapGroupShortcuts(_ firstKey: String, _ secondKey: String) {
+    let firstName = KeyboardShortcuts.Name("group-\(firstKey)")
+    let secondName = KeyboardShortcuts.Name("group-\(secondKey)")
+    let firstShortcut = KeyboardShortcuts.getShortcut(for: firstName)
+    let secondShortcut = KeyboardShortcuts.getShortcut(for: secondName)
+    guard firstShortcut != nil || secondShortcut != nil else { return }
+
+    KeyboardShortcuts.setShortcut(secondShortcut, for: firstName)
+    KeyboardShortcuts.setShortcut(firstShortcut, for: secondName)
+
+    var shortcuts = Defaults[.groupShortcuts]
+    if secondShortcut != nil { shortcuts.insert(firstKey) } else { shortcuts.remove(firstKey) }
+    if firstShortcut != nil { shortcuts.insert(secondKey) } else { shortcuts.remove(secondKey) }
+    Defaults[.groupShortcuts] = shortcuts
+
+    (NSApplication.shared.delegate as? AppDelegate)?.registerGlobalShortcuts()
   }
 
   private func saveGroup(_ group: KeyGroup) {
