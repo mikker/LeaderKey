@@ -71,7 +71,7 @@ class Controller {
 
     switch Defaults[.autoOpenCheatsheet] {
     case .always:
-      showCheatsheet()
+      showCheatsheet(centered: Defaults[.cheatsheetStyle] == .keyboard)
     case .delay:
       scheduleCheatsheet()
     default: break
